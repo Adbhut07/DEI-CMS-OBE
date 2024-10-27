@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int       @id @default(autoincrement())
+  name           String
+  email          String     @unique
+  password       String
+  role           Role
+  profileDetails Json?
+  enrollments    Enrollment[]
+  uploadedMarks  Marks[]    @relation("UploadedMarks")
+  marksReceived  Marks[]    @relation("StudentMarks")
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+}
+
+model Course {
+  id         Int         @id @default(autoincrement())
+  courseName String
+  semesters  Semester[]
+  enrollments Enrollment[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Semester {
+  id         Int         @id @default(autoincrement())
+  semesterName String
+  course     Course      @relation(fields: [courseId], references: [id])
+  courseId   Int
+  subjects   Subject[]
+  enrollments Enrollment[]
+  exams      Exam[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Subject {
+  id         Int         @id @default(autoincrement())
+  subjectName String
+  semester   Semester    @relation(fields: [semesterId], references: [id])
+  semesterId Int
+  enrollments Enrollment[]
+  exams      Exam[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Enrollment {
+  id         Int         @id @default(autoincrement())
+  student    User        @relation(fields: [studentId], references: [id])
+  studentId  Int
+  course     Course      @relation(fields: [courseId], references: [id])
+  courseId   Int
+  semester   Semester    @relation(fields: [semesterId], references: [id])
+  semesterId Int
+  subject    Subject     @relation(fields: [subjectId], references: [id])
+  subjectId  Int
+  enrollmentDate DateTime @default(now())
+}
+
+model Exam {
+  id         Int         @id @default(autoincrement())
+  examType   ExamType
+  semester   Semester    @relation(fields: [semesterId], references: [id])
+  semesterId Int
+  subject    Subject     @relation(fields: [subjectId], references: [id])
+  subjectId  Int
+  questions  Question[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Question {
+  id           Int        @id @default(autoincrement())
+  questionNumber String
+  exam         Exam       @relation(fields: [examId], references: [id])
+  examId       Int
+  marks        Marks[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Marks {
+  id           Int        @id @default(autoincrement())
+  student      User       @relation("StudentMarks", fields: [studentId], references: [id])
+  studentId    Int
+  question     Question   @relation(fields: [questionId], references: [id])
+  questionId   Int
+  marksObtained Int
+  uploadedBy   User       @relation("UploadedMarks", fields: [uploadedById], references: [id])
+  uploadedById Int
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+enum Role {
+  Student
+  Faculty
+  HOD
+  Dean
+  Admin
+}
+
+enum ExamType {
+  CT1
+  CT2
+}
