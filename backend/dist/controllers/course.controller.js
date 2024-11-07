@@ -40,6 +40,8 @@ const getCourseById = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 exports.getCourseById = getCourseById;
 const createCourse = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        console.log(req.body);
+        console.log("hi");
         const { courseName } = req.body;
         const newCourse = yield prisma.course.create({
             data: { courseName }

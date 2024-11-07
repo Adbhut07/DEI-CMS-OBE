@@ -11,6 +11,7 @@ const enrollment_route_1 = __importDefault(require("./routes/enrollment.route"))
 const exam_route_1 = __importDefault(require("./routes/exam.route"));
 const question_route_1 = __importDefault(require("./routes/question.route"));
 const marks_route_1 = __importDefault(require("./routes/marks.route"));
+const course_route_1 = __importDefault(require("./routes/course.route"));
 const user_route_1 = __importDefault(require("./routes/user.route"));
 const app = (0, express_1.default)();
 const port = process.env.PORT || 3000;
@@ -23,7 +24,7 @@ app.use('/api/v1/exams', exam_route_1.default);
 app.use('/api/v1/questions', question_route_1.default);
 app.use('/api/v1/marks', marks_route_1.default);
 app.use('/api/v1/users', user_route_1.default);
-app.use('/api/v1/exam', exam_route_1.default);
+app.use('/api/v1/course', course_route_1.default);
 app.get('/', (req, res) => {
     res.send('Hello, world!');
 });

@@ -7,6 +7,7 @@ import enrollmentRoutes from './routes/enrollment.route';
 import examRoutes from './routes/exam.route';
 import questionRoutes from './routes/question.route';
 import marksRoutes from './routes/marks.route';
+import courseRoutes from './routes/course.route';
 import userRoutes from './routes/user.route';
 
 const app = express();
@@ -22,7 +23,7 @@ app.use('/api/v1/exams', examRoutes);
 app.use('/api/v1/questions', questionRoutes);
 app.use('/api/v1/marks', marksRoutes);
 app.use('/api/v1/users', userRoutes);
-app.use('/api/v1/exam', examRoutes);
+app.use('/api/v1/course', courseRoutes);
 
 app.get('/', (req: Request, res: Response) => {
     res.send('Hello, world!');

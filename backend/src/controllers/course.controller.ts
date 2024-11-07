@@ -26,6 +26,8 @@ export const getCourseById = async (req: Request, res: Response) => {
 
 export const createCourse = async (req: Request, res: Response) => {
     try {
+        console.log(req.body);
+        console.log("hi");
         const { courseName } = req.body;
         const newCourse = await prisma.course.create({
             data: { courseName }
