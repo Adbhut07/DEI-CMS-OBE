@@ -1,4 +1,3 @@
-// examRoutes.ts
 import express from 'express';
 import {
     getExams,
@@ -6,7 +5,7 @@ import {
   createExam,
   updateExam,
   deleteExam,
-} from '../controllers/exam.controller';
+} from '../../controllers/exam/exam.controller';
 
 const router = express.Router();
 

@@ -1,4 +1,3 @@
-// semesterRoutes.ts
 import express from 'express';
 import {
   getSemesters,
@@ -6,7 +5,7 @@ import {
   createSemester,
   updateSemester,
   deleteSemester,
-} from '../controllers/semester.controller';
+} from '../../controllers/semester/semester.controller';
 
 const router = express.Router();
 

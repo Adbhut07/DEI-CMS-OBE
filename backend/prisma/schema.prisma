@@ -8,97 +8,129 @@ datasource db {
 }
 
 model User {
-  id             Int       @id @default(autoincrement())
-  name           String
-  email          String     @unique
-  password       String
-  role           Role
-  profileDetails Json?
-  enrollments    Enrollment[]
-  uploadedMarks  Marks[]    @relation("UploadedMarks")
-  marksReceived  Marks[]    @relation("StudentMarks")
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  id               Int          @id @default(autoincrement())
+  name             String
+  email            String       @unique
+  password         String
+  role             Role
+  profileDetails   Json?
+  enrollments      Enrollment[]
+  uploadedMarks    Marks[]      @relation("UploadedMarks")
+  marksReceived    Marks[]      @relation("StudentMarks")
+  assignedSubjects Subject[]    @relation("FacultySubjects")
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  Course           Course[]
 }
 
 model Course {
-  id         Int         @id @default(autoincrement())
-  courseName String
-  semesters  Semester[]
-  enrollments Enrollment[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id          Int          @id @default(autoincrement())
+  courseName  String
+  semesters   Semester[]
+  createdBy   User         @relation(fields: [createdById], references: [id])
+  createdById Int
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  Enrollment  Enrollment[]
 }
 
 model Semester {
-  id         Int         @id @default(autoincrement())
-  semesterName String
-  course     Course      @relation(fields: [courseId], references: [id])
-  courseId   Int
-  subjects   Subject[]
+  id          Int          @id @default(autoincrement())
+  name        String // Example: "Semester 1", "Semester 2"
+  course      Course       @relation(fields: [courseId], references: [id])
+  courseId    Int
+  subjects    Subject[]
   enrollments Enrollment[]
-  exams      Exam[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  exams       Exam[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
 
 model Subject {
-  id         Int         @id @default(autoincrement())
-  subjectName String
-  semester   Semester    @relation(fields: [semesterId], references: [id])
-  semesterId Int
-  enrollments Enrollment[]
-  exams      Exam[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id             Int             @id @default(autoincrement())
+  subjectName    String
+  semester       Semester        @relation(fields: [semesterId], references: [id])
+  semesterId     Int
+  faculty        User?           @relation("FacultySubjects", fields: [facultyId], references: [id])
+  facultyId      Int?
+  units          Unit[]
+  exams          Exam[]
+  courseOutcomes CourseOutcome[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Unit {
+  id             Int             @id @default(autoincrement())
+  unitNumber     Int
+  description    String?
+  subject        Subject         @relation(fields: [subjectId], references: [id])
+  subjectId      Int
+  courseOutcomes CourseOutcome[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  Question       Question[]
+}
+
+model CourseOutcome {
+  id          Int      @id @default(autoincrement())
+  description String
+  unit        Unit     @relation(fields: [unitId], references: [id])
+  unitId      Int
+  attainment  Float    @default(0.0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  Subject     Subject? @relation(fields: [subjectId], references: [id])
+  subjectId   Int?
 }
 
 model Enrollment {
-  id         Int         @id @default(autoincrement())
-  student    User        @relation(fields: [studentId], references: [id])
+  id         Int      @id @default(autoincrement())
+  student    User     @relation(fields: [studentId], references: [id])
   studentId  Int
-  course     Course      @relation(fields: [courseId], references: [id])
+  course     Course   @relation(fields: [courseId], references: [id])
   courseId   Int
-  semester   Semester    @relation(fields: [semesterId], references: [id])
+  semester   Semester @relation(fields: [semesterId], references: [id])
   semesterId Int
-  subject    Subject     @relation(fields: [subjectId], references: [id])
-  subjectId  Int
-  enrollmentDate DateTime @default(now())
+  createdAt  DateTime @default(now())
 }
 
 model Exam {
-  id         Int         @id @default(autoincrement())
+  id         Int        @id @default(autoincrement())
   examType   ExamType
-  semester   Semester    @relation(fields: [semesterId], references: [id])
-  semesterId Int
-  subject    Subject     @relation(fields: [subjectId], references: [id])
+  subject    Subject    @relation(fields: [subjectId], references: [id])
   subjectId  Int
+  semester   Semester   @relation(fields: [semesterId], references: [id])
+  semesterId Int
   questions  Question[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 }
 
 model Question {
-  id           Int        @id @default(autoincrement())
-  questionNumber String
-  exam         Exam       @relation(fields: [examId], references: [id])
-  examId       Int
-  marks        Marks[]
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id             Int      @id @default(autoincrement())
+  questionText   String
+  marksAllocated Int
+  exam           Exam     @relation(fields: [examId], references: [id])
+  examId         Int
+  unit           Unit     @relation(fields: [unitId], references: [id])
+  unitId         Int
+  marks          Marks[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Marks {
-  id           Int        @id @default(autoincrement())
-  student      User       @relation("StudentMarks", fields: [studentId], references: [id])
-  studentId    Int
-  question     Question   @relation(fields: [questionId], references: [id])
-  questionId   Int
+  id            Int      @id @default(autoincrement())
+  student       User     @relation("StudentMarks", fields: [studentId], references: [id])
+  studentId     Int
+  question      Question @relation(fields: [questionId], references: [id])
+  questionId    Int
   marksObtained Int
-  uploadedBy   User       @relation("UploadedMarks", fields: [uploadedById], references: [id])
-  uploadedById Int
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  uploadedBy    User     @relation("UploadedMarks", fields: [uploadedById], references: [id])
+  uploadedById  Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 enum Role {
@@ -112,4 +144,6 @@ enum Role {
 enum ExamType {
   CT1
   CT2
+  DHA
+  CA
 }
