@@ -73,8 +73,9 @@ export const createCourse = async (req: Request, res: Response): Promise<any> =>
 };
 
 // Get All Courses with Semesters and Subjects
-export const getCourses = async (_req: Request, res: Response): Promise<any> => {
+export const getCourses = async (req: Request, res: Response): Promise<any> => {
   try {
+    console.log(req.user);
     const courses = await prisma.course.findMany({
       include: {
         semesters: {

@@ -249,3 +249,47 @@ export const getUserByEmail = async (req: Request, res: Response): Promise<any> 
     });
   }
 };
+
+//create an api controller for updating the user role
+export const updateUserRole = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const userId = req.params.id; 
+    const { role } = req.body;
+
+    const existingUser = await prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: parseInt(userId) },
+      data: { role },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        profileDetails: true,
+        createdAt: true,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: updatedUser,
+      message: "User role updated successfully",
+    });
+  } catch (error) {
+    console.error("Error in updateUserRole:", (error as Error).message);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
