@@ -14,7 +14,7 @@ const subject_route_1 = __importDefault(require("./routes/subject/subject.route"
 const unit_route_1 = __importDefault(require("./routes/unit/unit.route"));
 const courseOutcome_route_1 = __importDefault(require("./routes/course/courseOutcome.route"));
 const app = (0, express_1.default)();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 const corsOptions = {
     origin: ['http://localhost:3000', 'https://your-production-domain.com'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],

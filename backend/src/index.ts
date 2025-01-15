@@ -11,7 +11,7 @@ import unitRoutes from './routes/unit/unit.route';
 import courseOutcomeRoutes from './routes/course/courseOutcome.route';
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 
 const corsOptions = {
     origin: ['http://localhost:3000', 'https://your-production-domain.com'],
