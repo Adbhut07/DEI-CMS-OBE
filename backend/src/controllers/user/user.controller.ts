@@ -49,6 +49,44 @@ export const getUserProfile = async (req: Request, res: Response): Promise<any> 
     }
   };
 
+//create a controller function getting users according to their role
+export const getUsersByRole = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { role } = req.params;
+
+    const users = await prisma.user.findMany({
+      where: { role: role as "Student" | "Faculty" | "HOD" | "Dean" | "Admin" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        profileDetails: true,
+        createdAt: true,
+      },
+    });
+
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No users found with the specified role",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: users,
+    });
+  } catch (error) {
+    console.error("Error in getUsersByRole:", (error as Error).message);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+
   export const updateUserProfile = async (req: Request, res: Response): Promise<any> => {
     try {
       const userId = req.params.id; 

@@ -10,4 +10,5 @@ router.put('/:id', user_controller_1.updateUserProfile);
 router.get('/userProfile/:id', user_controller_1.getUserProfile);
 router.delete('/:id', user_controller_1.deleteUser);
 router.put('/updateRole/:id', user_controller_1.updateUserRole);
+router.get('/getUserByRole', user_controller_1.getUsersByRole);
 exports.default = router;

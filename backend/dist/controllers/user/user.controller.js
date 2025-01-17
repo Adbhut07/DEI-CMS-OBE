@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateUserRole = exports.getUserByEmail = exports.deleteUser = exports.getUsers = exports.createUser = exports.updateUserProfile = exports.getUserProfile = void 0;
+exports.updateUserRole = exports.getUserByEmail = exports.deleteUser = exports.getUsers = exports.createUser = exports.updateUserProfile = exports.getUsersByRole = exports.getUserProfile = void 0;
 const client_1 = require("@prisma/client");
 const zod_1 = __importDefault(require("zod"));
 const prisma = new client_1.PrismaClient();
@@ -58,6 +58,41 @@ const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.getUserProfile = getUserProfile;
+//create a controller function getting users according to their role
+const getUsersByRole = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { role } = req.params;
+        const users = yield prisma.user.findMany({
+            where: { role: role },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                profileDetails: true,
+                createdAt: true,
+            },
+        });
+        if (users.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "No users found with the specified role",
+            });
+        }
+        res.status(200).json({
+            success: true,
+            data: users,
+        });
+    }
+    catch (error) {
+        console.error("Error in getUsersByRole:", error.message);
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+        });
+    }
+});
+exports.getUsersByRole = getUsersByRole;
 const updateUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const userId = req.params.id;

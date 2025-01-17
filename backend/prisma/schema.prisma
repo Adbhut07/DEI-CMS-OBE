@@ -37,7 +37,7 @@ model Course {
 model Semester {
   id          Int          @id @default(autoincrement())
   name        String // Example: "Semester 1", "Semester 2"
-  course      Course       @relation(fields: [courseId], references: [id])
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId    Int
   subjects    Subject[]
   enrollments Enrollment[]
@@ -88,7 +88,7 @@ model Enrollment {
   id         Int      @id @default(autoincrement())
   student    User     @relation(fields: [studentId], references: [id])
   studentId  Int
-  course     Course   @relation(fields: [courseId], references: [id])
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId   Int
   semester   Semester @relation(fields: [semesterId], references: [id])
   semesterId Int

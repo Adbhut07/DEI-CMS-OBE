@@ -66,12 +66,14 @@ export default function SignInPage() {
       }
 
       if (responseData.success) {
+        console.log(responseData.data);
         const { user, token } = responseData.data
 
         // Store token
         localStorage.setItem('token', token)
 
         // Update Redux state
+        console.log(user);
         dispatch(
           setUser({
             id: user.id || null,
@@ -83,17 +85,19 @@ export default function SignInPage() {
           })
         )
 
+        router.push('/course-management')
+
         // Role-based navigation
-        switch (user.role) {
-          case 'CANDIDATE':
-            router.push('/dashboard-candidate')
-            break
-          case 'ADMIN':
-            router.push('/dashboard-admin')
-            break
-          default:
-            router.push('/dashboard-interviewer')
-        }
+        // switch (user.role) {
+        //   case 'CANDIDATE':
+        //     router.push('/course-management')
+        //     break
+        //   case 'ADMIN':
+        //     router.push('/dashboard-admin')
+        //     break
+        //   default:
+        //     router.push('/course-management')
+        // }
       } else {
         throw new Error(responseData.message || 'Failed to sign in')
       }
