@@ -213,7 +213,7 @@ export default function SemestersPage() {
   const fetchSemesters = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/courses/${courseId}/semesters`)
+      const response = await fetch(`http://localhost:8000/api/v1/courses/${courseId}/semesters`)
       if (!response.ok) throw new Error('Failed to fetch semesters')
       const data = await response.json()
       setSemesters(data)

@@ -10,6 +10,6 @@ router.put('/:id', updateUserProfile);
 router.get('/userProfile/:id', getUserProfile)
 router.delete('/:id', deleteUser);
 router.put('/updateRole/:id', updateUserRole);
-router.get('/getUserByRole', getUsersByRole);
+router.get('/getUserByRole/:role', getUsersByRole);
 
 export default router;

@@ -616,7 +616,7 @@ const handleAddCourse = async (newCourse: any) => {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6">Course Management</h1>
-      
+
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -652,34 +652,29 @@ const handleAddCourse = async (newCourse: any) => {
                   <TableCell>{course.courseName}</TableCell>
                   <TableCell>{course.semesters.length}</TableCell>
                   <TableCell>
-                    {course.semesters.reduce((total, semester) => 
-                      total + (semester.subjects?.length || 0), 0
-                    )}
+                    {course.semesters.reduce((total, semester) => total + (semester.subjects?.length || 0), 0)}
                   </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditCourse(course)}
-                      >
+                      <Button variant="outline" size="sm" onClick={() => handleEditCourse(course)}>
                         <Edit className="h-4 w-4 mr-1" /> Edit
                       </Button>
-                      <Link href={`/course-management/${course.id}/subjects`} passHref>
+                      <Link href={`/admin/course/${course.id}/subjects`} passHref>
                         <Button variant="outline" size="sm">
                           Edit Subjects
                         </Button>
                       </Link>
-                      <Link href={`/course-management/${course.id}/semesters`} passHref>
+                      <Link href={`/admin/course/${course.id}/semesters`} passHref>
                         <Button variant="outline" size="sm">
                           Edit Semesters
                         </Button>
                       </Link>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteCourse(course.id)}
-                      >
+                      <Link href={`/admin/course/${course.id}/assign-faculty`} passHref>
+                        <Button variant="outline" size="sm">
+                          Assign Faculty
+                        </Button>
+                      </Link>
+                      <Button variant="destructive" size="sm" onClick={() => handleDeleteCourse(course.id)}>
                         <Trash2 className="h-4 w-4 mr-1" /> Delete
                       </Button>
                     </div>

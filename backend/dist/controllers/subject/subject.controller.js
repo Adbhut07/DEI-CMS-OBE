@@ -26,6 +26,8 @@ const updateSubjectSchema = zod_1.default.object({
     facultyId: zod_1.default.number().int("Invalid faculty ID").optional(),
 });
 const assignFacultySchema = zod_1.default.object({
+    subjectId: zod_1.default.number().int("Invalid subject ID"),
+    semesterId: zod_1.default.number().int("Invalid semester ID"),
     facultyId: zod_1.default.number().int("Invalid faculty ID"),
 });
 const createSubject = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -71,7 +73,7 @@ const createSubject = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 exports.createSubject = createSubject;
 const assignFacultyToSubject = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { subjectId } = req.params;
+        const { courseId } = req.params;
         const result = assignFacultySchema.safeParse(req.body);
         if (!result.success) {
             return res.status(400).json({
@@ -80,15 +82,27 @@ const assignFacultyToSubject = (req, res) => __awaiter(void 0, void 0, void 0, f
                 errors: result.error.format(),
             });
         }
-        const { facultyId } = result.data;
-        const subjectExists = yield prisma.subject.findUnique({
-            where: { id: parseInt(subjectId) },
+        const { subjectId, semesterId, facultyId } = result.data;
+        const courseExists = yield prisma.course.findUnique({
+            where: { id: parseInt(courseId) },
         });
-        if (!subjectExists) {
+        if (!courseExists) {
             return res.status(404).json({
                 success: false,
-                message: "Subject not found",
+                message: "Course not found",
             });
+        }
+        const subject = yield prisma.subject.findFirst({
+            where: {
+                id: subjectId,
+                semesterId: semesterId, // Ensure semesterId matches
+                semester: {
+                    courseId: parseInt(courseId), // Ensure courseId matches
+                },
+            },
+        });
+        if (!subject) {
+            return res.status(404).json({ success: false, message: "Subject not found 123" });
         }
         const faculty = yield prisma.user.findUnique({
             where: { id: facultyId },
@@ -100,7 +114,7 @@ const assignFacultyToSubject = (req, res) => __awaiter(void 0, void 0, void 0, f
             });
         }
         const updatedSubject = yield prisma.subject.update({
-            where: { id: parseInt(subjectId) },
+            where: { id: subjectId },
             data: { facultyId },
         });
         res.status(200).json({

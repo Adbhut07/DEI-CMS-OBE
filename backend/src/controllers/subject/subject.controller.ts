@@ -17,6 +17,8 @@ const updateSubjectSchema = zod.object({
 
 
 const assignFacultySchema = zod.object({
+  subjectId: zod.number().int("Invalid subject ID"),
+  semesterId: zod.number().int("Invalid semester ID"),
   facultyId: zod.number().int("Invalid faculty ID"),
 });
 
@@ -67,7 +69,7 @@ export const createSubject = async (req: Request, res: Response): Promise<any> =
 
 export const assignFacultyToSubject = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { subjectId } = req.params;
+    const { courseId } = req.params; 
 
     const result = assignFacultySchema.safeParse(req.body);
     if (!result.success) {
@@ -78,18 +80,33 @@ export const assignFacultyToSubject = async (req: Request, res: Response): Promi
       });
     }
 
-    const { facultyId } = result.data;
+    const { subjectId, semesterId, facultyId } = result.data;
 
-    const subjectExists = await prisma.subject.findUnique({
-      where: { id: parseInt(subjectId) },
+    const courseExists = await prisma.course.findUnique({
+      where: { id: parseInt(courseId) },
     });
 
-    if (!subjectExists) {
+    if (!courseExists) {
       return res.status(404).json({
         success: false,
-        message: "Subject not found",
+        message: "Course not found",
       });
     }
+
+    const subject = await prisma.subject.findFirst({
+      where: {
+        id: subjectId,
+        semesterId: semesterId, // Ensure semesterId matches
+        semester: {
+          courseId: parseInt(courseId), // Ensure courseId matches
+        },
+      },
+    });
+    
+    if (!subject) {
+      return res.status(404).json({ success: false, message: "Subject not found 123" });
+    }
+    
 
     const faculty = await prisma.user.findUnique({
       where: { id: facultyId },
@@ -103,7 +120,7 @@ export const assignFacultyToSubject = async (req: Request, res: Response): Promi
     }
 
     const updatedSubject = await prisma.subject.update({
-      where: { id: parseInt(subjectId) },
+      where: { id: subjectId },
       data: { facultyId },
     });
 
@@ -120,7 +137,6 @@ export const assignFacultyToSubject = async (req: Request, res: Response): Promi
     });
   }
 };
-
 
 export const getSubjects = async (req: Request, res: Response): Promise<any> => {
   try {
