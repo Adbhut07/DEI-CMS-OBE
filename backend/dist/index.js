@@ -13,6 +13,7 @@ const course_route_1 = __importDefault(require("./routes/course/course.route"));
 const subject_route_1 = __importDefault(require("./routes/subject/subject.route"));
 const unit_route_1 = __importDefault(require("./routes/unit/unit.route"));
 const courseOutcome_route_1 = __importDefault(require("./routes/course/courseOutcome.route"));
+const faculty_route_1 = __importDefault(require("./routes/faculty/faculty.route"));
 const app = (0, express_1.default)();
 const port = process.env.PORT || 5000;
 const corsOptions = {
@@ -30,6 +31,7 @@ app.use('/api/v1/courses', course_route_1.default);
 app.use('/api/v1/subjects', subject_route_1.default);
 app.use('/api/v1/units', unit_route_1.default);
 app.use('/api/v1/course-outcomes', courseOutcome_route_1.default);
+app.use('/api/v1/faculty', faculty_route_1.default);
 app.get('/', (req, res) => {
     res.send('Hello, world!');
 });

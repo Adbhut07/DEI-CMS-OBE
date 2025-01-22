@@ -1,0 +1,96 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { AssignedSubjects } from "@/components/faculty/assigned-subjects"
+import { useToast } from "@/hooks/use-toast"
+
+interface DashboardStats {
+  totalAssignedSubjects: number
+  pendingMarkUploads: number
+  upcomingDeadlines: number
+}
+
+export default function FacultyDashboard() {
+  const [stats, setStats] = useState<DashboardStats>({
+    totalAssignedSubjects: 0,
+    pendingMarkUploads: 0,
+    upcomingDeadlines: 0,
+  })
+  const [isLoading, setIsLoading] = useState(true)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        const response = await fetch("http://localhost:8000/api/v1/faculty/get-assigned-subjects", {
+          credentials: "include",
+        })
+        if (!response.ok) {
+          throw new Error("Failed to fetch dashboard stats")
+        }
+        const data = await response.json()
+        if (data.success) {
+          const totalAssignedSubjects = data.data.length
+          
+          setStats({
+            totalAssignedSubjects,
+            pendingMarkUploads: 5, 
+            upcomingDeadlines: 3,  
+          })
+        } else {
+          throw new Error("Unexpected response format")
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard stats:", error)
+        toast({
+          title: "Error",
+          description: "Failed to fetch dashboard stats. Please try again.",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchDashboardStats()
+  }, [toast])
+
+  if (isLoading) {
+    return <div>Loading dashboard...</div>
+  }
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold">Welcome, Professor</h1>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle>Total Assigned Subjects</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{stats.totalAssignedSubjects}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Pending Mark Uploads</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{stats.pendingMarkUploads}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Upcoming Deadlines</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{stats.upcomingDeadlines}</p>
+          </CardContent>
+        </Card>
+      </div>
+      <AssignedSubjects />
+    </div>
+  )
+}
+

@@ -85,7 +85,11 @@ export default function SignInPage() {
           })
         )
 
-        router.push('/course-management')
+        if(user.role === 'ADMIN'){
+          router.push('/admin/course')
+        }else if(user.role === 'Faculty'){
+          router.push('/faculty')
+        }
 
         // Role-based navigation
         // switch (user.role) {

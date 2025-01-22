@@ -11,4 +11,5 @@ router.get('/userProfile/:id', user_controller_1.getUserProfile);
 router.delete('/:id', user_controller_1.deleteUser);
 router.put('/updateRole/:id', user_controller_1.updateUserRole);
 router.get('/getUserByRole/:role', user_controller_1.getUsersByRole);
+router.put('/updatePassword/:id', user_controller_1.updateUserPassword);
 exports.default = router;

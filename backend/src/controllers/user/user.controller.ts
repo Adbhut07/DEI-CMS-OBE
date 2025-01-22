@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import bcrypt from "bcryptjs";
 import zod from "zod";
 
 const prisma = new PrismaClient();
@@ -160,12 +161,14 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
         message: "User already exists with this email",
       });
     }
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     const user = await prisma.user.create({
       data: {
         name,
         email,
-        password,
+        password: hashedPassword,
         role,
         profileDetails: profileDetails || {}, 
       },
@@ -325,6 +328,60 @@ export const updateUserRole = async (req: Request, res: Response): Promise<any> 
     });
   } catch (error) {
     console.error("Error in updateUserRole:", (error as Error).message);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+//create api controller for updating users password
+export const updateUserPassword = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const userId = req.params.id; 
+    const { password } = req.body;
+
+    if (!req.user || parseInt(userId) !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to update this user's password",
+      });
+    }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const updatedUser = await prisma.user.update({
+      where: { id: parseInt(userId) },
+      data: { password: hashedPassword },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        profileDetails: true,
+        createdAt: true,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: updatedUser,
+      message: "User password updated successfully",
+    });
+  } catch (error) {
+    console.error("Error in updateUserPassword:", (error as Error).message);
     res.status(500).json({
       success: false,
       message: "Internal Server Error",
