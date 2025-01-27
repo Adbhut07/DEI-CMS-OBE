@@ -12,7 +12,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteMarks = exports.updateMarks = exports.getMarksByExam = exports.uploadMarks = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
-// Controller to handle marks upload
 const uploadMarks = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const { examId, marks } = req.body;
@@ -21,7 +20,6 @@ const uploadMarks = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         return res.status(401).json({ success: false, message: 'Unauthorized: User not found.' });
     }
     try {
-        // Validate Exam
         const exam = yield prisma.exam.findUnique({
             where: { id: Number(examId) },
             include: { questions: true },
@@ -29,7 +27,6 @@ const uploadMarks = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         if (!exam) {
             return res.status(404).json({ success: false, message: 'Exam not found.' });
         }
-        // Validate Marks and Questions
         const questionIds = exam.questions.map((q) => q.id);
         for (const studentMarks of marks) {
             for (const markEntry of studentMarks.marks) {
@@ -48,7 +45,6 @@ const uploadMarks = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 }
             }
         }
-        // Prepare Bulk Data
         const markEntries = marks.flatMap((studentMarks) => studentMarks.marks.map((markEntry) => ({
             studentId: studentMarks.studentId,
             questionId: markEntry.questionId,
@@ -56,7 +52,6 @@ const uploadMarks = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             marksObtained: markEntry.marksObtained,
             uploadedById,
         })));
-        // Upsert Marks
         yield prisma.$transaction(markEntries.map((entry) => prisma.marks.upsert({
             where: {
                 studentId_questionId_examId: {
@@ -76,7 +71,6 @@ const uploadMarks = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.uploadMarks = uploadMarks;
-// Controller to fetch marks for a specific exam
 const getMarksByExam = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { examId } = req.params;
     try {
@@ -102,7 +96,6 @@ const getMarksByExam = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.getMarksByExam = getMarksByExam;
-// Controller to update marks for a specific student and question
 const updateMarks = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { studentId, questionId, examId } = req.params;
     const { marksObtained } = req.body;
@@ -125,7 +118,6 @@ const updateMarks = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.updateMarks = updateMarks;
-// Controller to delete marks for a specific student and question
 const deleteMarks = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { studentId, questionId, examId } = req.params;
     try {

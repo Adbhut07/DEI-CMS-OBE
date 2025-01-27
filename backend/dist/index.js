@@ -16,6 +16,7 @@ const courseOutcome_route_1 = __importDefault(require("./routes/course/courseOut
 const faculty_route_1 = __importDefault(require("./routes/faculty/faculty.route"));
 const enrollment_route_1 = __importDefault(require("./routes/enrollment/enrollment.route"));
 const exam_route_1 = __importDefault(require("./routes/exam/exam.route"));
+const marks_route_1 = __importDefault(require("./routes/marks/marks.route"));
 const app = (0, express_1.default)();
 const port = process.env.PORT || 5000;
 const corsOptions = {
@@ -36,6 +37,7 @@ app.use('/api/v1/course-outcomes', courseOutcome_route_1.default);
 app.use('/api/v1/faculty', faculty_route_1.default);
 app.use('/api/v1/enrollments', enrollment_route_1.default);
 app.use('/api/v1/exams', exam_route_1.default);
+app.use('/api/v1/marks', marks_route_1.default);
 app.get('/', (req, res) => {
     res.send('Hello, world!');
 });

@@ -182,6 +182,31 @@ export const createExam = async (req: Request, res: Response): Promise<any> => {
   }
 };
 
+//create controller function for getting all exams in a subject
+export const getExamsBySubject = async (req: Request, res: Response): Promise<any> => {
+  const { subjectId } = req.params;
+  try {
+    const exams = await prisma.exam.findMany({
+      where: {
+        subjectId: Number(subjectId),
+      },
+      include: {
+        semester: {
+          include: {
+            course: true, 
+          },
+        },
+        subject: true,
+        questions: true,
+      },
+    });
+    res.json(exams);
+  } catch (error) {
+    console.error("Error in getExamsBySubject controller:", (error as Error).message);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};  
+
 
 // Update an exam and related questions
 export const updateExam = async (req: Request, res: Response): Promise<any> => {

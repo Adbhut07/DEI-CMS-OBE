@@ -3,8 +3,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Controller to handle marks upload
-export const uploadMarks = async (req: Request, res: Response) => {
+export const uploadMarks = async (req: Request, res: Response): Promise<any> => {
   const { examId, marks }: { examId: number, marks: { studentId: number, marks: { questionId: number, marksObtained: number }[] }[] } = req.body;
   const uploadedById = req.user?.id; 
   if (!uploadedById) {
@@ -12,7 +11,6 @@ export const uploadMarks = async (req: Request, res: Response) => {
   }
 
   try {
-    // Validate Exam
     const exam = await prisma.exam.findUnique({
       where: { id: Number(examId) },
       include: { questions: true },
@@ -22,7 +20,6 @@ export const uploadMarks = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: 'Exam not found.' });
     }
 
-    // Validate Marks and Questions
     const questionIds = exam.questions.map((q) => q.id);
     for (const studentMarks of marks) {
       for (const markEntry of studentMarks.marks) {
@@ -43,7 +40,6 @@ export const uploadMarks = async (req: Request, res: Response) => {
       }
     }
 
-    // Prepare Bulk Data
     const markEntries = marks.flatMap((studentMarks) =>
       studentMarks.marks.map((markEntry) => ({
         studentId: studentMarks.studentId,
@@ -54,7 +50,6 @@ export const uploadMarks = async (req: Request, res: Response) => {
       }))
     );
 
-    // Upsert Marks
     await prisma.$transaction(
       markEntries.map((entry) =>
         prisma.marks.upsert({
@@ -78,8 +73,7 @@ export const uploadMarks = async (req: Request, res: Response) => {
   }
 };
 
-// Controller to fetch marks for a specific exam
-export const getMarksByExam = async (req: Request, res: Response) => {
+export const getMarksByExam = async (req: Request, res: Response): Promise<any> => {
   const { examId } = req.params;
 
   try {
@@ -106,8 +100,7 @@ export const getMarksByExam = async (req: Request, res: Response) => {
   }
 };
 
-// Controller to update marks for a specific student and question
-export const updateMarks = async (req: Request, res: Response) => {
+export const updateMarks = async (req: Request, res: Response): Promise<any> => {
   const { studentId, questionId, examId } = req.params;
   const { marksObtained } = req.body;
 
@@ -130,7 +123,6 @@ export const updateMarks = async (req: Request, res: Response) => {
   }
 };
 
-// Controller to delete marks for a specific student and question
 export const deleteMarks = async (req: Request, res: Response) => {
   const { studentId, questionId, examId } = req.params;
 

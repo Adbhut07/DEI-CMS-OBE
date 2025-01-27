@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteExam = exports.updateExam = exports.createExam = exports.getExamById = exports.getExamsByCourseAndSemester = exports.getExams = void 0;
+exports.deleteExam = exports.updateExam = exports.getExamsBySubject = exports.createExam = exports.getExamById = exports.getExamsByCourseAndSemester = exports.getExams = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 // Get all exams with course information
@@ -183,6 +183,32 @@ const createExam = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.createExam = createExam;
+//create controller function for getting all exams in a subject
+const getExamsBySubject = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { subjectId } = req.params;
+    try {
+        const exams = yield prisma.exam.findMany({
+            where: {
+                subjectId: Number(subjectId),
+            },
+            include: {
+                semester: {
+                    include: {
+                        course: true,
+                    },
+                },
+                subject: true,
+                questions: true,
+            },
+        });
+        res.json(exams);
+    }
+    catch (error) {
+        console.error("Error in getExamsBySubject controller:", error.message);
+        res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+});
+exports.getExamsBySubject = getExamsBySubject;
 // Update an exam and related questions
 const updateExam = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
