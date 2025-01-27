@@ -9,6 +9,7 @@ const enrollment_controller_1 = require("../../controllers/enrollment/enrollment
 const router = express_1.default.Router();
 router.post('/', enrollment_controller_1.createEnrollment);
 router.get('/', enrollment_controller_1.getAllEnrollments);
+router.get('/students/:subjectId/:courseId', enrollment_controller_1.getStudentsBySubjectAndCourse);
 router.get('/getEnrollment/:id', enrollment_controller_1.getEnrollmentById);
 router.put('/:id', enrollment_controller_1.updateEnrollment);
 router.delete('/:id', enrollment_controller_1.deleteEnrollment);

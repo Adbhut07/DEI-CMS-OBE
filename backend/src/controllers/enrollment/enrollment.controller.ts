@@ -68,6 +68,63 @@ export const getAllEnrollments = async (req: Request, res: Response): Promise<an
   }
 };
 
+export const getStudentsBySubjectAndCourse = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { subjectId, courseId } = req.params;
+
+    // Validate input
+    if (!subjectId || !courseId) {
+      return res.status(400).json({
+        success: false,
+        message: "subjectId and courseId are required.",
+      });
+    }
+
+    // Fetch students using Prisma
+    const enrollments = await prisma.enrollment.findMany({
+      where: {
+        courseId: parseInt(courseId),
+        semester: {
+          subjects: {
+            some: {
+              id: parseInt(subjectId),
+            },
+          },
+        },
+      },
+      include: {
+        student: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        semester: true,
+      },
+    });
+
+    // Check if enrollments exist
+    if (enrollments.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No students found for the provided subjectId and courseId.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: enrollments.map((enrollment) => enrollment.student),
+    });
+  } catch (error) {
+    console.error("Error fetching students by subject and course:", (error as Error).message);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
 // Get Enrollment by ID
 export const getEnrollmentById = async (req: Request, res: Response): Promise<any> => {
   try {

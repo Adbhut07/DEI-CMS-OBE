@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getEnrollmentsByCourseId = exports.deleteEnrollment = exports.updateEnrollment = exports.getEnrollmentById = exports.getAllEnrollments = exports.createEnrollment = void 0;
+exports.getEnrollmentsByCourseId = exports.deleteEnrollment = exports.updateEnrollment = exports.getEnrollmentById = exports.getStudentsBySubjectAndCourse = exports.getAllEnrollments = exports.createEnrollment = void 0;
 const client_1 = require("@prisma/client");
 const zod_1 = __importDefault(require("zod"));
 const prisma = new client_1.PrismaClient();
@@ -76,6 +76,60 @@ const getAllEnrollments = (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
 });
 exports.getAllEnrollments = getAllEnrollments;
+const getStudentsBySubjectAndCourse = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { subjectId, courseId } = req.params;
+        // Validate input
+        if (!subjectId || !courseId) {
+            return res.status(400).json({
+                success: false,
+                message: "subjectId and courseId are required.",
+            });
+        }
+        // Fetch students using Prisma
+        const enrollments = yield prisma.enrollment.findMany({
+            where: {
+                courseId: parseInt(courseId),
+                semester: {
+                    subjects: {
+                        some: {
+                            id: parseInt(subjectId),
+                        },
+                    },
+                },
+            },
+            include: {
+                student: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    },
+                },
+                semester: true,
+            },
+        });
+        // Check if enrollments exist
+        if (enrollments.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "No students found for the provided subjectId and courseId.",
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            data: enrollments.map((enrollment) => enrollment.student),
+        });
+    }
+    catch (error) {
+        console.error("Error fetching students by subject and course:", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+        });
+    }
+});
+exports.getStudentsBySubjectAndCourse = getStudentsBySubjectAndCourse;
 // Get Enrollment by ID
 const getEnrollmentById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
