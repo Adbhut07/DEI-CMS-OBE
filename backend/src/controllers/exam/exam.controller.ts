@@ -3,13 +3,18 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export const getExams = async (req: Request, res: Response) => {
+// Get all exams with course information
+export const getExams = async (req: Request, res: Response): Promise<any> => {
   try {
     const exams = await prisma.exam.findMany({
       include: {
-        semester: true,   
-        subject: true,   
-        questions: true,  
+        semester: {
+          include: {
+            course: true, 
+          },
+        },
+        subject: true,
+        questions: true,
       },
     });
     res.json(exams);
@@ -19,21 +24,69 @@ export const getExams = async (req: Request, res: Response) => {
   }
 };
 
-export const getExamById = async (req: Request, res: Response) => {
+export const getExamsByCourseAndSemester = async (req: Request, res: Response): Promise<any> => {
+  const { courseId, semesterId } = req.params;
+
+  try {
+    if (!courseId || !semesterId) {
+      return res.status(400).json({
+        success: false,
+        message: "courseId and semesterId are required",
+      });
+    }
+
+    const exams = await prisma.exam.findMany({
+      where: {
+        semester: {
+          id: Number(semesterId),
+          courseId: Number(courseId),
+        },
+      },
+      include: {
+        semester: {
+          include: {
+            course: true,
+          },
+        },
+        subject: true, 
+        questions: true, 
+      },
+    });
+
+    if (exams.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No exams found for the given course and semester",
+      });
+    }
+
+    res.json({ success: true, exams });
+  } catch (error) {
+    console.error("Error in getExamsByCourseAndSemester controller:", (error as Error).message);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+// Get a specific exam by ID with course information
+export const getExamById = async (req: Request, res: Response): Promise<any> => {
   const { id } = req.params;
   try {
     const exam = await prisma.exam.findUnique({
       where: { id: Number(id) },
       include: {
-        semester: true,   
-        subject: true,    
-        questions: true,  
+        semester: {
+          include: {
+            course: true,
+          },
+        },
+        subject: true,
+        questions: true,
       },
     });
     if (exam) {
       res.json(exam);
     } else {
-      res.status(404).json({ success: false, message: 'Exam not found' });
+      res.status(404).json({ success: false, message: "Exam not found" });
     }
   } catch (error) {
     console.error("Error in getExamById controller:", (error as Error).message);
@@ -41,16 +94,87 @@ export const getExamById = async (req: Request, res: Response) => {
   }
 };
 
-export const createExam = async (req: Request, res: Response) => {
-  const { examType, subjectId, semesterId } = req.body;
+// Create an exam with related questions
+export const createExam = async (req: Request, res: Response): Promise<any> => {
+  const { examType, subjectId, semesterId, questions } = req.body;
   try {
+    const semester = await prisma.semester.findUnique({
+      where: { id: semesterId },
+    });
+
+    const subject = await prisma.subject.findUnique({
+      where: { id: subjectId },
+    });
+
+    if (!semester) {
+      return res.status(404).json({
+        success: false,
+        message: "Semester not found.",
+      });
+    }
+
+    if (!subject) {
+      return res.status(404).json({
+        success: false,
+        message: "Subject not found.",
+      });
+    }
+
+    for (const q of questions) {
+      const unit = await prisma.unit.findUnique({
+        where: { 
+          id: q.unitId,
+          subjectId: subjectId 
+        },
+      });
+
+      if (!unit) {
+        return res.status(400).json({
+          success: false,
+          message: `Unit with ID ${q.unitId} not found or does not belong to the specified subject.`,
+        });
+      }
+    }
+
+    const existingExam = await prisma.exam.findFirst({
+      where: {
+        examType,
+        subjectId,
+        semesterId,
+      },
+    });
+
+    if (existingExam) {
+      return res.status(400).json({
+        success: false,
+        message: "An exam with the same type already exists for this subject and semester.",
+      });
+    }
+
     const newExam = await prisma.exam.create({
       data: {
         examType,
-        subject: { connect: { id: subjectId } },  
-        semester: { connect: { id: semesterId } }, 
+        subjectId,
+        semesterId,
+        questions: {
+          create: questions.map((q: { text: string; marksAllocated: number; unitId: number }) => ({
+            questionText: q.text,
+            marksAllocated: q.marksAllocated,
+            unitId: q.unitId,
+          })),
+        },
+      },
+      include: {
+        semester: {
+          include: {
+            course: true, 
+          },
+        },
+        subject: true,
+        questions: true,
       },
     });
+    
     res.status(201).json(newExam);
   } catch (error) {
     console.error("Error in createExam controller:", (error as Error).message);
@@ -58,17 +182,34 @@ export const createExam = async (req: Request, res: Response) => {
   }
 };
 
-// Update Exam
-export const updateExam = async (req: Request, res: Response) => {
+
+// Update an exam and related questions
+export const updateExam = async (req: Request, res: Response): Promise<any> => {
   const { id } = req.params;
-  const { examType, subjectId, semesterId } = req.body;
+  const { examType, subjectId, semesterId, questions } = req.body;
   try {
     const updatedExam = await prisma.exam.update({
       where: { id: Number(id) },
       data: {
         examType,
-        subject: { connect: { id: subjectId } },  
-        semester: { connect: { id: semesterId } }, 
+        subject: { connect: { id: subjectId } },
+        semester: { connect: { id: semesterId } },
+        questions: {
+          deleteMany: {}, 
+          create: questions.map((q: { text: string; marks: number }) => ({
+            text: q.text,
+            marks: q.marks,
+          })),
+        },
+      },
+      include: {
+        semester: {
+          include: {
+            course: true, 
+          },
+        },
+        subject: true,
+        questions: true,
       },
     });
     res.json(updatedExam);
@@ -78,14 +219,29 @@ export const updateExam = async (req: Request, res: Response) => {
   }
 };
 
-// Delete Exam
-export const deleteExam = async (req: Request, res: Response) => {
+// Delete an exam and related questions
+export const deleteExam = async (req: Request, res: Response): Promise<any> => {
   const { id } = req.params;
+
   try {
-    await prisma.exam.delete({
-      where: { id: Number(id) },
+    const examId = Number(id);
+
+    // Delete related marks
+    await prisma.marks.deleteMany({
+      where: { examId },
     });
-    res.status(204).send();
+
+    // Delete related questions
+    await prisma.question.deleteMany({
+      where: { examId },
+    });
+
+    // Delete the exam
+    await prisma.exam.delete({
+      where: { id: examId },
+    });
+
+    res.status(200).json({ success: true, message: "Exam deleted successfully" });
   } catch (error) {
     console.error("Error in deleteExam controller:", (error as Error).message);
     res.status(500).json({ success: false, message: "Internal Server Error" });

@@ -90,6 +90,9 @@ export default function SignInPage() {
         }else if(user.role === 'Faculty'){
           router.push('/faculty')
         }
+        else{
+          router.push('/admin/course')
+        }
 
         // Role-based navigation
         // switch (user.role) {

@@ -10,6 +10,8 @@ import subjectRoutes from './routes/subject/subject.route';
 import unitRoutes from './routes/unit/unit.route';
 import courseOutcomeRoutes from './routes/course/courseOutcome.route';
 import facultyRoutes from './routes/faculty/faculty.route';
+import enrollmentRoutes from './routes/enrollment/enrollment.route';
+import examRoutes from './routes/exam/exam.route';
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -32,6 +34,8 @@ app.use('/api/v1/subjects', subjectRoutes);
 app.use('/api/v1/units', unitRoutes);
 app.use('/api/v1/course-outcomes', courseOutcomeRoutes);
 app.use('/api/v1/faculty', facultyRoutes);
+app.use('/api/v1/enrollments', enrollmentRoutes);
+app.use('/api/v1/exams', examRoutes);
 
 app.get('/', (req: Request, res: Response) => {
     res.send('Hello, world!');
