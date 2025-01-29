@@ -212,37 +212,128 @@ export const getExamsBySubject = async (req: Request, res: Response): Promise<an
 export const updateExam = async (req: Request, res: Response): Promise<any> => {
   const { id } = req.params;
   const { examType, subjectId, semesterId, questions } = req.body;
+
   try {
+    const existingExam = await prisma.exam.findUnique({
+      where: { id: Number(id) },
+      include: { questions: true }
+    });
+
+    if (!existingExam) {
+      return res.status(404).json({
+        success: false,
+        message: "Exam not found"
+      });
+    }
+
+    const semester = await prisma.semester.findUnique({
+      where: { id: semesterId },
+    });
+
+    const subject = await prisma.subject.findUnique({
+      where: { id: subjectId },
+    });
+
+    if (!semester) {
+      return res.status(404).json({
+        success: false,
+        message: "Semester not found.",
+      });
+    }
+
+    if (!subject) {
+      return res.status(404).json({
+        success: false,
+        message: "Subject not found.",
+      });
+    }
+
+    for (const q of questions) {
+      if (!q.id) { // Only check unit for new questions
+        const unit = await prisma.unit.findUnique({
+          where: { 
+            id: q.unitId,
+            subjectId: subjectId 
+          },
+        });
+
+        if (!unit) {
+          return res.status(400).json({
+            success: false,
+            message: `Unit with ID ${q.unitId} not found or does not belong to the specified subject.`,
+          });
+        }
+      }
+    }
+
+    const duplicateExam = await prisma.exam.findFirst({
+      where: {
+        examType,
+        subjectId,
+        semesterId,
+        NOT: {
+          id: Number(id) // Exclude current exam from check
+        }
+      },
+    });
+
+    if (duplicateExam) {
+      return res.status(400).json({
+        success: false,
+        message: "An exam with the same type already exists for this subject and semester.",
+      });
+    }
+
+    // Separate existing and new questions
+    const existingQuestions = questions.filter((q: any) => q.id);
+    const newQuestions = questions.filter((q: any) => !q.id);
+
+    // Update the exam
     const updatedExam = await prisma.exam.update({
       where: { id: Number(id) },
       data: {
         examType,
-        subject: { connect: { id: subjectId } },
-        semester: { connect: { id: semesterId } },
+        subjectId,
+        semesterId,
         questions: {
-          deleteMany: {}, 
-          create: questions.map((q: { text: string; marks: number }) => ({
-            text: q.text,
-            marks: q.marks,
+          // Update existing questions
+          update: existingQuestions.map((q: any) => ({
+            where: { id: q.id },
+            data: {
+              questionText: q.text,
+              marksAllocated: q.marksAllocated,
+              unitId: q.unitId,
+            }
           })),
-        },
+          // Add new questions
+          create: newQuestions.map((q: any) => ({
+            questionText: q.text,
+            marksAllocated: q.marksAllocated,
+            unitId: q.unitId,
+          }))
+        }
       },
       include: {
         semester: {
           include: {
-            course: true, 
+            course: true,
           },
         },
         subject: true,
         questions: true,
       },
     });
-    res.json(updatedExam);
+
+    res.json({
+      success: true,
+      data: updatedExam
+    });
   } catch (error) {
     console.error("Error in updateExam controller:", (error as Error).message);
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
+
 
 // Delete an exam and related questions
 export const deleteExam = async (req: Request, res: Response): Promise<any> => {

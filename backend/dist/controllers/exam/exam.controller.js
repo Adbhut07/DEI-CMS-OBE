@@ -214,19 +214,93 @@ const updateExam = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     const { id } = req.params;
     const { examType, subjectId, semesterId, questions } = req.body;
     try {
+        const existingExam = yield prisma.exam.findUnique({
+            where: { id: Number(id) },
+            include: { questions: true }
+        });
+        if (!existingExam) {
+            return res.status(404).json({
+                success: false,
+                message: "Exam not found"
+            });
+        }
+        const semester = yield prisma.semester.findUnique({
+            where: { id: semesterId },
+        });
+        const subject = yield prisma.subject.findUnique({
+            where: { id: subjectId },
+        });
+        if (!semester) {
+            return res.status(404).json({
+                success: false,
+                message: "Semester not found.",
+            });
+        }
+        if (!subject) {
+            return res.status(404).json({
+                success: false,
+                message: "Subject not found.",
+            });
+        }
+        for (const q of questions) {
+            if (!q.id) { // Only check unit for new questions
+                const unit = yield prisma.unit.findUnique({
+                    where: {
+                        id: q.unitId,
+                        subjectId: subjectId
+                    },
+                });
+                if (!unit) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Unit with ID ${q.unitId} not found or does not belong to the specified subject.`,
+                    });
+                }
+            }
+        }
+        const duplicateExam = yield prisma.exam.findFirst({
+            where: {
+                examType,
+                subjectId,
+                semesterId,
+                NOT: {
+                    id: Number(id) // Exclude current exam from check
+                }
+            },
+        });
+        if (duplicateExam) {
+            return res.status(400).json({
+                success: false,
+                message: "An exam with the same type already exists for this subject and semester.",
+            });
+        }
+        // Separate existing and new questions
+        const existingQuestions = questions.filter((q) => q.id);
+        const newQuestions = questions.filter((q) => !q.id);
+        // Update the exam
         const updatedExam = yield prisma.exam.update({
             where: { id: Number(id) },
             data: {
                 examType,
-                subject: { connect: { id: subjectId } },
-                semester: { connect: { id: semesterId } },
+                subjectId,
+                semesterId,
                 questions: {
-                    deleteMany: {},
-                    create: questions.map((q) => ({
-                        text: q.text,
-                        marks: q.marks,
+                    // Update existing questions
+                    update: existingQuestions.map((q) => ({
+                        where: { id: q.id },
+                        data: {
+                            questionText: q.text,
+                            marksAllocated: q.marksAllocated,
+                            unitId: q.unitId,
+                        }
                     })),
-                },
+                    // Add new questions
+                    create: newQuestions.map((q) => ({
+                        questionText: q.text,
+                        marksAllocated: q.marksAllocated,
+                        unitId: q.unitId,
+                    }))
+                }
             },
             include: {
                 semester: {
@@ -238,7 +312,10 @@ const updateExam = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 questions: true,
             },
         });
-        res.json(updatedExam);
+        res.json({
+            success: true,
+            data: updatedExam
+        });
     }
     catch (error) {
         console.error("Error in updateExam controller:", error.message);
