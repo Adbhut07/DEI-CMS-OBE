@@ -1,16 +1,19 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import zod from "zod";
 
 const prisma = new PrismaClient();
 
 const subjectSchema = zod.object({
   subjectName: zod.string().min(3, "Subject name must be at least 3 characters"),
+  subjectCode: zod.string().min(2, "Subject code must be at least 2 characters"),
   semesterId: zod.number().int("Invalid semester ID"),
+  facultyId: zod.number().int("Invalid faculty ID").optional(),
 });
 
 const updateSubjectSchema = zod.object({
   subjectName: zod.string().min(3, "Subject name must be at least 3 characters").optional(),
+  subjectCode: zod.string().min(2, "Subject code must be at least 2 characters").optional(),
   semesterId: zod.number().int("Invalid semester ID").optional(),
   facultyId: zod.number().int("Invalid faculty ID").optional(),
 });
@@ -22,47 +25,98 @@ const assignFacultySchema = zod.object({
   facultyId: zod.number().int("Invalid faculty ID"),
 });
 
-export const createSubject = async (req: Request, res: Response): Promise<any> => {
+export const createSubject = async (req: Request, res: Response): Promise<void> => {
   try {
     const result = subjectSchema.safeParse(req.body);
+    
     if (!result.success) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: "Invalid inputs",
         errors: result.error.format(),
       });
+      return;
     }
 
-    const { subjectName, semesterId } = result.data;
+    const { subjectName, subjectCode, semesterId, facultyId } = result.data;
 
+    // Verify semester exists
     const semesterExists = await prisma.semester.findUnique({
       where: { id: semesterId },
+      include: { course: true }
     });
 
     if (!semesterExists) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
-        message: "Semester not found",
+        message: "Semester not found"
       });
+      return;
+    }
+
+    const existingSubject = await prisma.subject.findFirst({
+      where: {
+        subjectCode,
+        semester: {
+          courseId: semesterExists.courseId
+        }
+      }
+    });
+
+    if (existingSubject) {
+      res.status(400).json({
+        success: false,
+        message: "Subject code already exists in this course"
+      });
+      return;
+    }
+
+    if (facultyId) {
+      const faculty = await prisma.user.findFirst({
+        where: {
+          id: facultyId,
+          role: "Faculty"
+        }
+      });
+
+      if (!faculty) {
+        res.status(404).json({
+          success: false,
+          message: "Faculty not found or user is not a faculty member"
+        });
+        return;
+      }
     }
 
     const subject = await prisma.subject.create({
       data: {
         subjectName,
+        subjectCode,
         semesterId,
+        facultyId
       },
+      include: {
+        semester: true,
+        faculty: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
     });
 
     res.status(201).json({
       success: true,
       message: "Subject created successfully",
-      data: subject,
+      data: subject
     });
   } catch (error) {
-    console.error("Error in createSubject:", (error as Error).message);
+    console.error("Error in createSubject:", error);
     res.status(500).json({
       success: false,
-      message: "Internal Server Error",
+      message: "Internal Server Error"
     });
   }
 };
@@ -104,9 +158,8 @@ export const assignFacultyToSubject = async (req: Request, res: Response): Promi
     });
     
     if (!subject) {
-      return res.status(404).json({ success: false, message: "Subject not found 123" });
+      return res.status(404).json({ success: false, message: "Subject not found" });
     }
-    
 
     const faculty = await prisma.user.findUnique({
       where: { id: facultyId },
@@ -148,7 +201,7 @@ export const getSubjects = async (req: Request, res: Response): Promise<any> => 
 
     const subjects = await prisma.subject.findMany({
       where: whereClause,
-      include: { semester: true, faculty: true, units: true },
+      include: { semester: {include: { course: true}}, faculty: true, units: true, exams: true },
     });
 
     res.status(200).json({
@@ -167,10 +220,17 @@ export const getSubjects = async (req: Request, res: Response): Promise<any> => 
 export const getSubject = async (req: Request, res: Response): Promise<any> => {
   try {
     const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid subject ID"
+      });
+      return;
+    }
 
     const subject = await prisma.subject.findUnique({
       where: { id },
-      include: { semester: true, faculty: true, units: true },
+      include: { semester: {include: {course: true}}, faculty: {select: {id: true, name: true, email: true }}, units: true, exams: true },
     });
 
     if (!subject) {
@@ -208,6 +268,13 @@ export const updateSubject = async (req: Request, res: Response): Promise<any> =
 
     const { facultyId } = result.data;
 
+    if (isNaN(id)) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid subject ID"
+      });
+      return;
+    }
     const subjectExists = await prisma.subject.findUnique({ where: { id } });
     if (!subjectExists) {
       return res.status(404).json({
@@ -229,15 +296,25 @@ export const updateSubject = async (req: Request, res: Response): Promise<any> =
       }
     }
 
-    const subject = await prisma.subject.update({
-      where: { id },
+    const updatedSubject = await prisma.subject.update({
+      where: { id: id },
       data: result.data,
+      include: {
+        semester: true,
+        faculty: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
     });
 
-    res.status(200).json({
+    res.json({
       success: true,
       message: "Subject updated successfully",
-      data: subject,
+      data: updatedSubject
     });
   } catch (error) {
     console.error("Error in updateSubject:", (error as Error).message);
@@ -251,6 +328,13 @@ export const updateSubject = async (req: Request, res: Response): Promise<any> =
 export const deleteSubject = async (req: Request, res: Response): Promise<any> => {
   try {
     const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid subject ID"
+      });
+      return;
+    }
 
     const subjectExists = await prisma.subject.findUnique({ where: { id } });
     if (!subjectExists) {
@@ -267,10 +351,19 @@ export const deleteSubject = async (req: Request, res: Response): Promise<any> =
       message: "Subject deleted successfully",
     });
   } catch (error) {
-    console.error("Error in deleteSubject:", (error as Error).message);
+    console.error("Error in deleteSubject:", error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2003') {
+        res.status(400).json({
+          success: false,
+          message: "Cannot delete subject with existing references"
+        });
+        return;
+      }
+    }
     res.status(500).json({
       success: false,
-      message: "Internal Server Error",
+      message: "Internal Server Error"
     });
   }
 };

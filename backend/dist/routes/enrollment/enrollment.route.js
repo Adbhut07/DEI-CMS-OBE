@@ -1,17 +1,13 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-// enrollmentRoutes.ts
-const express_1 = __importDefault(require("express"));
-const enrollment_controller_1 = require("../../controllers/enrollment/enrollment.controller");
-const router = express_1.default.Router();
-router.post('/', enrollment_controller_1.createEnrollment);
-router.get('/', enrollment_controller_1.getAllEnrollments);
-router.get('/students/:subjectId/:courseId', enrollment_controller_1.getStudentsBySubjectAndCourse);
-router.get('/getEnrollment/:id', enrollment_controller_1.getEnrollmentById);
-router.put('/:id', enrollment_controller_1.updateEnrollment);
-router.delete('/:id', enrollment_controller_1.deleteEnrollment);
-router.get('/course/:courseId', enrollment_controller_1.getEnrollmentsByCourseId);
-exports.default = router;
+// // enrollmentRoutes.ts
+// import express from 'express';
+// import { createEnrollment, deleteEnrollment, getAllEnrollments, getEnrollmentById, getEnrollmentsByCourseId, getStudentsBySubjectAndCourse, updateEnrollment } from '../../controllers/enrollment/enrollment.controller';
+// const router = express.Router();
+// router.post('/', createEnrollment);
+// router.get('/', getAllEnrollments);
+// router.get('/students/:subjectId/:courseId', getStudentsBySubjectAndCourse);
+// router.get('/getEnrollment/:id', getEnrollmentById);
+// router.put('/:id', updateEnrollment);
+// router.delete('/:id', deleteEnrollment);
+// router.get('/course/:courseId', getEnrollmentsByCourseId);
+// export default router;

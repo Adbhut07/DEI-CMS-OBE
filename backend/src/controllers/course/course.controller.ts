@@ -1,57 +1,35 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
-import zod from "zod";
+import z from "zod";
 
 const prisma = new PrismaClient();
 
-const unitSchema = zod.object({
-  id: zod.number().optional(),
-  unitNumber: zod.number().positive("Unit number must be positive"),
-  description: zod.string().min(3, "Unit description must be at least 3 characters"),
-});
-
-const subjectSchema = zod.object({
-  id: zod.number().optional(),
-  subjectName: zod.string().min(3, "Subject name must be at least 3 characters"),
-  facultyId: zod.number().positive("Faculty ID must be positive").optional(),
-  units: zod.array(unitSchema).optional(),
-});
-
-const semesterSchema = zod.object({
-  id: zod.number().optional(),
-  name: zod.string().min(3, "Semester name must be at least 3 characters"),
-  subjects: zod.array(subjectSchema).optional(),
-});
-
-const courseSchema = zod.object({
-  courseName: zod.string().min(3, "Course name must be at least 3 characters"),
-  semesters: zod.array(semesterSchema).optional(),
-});
-
-const updateUnitSchema = zod.object({
-  unitNumber: zod.number().positive("Unit number must be positive"),
-  description: zod.string().min(3, "Unit description must be at least 3 characters"),
-});
-
-const updateSubjectSchema = zod.object({
-  subjectName: zod.string().min(3, "Subject name must be at least 3 characters"),
-  facultyId: zod.number().positive("Faculty ID must be positive").optional(),
-  units: zod.array(unitSchema).optional(),
-});
-const updateSemesterSchema = zod.object({
-  id: zod.number().optional(),
-  name: zod.string().min(3, "Semester name must be at least 3 characters"),
-  subjects: zod.array(subjectSchema).optional(),
-});
-
-const updateCourseSchema = zod.object({
-  courseName: zod.string().min(3, "Course name must be at least 3 characters"),
-  semesters: zod.array(semesterSchema).optional(),
+export const createCourseSchema = z.object({
+  courseName: z.string().min(3, "Course name must be at least 3 characters long"),
+  createdById: z.number().int().positive("Invalid user ID"),
+  semesters: z.array(
+    z.object({
+      name: z.string().min(3, "Semester name must be at least 3 characters long"),
+      subjects: z.array(
+        z.object({
+          subjectName: z.string().min(3, "Subject name must be at least 3 characters long"),
+          subjectCode: z.string().min(2, "Subject code must be at least 2 characters long"),
+          facultyId: z.number().int().positive().optional(),
+          units: z.array(
+            z.object({
+              unitNumber: z.number().int().positive("Unit number must be positive"),
+              description: z.string().min(5, "Unit description must be at least 5 characters"),
+            })
+          ).nonempty("At least one unit is required"),
+        })
+      ).nonempty("At least one subject is required"),
+    })
+  ).nonempty("At least one semester is required"),
 });
 
 export const createCourse = async (req: Request, res: Response): Promise<any> => {
   try {
-    const result = courseSchema.safeParse(req.body);
+    const result = createCourseSchema.safeParse(req.body);
     if (!result.success) {
       return res.status(400).json({
         success: false,
@@ -60,38 +38,39 @@ export const createCourse = async (req: Request, res: Response): Promise<any> =>
       });
     }
 
-    const createdById = req.user?.id;
-    if(!createdById){
-      return res.status(400).json({
-        success: false,
-        message: "created By Id is not present",
-      });
-    }
+    const { courseName, createdById, semesters } = result.data;
 
-    const { courseName, semesters } = result.data;
+    const existingCourse = await prisma.course.findFirst({
+      where: { courseName },
+    });
+
+    if (existingCourse) {
+      return res.status(400).json({ message: "Course already exists" });
+    }
 
     const course = await prisma.course.create({
       data: {
         courseName,
         createdById,
-        semesters: semesters
+        semesters: semesters?.length
           ? {
               create: semesters.map((semester) => ({
                 name: semester.name,
-                subjects: semester.subjects
+                subjects: semester.subjects?.length
                   ? {
-                      create: semester.subjects.map((subject) => ({
-                        subjectName: subject.subjectName,
-                        facultyId: subject.facultyId,
-                        units: subject.units
-                          ? {
-                              create: subject.units.map((unit) => ({
-                                unitNumber: unit.unitNumber,
-                                description: unit.description,
-                              })),
-                            }
-                          : undefined,
-                      })),
+                    create: semester.subjects.map((subject: any) => ({
+                      subjectName: subject.subjectName,
+                      subjectCode: subject.subjectCode,
+                      faculty: subject.facultyId
+                        ? { connect: { id: subject.facultyId } }
+                        : undefined,
+                      units: {
+                        create: subject.units.map((unit: any) => ({
+                          unitNumber: unit.unitNumber,
+                          description: unit.description,
+                        })),
+                      },
+                    })),
                     }
                   : undefined,
               })),
@@ -99,6 +78,7 @@ export const createCourse = async (req: Request, res: Response): Promise<any> =>
           : undefined,
       },
       include: {
+        batches: true,
         semesters: {
           include: {
             subjects: {
@@ -128,7 +108,6 @@ export const createCourse = async (req: Request, res: Response): Promise<any> =>
 // Get All Courses with Semesters and Subjects
 export const getCourses = async (req: Request, res: Response): Promise<any> => {
   try {
-    console.log(req.user);
     const courses = await prisma.course.findMany({
       include: {
         semesters: {
@@ -136,21 +115,23 @@ export const getCourses = async (req: Request, res: Response): Promise<any> => {
             subjects: {
               include: {
                 units: true,
-              }
+              },
             },
           },
         },
-        createdBy: true,
+        createdBy: {
+          select: { id: true, name: true, email: true, role: true },
+        },
       },
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: courses,
     });
   } catch (error) {
     console.error("Error in getCourses:", (error as Error).message);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Internal Server Error",
     });
@@ -161,6 +142,12 @@ export const getCourses = async (req: Request, res: Response): Promise<any> => {
 export const getCourse = async (req: Request, res: Response): Promise<any> => {
   try {
     const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid course ID",
+      });
+    }
 
     const course = await prisma.course.findUnique({
       where: { id },
@@ -170,12 +157,20 @@ export const getCourse = async (req: Request, res: Response): Promise<any> => {
             subjects: {
               include: {
                 units: true,
-              }
+              },
             },
           },
         },
-        createdBy: true,
-        Enrollment: true,
+        createdBy: {
+          select: { id: true, name: true, email: true, role: true },
+        },
+        // enrollments: {
+        //   include: {
+        //     student: {
+        //       select: { id: true, name: true, email: true, role: true },
+        //     },
+        //   },
+        // },
       },
     });
 
@@ -186,56 +181,126 @@ export const getCourse = async (req: Request, res: Response): Promise<any> => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: course,
     });
   } catch (error) {
     console.error("Error in getCourse:", (error as Error).message);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Internal Server Error",
     });
   }
 };
 
+const updateCourseSchema = z.object({
+  courseName: z.string().min(3, "Course name must be at least 3 characters long"),
+  semesters: z
+    .array(
+      z.object({
+        id: z.number().optional(), // Optional for new semesters
+        name: z.string().min(3, "Semester name must be at least 3 characters"),
+        subjects: z
+          .array(
+            z.object({
+              id: z.number().optional(), // Optional for new subjects
+              subjectName: z.string().min(3, "Subject name must be at least 3 characters"),
+              subjectCode: z.string().min(2, "Subject code must be at least 2 characters"),
+              facultyId: z.number().optional(),
+              units: z
+                .array(
+                  z.object({
+                    id: z.number().optional(), // Optional for new units
+                    unitNumber: z.number().min(1, "Unit number must be at least 1"),
+                    description: z.string().min(5, "Description must be at least 5 characters"),
+                  })
+                )
+                .optional()
+                .default([]), // Default empty array if units are not provided
+            })
+          )
+          .optional()
+          .default([]), // Default empty array if subjects are not provided
+      })
+    )
+    .optional()
+    .default([]), // Default empty array if semesters are not provided
+});
+
 // Update Course with Semesters and Subjects
 export const updateCourse = async (req: Request, res: Response): Promise<any> => {
   try {
     const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid course ID",
+      });
+    }
+
     const validationResult = updateCourseSchema.safeParse(req.body);
-if (!validationResult.success) {
-  console.error("Validation Errors:", validationResult.error.format());
-  return res.status(400).json({
-    success: false,
-    message: "Invalid inputs",
-    errors: validationResult.error.format(),
-  });
-}
+    if (!validationResult.success) {
+      console.error("Validation Errors:", validationResult.error.format());
+      return res.status(400).json({
+        success: false,
+        message: "Invalid inputs",
+        errors: validationResult.error.format(),
+      });
+    }
 
-console.log("Request Body:", JSON.stringify(req.body, null, 2));
-
+    console.log("Request Body:", JSON.stringify(req.body, null, 2));
 
     const { courseName, semesters } = validationResult.data;
+
+    const existingCourse = await prisma.course.findUnique({
+      where: { id },
+      select: { 
+        createdById: true,
+        semesters: {
+          include: {
+            subjects: {
+              include: {
+                units: {
+                  select: {
+                    id: true,
+                    attainment: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!existingCourse) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found",
+      });
+    }
 
     const updatedCourse = await prisma.course.update({
       where: { id },
       data: {
         courseName,
+        createdById: existingCourse.createdById,
         semesters: {
           upsert: semesters?.map((semester) => ({
-            where: {
-              id: semester.id ?? -1, // Use -1 for new semesters
-            },
+            where: { id: semester.id ?? -1 },
             create: {
               name: semester.name,
               subjects: {
-                create: semester.subjects?.map((subject) => ({
+                create: semester.subjects.map((subject) => ({
                   subjectName: subject.subjectName,
+                  subjectCode: subject.subjectCode, 
+                  facultyId: subject.facultyId, 
                   units: {
-                    create: subject.units?.map((unit) => ({
+                    create: subject.units.map((unit) => ({
                       unitNumber: unit.unitNumber,
                       description: unit.description,
+                      attainment: 0.0,
                     })),
                   },
                 })),
@@ -245,32 +310,35 @@ console.log("Request Body:", JSON.stringify(req.body, null, 2));
               name: semester.name,
               subjects: {
                 upsert: semester.subjects?.map((subject) => ({
-                  where: {
-                    id: subject.id ?? -1,
-                  },
+                  where: { id: subject.id ?? -1 },
                   create: {
                     subjectName: subject.subjectName,
+                    subjectCode: subject.subjectCode,
+                    facultyId: subject.facultyId,
                     units: {
                       create: subject.units?.map((unit) => ({
                         unitNumber: unit.unitNumber,
                         description: unit.description,
+                        attainment: 0.0,
                       })),
                     },
                   },
                   update: {
                     subjectName: subject.subjectName,
+                    subjectCode: subject.subjectCode,
+                    facultyId: subject.facultyId,
                     units: {
                       upsert: subject.units?.map((unit) => ({
-                        where: {
-                          id: unit.id ?? -1,
-                        },
+                        where: { id: unit.id ?? -1 },
                         create: {
                           unitNumber: unit.unitNumber,
                           description: unit.description,
+                          attainment: 0.0,
                         },
                         update: {
                           unitNumber: unit.unitNumber,
                           description: unit.description,
+                          ...(unit.id ? {} : { attainment: 0.0 })
                         },
                       })),
                     },
@@ -291,17 +359,20 @@ console.log("Request Body:", JSON.stringify(req.body, null, 2));
             },
           },
         },
+        createdBy: {
+          select: { id: true, name: true, email: true },
+        },
       },
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: "Course updated successfully with semesters, subjects, and units",
+      message: "Course updated successfully",
       data: updatedCourse,
     });
   } catch (error) {
     console.error("Error in updateCourse:", (error as Error).message);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Internal Server Error",
     });
@@ -312,94 +383,154 @@ console.log("Request Body:", JSON.stringify(req.body, null, 2));
 export const deleteCourse = async (req: Request, res: Response): Promise<any> => {
   try {
     const id = parseInt(req.params.id);
+    
+    if (isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid course ID",
+      });
+    }
 
-    // First, delete all related enrollments
-    await prisma.enrollment.deleteMany({
-      where: { courseId: id },
-    });
+    // Start a transaction to ensure all deletions are atomic
+    await prisma.$transaction(async (tx) => {
+      // 1. Delete all CO_PO_Mappings related to units in this course
+      await tx.cO_PO_Mapping.deleteMany({
+        where: {
+          courseOutcome: {
+            subject: {
+              semester: {
+                courseId: id
+              }
+            }
+          }
+        }
+      });
 
-    // Delete all related marks for exams in the course's semesters
-    await prisma.marks.deleteMany({
-      where: {
-        exam: {
+      // 2. Delete all CO_Attainments related to units in this course
+      await tx.cO_Attainment.deleteMany({
+        where: {
+          co: {
+            subject: {
+              semester: {
+                courseId: id
+              }
+            }
+          }
+        }
+      });
+
+      // 3. Delete all PO_Attainments for this course's batches
+      await tx.pO_Attainment.deleteMany({
+        where: {
+          batch: {
+            courseId: id
+          }
+        }
+      });
+
+      // 4. Delete all marks for questions in exams
+      await tx.marks.deleteMany({
+        where: {
+          exam: {
+            subject: {
+              semester: {
+                courseId: id
+              }
+            }
+          }
+        }
+      });
+
+      // 5. Delete all questions in exams
+      await tx.question.deleteMany({
+        where: {
+          exam: {
+            subject: {
+              semester: {
+                courseId: id
+              }
+            }
+          }
+        }
+      });
+
+      // 6. Delete all exams
+      await tx.exam.deleteMany({
+        where: {
+          subject: {
+            semester: {
+              courseId: id
+            }
+          }
+        }
+      });
+
+      // 7. Delete all units
+      await tx.unit.deleteMany({
+        where: {
+          subject: {
+            semester: {
+              courseId: id
+            }
+          }
+        }
+      });
+
+      // 8. Delete all subjects
+      await tx.subject.deleteMany({
+        where: {
           semester: {
-            courseId: id,
-          },
-        },
-      },
+            courseId: id
+          }
+        }
+      });
+
+      // 9. Delete all program outcomes
+      await tx.programOutcome.deleteMany({
+        where: {
+          courseId: id
+        }
+      });
+
+      // 10. Delete all enrollments in batches
+      await tx.enrollment.deleteMany({
+        where: {
+          batch: {
+            courseId: id
+          }
+        }
+      });
+
+      // 11. Delete all batches
+      await tx.batch.deleteMany({
+        where: {
+          courseId: id
+        }
+      });
+
+      // 12. Delete all semesters
+      await tx.semester.deleteMany({
+        where: {
+          courseId: id
+        }
+      });
+
+      // 13. Finally, delete the course itself
+      await tx.course.delete({
+        where: { id }
+      });
     });
 
-    // Delete all questions for exams in the course's semesters
-    await prisma.question.deleteMany({
-      where: {
-        exam: {
-          semester: {
-            courseId: id,
-          },
-        },
-      },
-    });
-
-    // Delete all exams in the course's semesters
-    await prisma.exam.deleteMany({
-      where: {
-        semester: {
-          courseId: id,
-        },
-      },
-    });
-
-    // Delete all course outcomes for subjects in the course's semesters
-    await prisma.courseOutcome.deleteMany({
-      where: {
-        Subject: {
-          semester: {
-            courseId: id,
-          },
-        },
-      },
-    });
-
-    // Delete all units for subjects in the course's semesters
-    await prisma.unit.deleteMany({
-      where: {
-        subject: {
-          semester: {
-            courseId: id,
-          },
-        },
-      },
-    });
-
-    // Delete all subjects in the course's semesters
-    await prisma.subject.deleteMany({
-      where: {
-        semester: {
-          courseId: id,
-        },
-      },
-    });
-
-    // Delete all semesters for the course
-    await prisma.semester.deleteMany({
-      where: { courseId: id },
-    });
-
-    // Finally, delete the course itself
-    await prisma.course.delete({
-      where: { id },
-    });
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: "Course and all related data deleted successfully",
+      message: "Course and all related data deleted successfully"
     });
   } catch (error) {
-    console.error("Error in deleteCourse:", (error as Error).message);
-    res.status(500).json({
+    console.error("Error in deleteCourse:", error);
+    return res.status(500).json({
       success: false,
       message: "Internal Server Error",
-      error: (error as Error).message,
+      error: (error as Error).message
     });
   }
 };

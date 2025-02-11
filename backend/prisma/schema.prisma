@@ -18,21 +18,37 @@ model User {
   uploadedMarks    Marks[]      @relation("UploadedMarks")
   marksReceived    Marks[]      @relation("StudentMarks")
   assignedSubjects Subject[]    @relation("FacultySubjects")
+  createdCourses   Course[]     @relation("CreatedCourses")
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
-  Course           Course[]
 }
 
 model Course {
-  id          Int          @id @default(autoincrement())
-  courseName  String
-  semesters   Semester[]
-  createdBy   User         @relation(fields: [createdById], references: [id])
+  id              Int               @id @default(autoincrement())
+  courseName      String
+  createdBy   User     @relation(fields: [createdById], references: [id], name: "CreatedCourses")
   createdById Int
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  Enrollment  Enrollment[]
+  semesters       Semester[]
+  batches         Batch[]
+  programOutcomes ProgramOutcome[]  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 }
+
+
+model Batch {
+  id              Int              @id @default(autoincrement())
+  batchYear       Int              // Stores admission or graduation year
+  course          Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId        Int
+  students        Enrollment[]
+  programOutcomes ProgramOutcome[] // ✅ Add this
+  coAttainments   CO_Attainment[]  // ✅ Add this
+  poAttainments   PO_Attainment[]  // ✅ Add this
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
 
 model Semester {
   id          Int          @id @default(autoincrement())
@@ -40,8 +56,8 @@ model Semester {
   course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId    Int
   subjects    Subject[]
-  enrollments Enrollment[]
-  exams       Exam[]
+  // enrollments Enrollment[]
+  // exams       Exam[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 }
@@ -49,16 +65,32 @@ model Semester {
 model Subject {
   id             Int             @id @default(autoincrement())
   subjectName    String
+  subjectCode    String
   semester       Semester        @relation(fields: [semesterId], references: [id])
   semesterId     Int
   faculty        User?           @relation("FacultySubjects", fields: [facultyId], references: [id])
   facultyId      Int?
   units          Unit[]
   exams          Exam[]
-  courseOutcomes CourseOutcome[]
+  coAttainments  CO_Attainment[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 }
+
+model ProgramOutcome {
+  id          Int       @id @default(autoincrement())
+  course      Course    @relation(fields: [courseId], references: [id])
+  courseId    Int
+  batch       Batch?    @relation(fields: [batchId], references: [id]) // New relation
+  batchId     Int?
+  description String    // Example: "Ability to apply mathematics in engineering"
+  coMappings  CO_PO_Mapping[]
+  attainment  Float     @default(0.0) // Auto-calculated
+  poAttainments PO_Attainment[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
 
 model Unit {
   id             Int             @id @default(autoincrement())
@@ -66,48 +98,73 @@ model Unit {
   description    String?
   subject        Subject         @relation(fields: [subjectId], references: [id])
   subjectId      Int
-  courseOutcomes CourseOutcome[]
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  Question       Question[]
+  coMappings     CO_PO_Mapping[]
+  questions      Question[]
+  attainment     Float    @default(0.0) // Auto-calculated
+  coAttainments  CO_Attainment[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
-model CourseOutcome {
-  id          Int      @id @default(autoincrement())
-  description String
-  unit        Unit     @relation(fields: [unitId], references: [id])
-  unitId      Int
-  attainment  Float    @default(0.0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  Subject     Subject? @relation(fields: [subjectId], references: [id])
-  subjectId   Int?
+model CO_PO_Mapping {
+  id           Int            @id @default(autoincrement())
+  courseOutcome Unit         @relation(fields: [coId], references: [id]) // CO = Unit
+  coId         Int
+  programOutcome ProgramOutcome @relation(fields: [poId], references: [id])
+  poId         Int
+  weightage    Float           // Weightage of CO in PO (e.g., 0.3 means 30%)
+}
+
+model CO_Attainment {
+  id          Int       @id @default(autoincrement())
+  co          Unit      @relation(fields: [coId], references: [id])
+  coId        Int
+  batch       Batch     @relation(fields: [batchId], references: [id])
+  batchId     Int
+  subject     Subject   @relation(fields: [subjectId], references: [id])
+  subjectId   Int
+  attainment  Float     @default(0.0) // Calculated per batch
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([coId, batchId, subjectId]) // Prevent duplicate entries
+}
+
+model PO_Attainment {
+  id          Int       @id @default(autoincrement())
+  po          ProgramOutcome @relation(fields: [poId], references: [id])
+  poId        Int
+  batch       Batch     @relation(fields: [batchId], references: [id])
+  batchId     Int
+  attainment  Float     @default(0.0) // Calculated per batch
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([poId, batchId]) // Prevent duplicate entries
 }
 
 model Enrollment {
   id         Int      @id @default(autoincrement())
   student    User     @relation(fields: [studentId], references: [id])
   studentId  Int
-  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  courseId   Int
-  semester   Semester @relation(fields: [semesterId], references: [id])
-  semesterId Int
+  batch      Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  batchId    Int
+  isActive   Boolean  @default(true) // NEW - To track dropouts
   createdAt  DateTime @default(now())
 }
+
 
 model Exam {
   id         Int        @id @default(autoincrement())
   examType   ExamType
   subject    Subject    @relation(fields: [subjectId], references: [id])
   subjectId  Int
-  semester   Semester   @relation(fields: [semesterId], references: [id])
-  semesterId Int
   questions  Question[]
   marks      Marks[]
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt 
 
-  @@unique([examType, subjectId, semesterId])
+  @@unique([examType, subjectId])
 }
 
 model Question {
@@ -130,12 +187,12 @@ model Marks {
   question      Question @relation(fields: [questionId], references: [id])
   questionId    Int
   marksObtained Int
-  examId      Int
-  exam        Exam    @relation(fields: [examId], references: [id])
-  uploadedBy    User     @relation("UploadedMarks", fields: [uploadedById], references: [id])
-  uploadedById  Int
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  exam         Exam     @relation(fields: [examId], references: [id])
+  examId       Int
+  uploadedBy   User     @relation("UploadedMarks", fields: [uploadedById], references: [id])
+  uploadedById Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@unique([studentId, questionId, examId])
 }
@@ -149,8 +206,12 @@ enum Role {
 }
 
 enum ExamType {
-  CT1
-  CT2
-  DHA
-  CA
+  CT1   // Class Test 1
+  CT2   // Class Test 2
+  DHA   // Daily Home Assignment
+  CA    // Class Assessment
+  AA    // Additional Assessment
+  ATT   // Attendance-Based Marks
+  ESE   // End Semester Exam **
 }
+
