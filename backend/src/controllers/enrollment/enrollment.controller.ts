@@ -1,254 +1,205 @@
-// import { Request, Response } from 'express';
-// import { PrismaClient } from '@prisma/client';
-// import zod from 'zod';
+import { Request, Response } from 'express';
+import { PrismaClient } from '@prisma/client';
+import zod from 'zod';
 
-// const prisma = new PrismaClient();
+const prisma = new PrismaClient();
 
-// const enrollmentSchema = zod.object({
-//   studentId: zod.number().int().positive("Student ID must be a positive integer"),
-//   courseId: zod.number().int().positive("Course ID must be a positive integer"),
-//   semesterId: zod.number().int().positive("Semester ID must be a positive integer"),
-// });
+const enrollmentSchema = zod.object({
+  studentId: zod.number().int().positive("Student ID must be a positive integer"),
+  batchId: zod.number().int().positive("Batch ID must be a positive integer"),
+});
 
-// export const createEnrollment = async (req: Request, res: Response): Promise<any> => {
-//   try {
-//     const result = enrollmentSchema.safeParse(req.body);
+export const createEnrollment = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const result = enrollmentSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid input data",
+        errors: result.error.format(),
+      });
+    }
 
-//     if (!result.success) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Invalid input data",
-//         errors: result.error.format(),
-//       });
-//     }
+    const { studentId, batchId } = req.body;
 
-//     const { studentId, courseId, semesterId } = req.body;
+    const existingEnrollment = await prisma.enrollment.findFirst({
+      where: { studentId, batchId },
+    });
 
-//     const enrollment = await prisma.enrollment.create({
-//       data: {
-//         studentId,
-//         courseId,
-//         semesterId,
-//       },
-//     });
+    if (existingEnrollment) {
+      return res.status(400).json({
+        success: false,
+        message: "Student is already enrolled in this batch",
+      });
+    }
 
-//     return res.status(201).json({
-//       success: true,
-//       data: enrollment,
-//     });
-//   } catch (error) {
-//     console.error("Error creating enrollment:", (error as Error).message);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Internal Server Error",
-//     });
-//   }
-// };
+    // Create Enrollment
+    const enrollment = await prisma.enrollment.create({
+      data: { studentId, batchId },
+    });
 
-// export const getAllEnrollments = async (req: Request, res: Response): Promise<any> => {
-//   try {
-//     const enrollments = await prisma.enrollment.findMany({
-//       include: {
-//         student: true,
-//         course: true,
-//         semester: true,
-//       },
-//     });
+    return res.status(201).json({
+      success: true,
+      message: "Student enrolled successfully",
+      data: enrollment,
+    });
+  } catch (error) {
+    console.error("Error creating enrollment:", (error as Error).message);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
 
-//     return res.status(200).json({
-//       success: true,
-//       data: enrollments,
-//     });
-//   } catch (error) {
-//     console.error("Error fetching enrollments:", (error as Error).message);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Internal Server Error",
-//     });
-//   }
-// };
+// ✅ Get All Enrolled Students in a Course by Batch
+export const getEnrollmentsByCourseAndBatch = async (req: Request, res: Response): Promise<any> => {
+    try {
+      const batchId = parseInt(req.params.batchId);
+  
+      if (isNaN(batchId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Batch ID",
+        });
+      }
+  
+      // Find batch and get courseId
+      const batch = await prisma.batch.findUnique({
+        where: { id: batchId },
+        include: { course: true },
+      });
+  
+      if (!batch) {
+        return res.status(404).json({
+          success: false,
+          message: "Batch not found",
+        });
+      }
+  
+      // Fetch enrolled students in the batch
+      const enrollments = await prisma.enrollment.findMany({
+        where: { batchId },
+        include: {
+          student: {
+            select: { id: true, name: true, email: true },
+          },
+        },
+      });
+  
+      return res.status(200).json({
+        success: true,
+        message: `Students enrolled in course ${batch.course.courseName}, Batch ${batch.batchYear}`,
+        courseId: batch.course.id,
+        courseName: batch.course.courseName,
+        batchYear: batch.batchYear,
+        students: enrollments.map((enrollment) => enrollment.student),
+      });
+    } catch (error) {
+      console.error("Error fetching enrollments by course and batch:", (error as Error).message);
+      return res.status(500).json({
+        success: false,
+        message: "Internal Server Error",
+      });
+    }
+  };
+  
 
-// export const getStudentsBySubjectAndCourse = async (req: Request, res: Response): Promise<any> => {
-//   try {
-//     const { subjectId, courseId } = req.params;
+// ✅ Get All Enrolled Students in a Batch
+export const getEnrollmentsByBatch = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const batchId = parseInt(req.params.batchId);
 
-//     // Validate input
-//     if (!subjectId || !courseId) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "subjectId and courseId are required.",
-//       });
-//     }
+    if (isNaN(batchId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Batch ID",
+      });
+    }
 
-//     // Fetch students using Prisma
-//     const enrollments = await prisma.enrollment.findMany({
-//       where: {
-//         courseId: parseInt(courseId),
-//         semester: {
-//           subjects: {
-//             some: {
-//               id: parseInt(subjectId),
-//             },
-//           },
-//         },
-//       },
-//       include: {
-//         student: {
-//           select: {
-//             id: true,
-//             name: true,
-//             email: true,
-//           },
-//         },
-//         semester: true,
-//       },
-//     });
+    const enrollments = await prisma.enrollment.findMany({
+      where: { batchId },
+      include: {
+        student: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
 
-//     // Check if enrollments exist
-//     if (enrollments.length === 0) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "No students found for the provided subjectId and courseId.",
-//       });
-//     }
+    return res.status(200).json({
+      success: true,
+      data: enrollments,
+    });
+  } catch (error) {
+    console.error("Error fetching enrollments:", (error as Error).message);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
 
-//     return res.status(200).json({
-//       success: true,
-//       data: enrollments.map((enrollment) => enrollment.student),
-//     });
-//   } catch (error) {
-//     console.error("Error fetching students by subject and course:", (error as Error).message);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Internal Server Error",
-//     });
-//   }
-// };
+// ✅ Get Student's Enrollment Details
+export const getStudentEnrollment = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const studentId = parseInt(req.params.studentId);
 
-// // Get Enrollment by ID
-// export const getEnrollmentById = async (req: Request, res: Response): Promise<any> => {
-//   try {
-//     const { id } = req.params;
+    if (isNaN(studentId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Student ID",
+      });
+    }
 
-//     const enrollment = await prisma.enrollment.findUnique({
-//       where: { id: parseInt(id) },
-//       include: {
-//         student: true,
-//         course: true,
-//         semester: true,
-//       },
-//     });
+    const enrollment = await prisma.enrollment.findMany({
+      where: { studentId },
+      include: {
+        batch: {
+          select: { id: true, batchYear: true },
+        },
+      },
+    });
 
-//     if (!enrollment) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Enrollment not found",
-//       });
-//     }
+    return res.status(200).json({
+      success: true,
+      data: enrollment,
+    });
+  } catch (error) {
+    console.error("Error fetching student's enrollment:", (error as Error).message);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
 
-//     return res.status(200).json({
-//       success: true,
-//       data: enrollment,
-//     });
-//   } catch (error) {
-//     console.error("Error fetching enrollment by ID:", (error as Error).message);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Internal Server Error",
-//     });
-//   }
-// };
+// ✅ Remove Student from Batch (Dropout)
+export const removeEnrollment = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const enrollmentId = parseInt(req.params.enrollmentId);
 
-// // Update Enrollment
-// export const updateEnrollment = async (req: Request, res: Response): Promise<any> => {
-//   try {
-//     const { id } = req.params;
+    if (isNaN(enrollmentId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Enrollment ID",
+      });
+    }
 
-//     const result = enrollmentSchema.safeParse(req.body);
+    // Soft Delete: Set isActive to false
+    await prisma.enrollment.update({
+      where: { id: enrollmentId },
+      data: { isActive: false },
+    });
 
-//     if (!result.success) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Invalid input data",
-//         errors: result.error.format(),
-//       });
-//     }
-
-//     const { studentId, courseId, semesterId } = req.body;
-
-//     const updatedEnrollment = await prisma.enrollment.update({
-//       where: { id: parseInt(id) },
-//       data: {
-//         studentId,
-//         courseId,
-//         semesterId,
-//       },
-//     });
-
-//     return res.status(200).json({
-//       success: true,
-//       data: updatedEnrollment,
-//     });
-//   } catch (error) {
-//     console.error("Error updating enrollment:", (error as Error).message);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Internal Server Error",
-//     });
-//   }
-// };
-
-// // Delete Enrollment
-// export const deleteEnrollment = async (req: Request, res: Response): Promise<any> => {
-//   try {
-//     const { id } = req.params;
-
-//     await prisma.enrollment.delete({
-//       where: { id: parseInt(id) },
-//     });
-
-//     return res.status(200).json({
-//       success: true,
-//       message: "Enrollment deleted successfully",
-//     });
-//   } catch (error) {
-//     console.error("Error deleting enrollment:", (error as Error).message);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Internal Server Error",
-//     });
-//   }
-// };
-
-// export const getEnrollmentsByCourseId = async (req: Request, res: Response): Promise<any> => {
-//   try {
-//     const { courseId } = req.params;
-//     const { semesterId } = req.query; 
-
-//     const filter: any = { courseId: parseInt(courseId) };
-
-//     if (semesterId) {
-//       filter.semesterId = parseInt(semesterId as string); 
-//     }
-
-//     const enrollments = await prisma.enrollment.findMany({
-//       where: filter,
-//       include: {
-//         student: true,
-//         course: true,
-//         semester: true,
-//       },
-//     });
-
-//     return res.status(200).json({
-//       success: true,
-//       data: enrollments,
-//     });
-//   } catch (error) {
-//     console.error("Error fetching enrollments by course ID:", (error as Error).message);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Internal Server Error",
-//     });
-//   }
-// };
+    return res.status(200).json({
+      success: true,
+      message: "Enrollment removed successfully",
+    });
+  } catch (error) {
+    console.error("Error removing enrollment:", (error as Error).message);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
