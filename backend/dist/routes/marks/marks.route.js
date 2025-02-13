@@ -8,4 +8,5 @@ router.post('/upload', (0, roleMiddleware_1.roleMiddleware)(['Admin', 'HOD', 'De
 router.get('/:examId', (0, roleMiddleware_1.roleMiddleware)(['Admin', 'HOD', 'Dean', 'Faculty']), marks_controller_1.getMarksByExam);
 router.put('/:examId/:studentId/:questionId', (0, roleMiddleware_1.roleMiddleware)(['Admin', 'HOD', 'Dean', 'Faculty']), marks_controller_1.updateMarks);
 router.delete('/:examId/:studentId/:questionId', (0, roleMiddleware_1.roleMiddleware)(['Admin', 'HOD', 'Dean', 'Faculty']), marks_controller_1.deleteMarks);
+router.get('/getMarksByBatch/:batchId', (0, roleMiddleware_1.roleMiddleware)(['Admin', 'HOD', 'Dean', 'Faculty']), marks_controller_1.getMarksByBatch);
 exports.default = router;

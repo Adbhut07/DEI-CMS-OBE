@@ -1,4 +1,6 @@
 "use strict";
+// Course outcome is UNIT 
+// so no need to create a separate controller for course outcome
 // import { Request, Response } from "express";
 // import { PrismaClient } from "@prisma/client";
 // import zod from "zod";
@@ -164,3 +166,4 @@
 //     });
 //   }
 // };
+//

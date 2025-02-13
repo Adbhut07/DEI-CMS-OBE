@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteMarks = exports.updateMarks = exports.getMarksByExam = exports.uploadMarks = void 0;
+exports.getMarksByBatch = exports.deleteMarks = exports.updateMarks = exports.getMarksByExam = exports.uploadMarks = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const uploadMarks = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -138,3 +138,26 @@ const deleteMarks = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.deleteMarks = deleteMarks;
+const getMarksByBatch = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { batchId } = req.params;
+    try {
+        const studentsInBatch = yield prisma.enrollment.findMany({
+            where: { batchId: Number(batchId) },
+            select: { studentId: true },
+        });
+        const studentIds = studentsInBatch.map((s) => s.studentId);
+        const marks = yield prisma.marks.findMany({
+            where: { studentId: { in: studentIds } },
+            include: {
+                student: { select: { id: true, name: true, email: true } },
+                question: { select: { id: true, questionText: true } },
+            },
+        });
+        res.status(200).json({ success: true, data: marks });
+    }
+    catch (error) {
+        console.error("Error fetching batch marks:", error);
+        res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+});
+exports.getMarksByBatch = getMarksByBatch;

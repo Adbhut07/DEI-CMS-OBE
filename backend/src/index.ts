@@ -8,11 +8,14 @@ import userRoutes from './routes/user/user.route';
 import courseRoutes from './routes/course/course.route';
 import subjectRoutes from './routes/subject/subject.route';
 import unitRoutes from './routes/unit/unit.route';
-import courseOutcomeRoutes from './routes/course/courseOutcome.route';
+// import courseOutcomeRoutes from './routes/course/courseOutcome.route';
 import facultyRoutes from './routes/faculty/faculty.route';
 import enrollmentRoutes from './routes/enrollment/enrollment.route';
 import examRoutes from './routes/exam/exam.route';
 import marksRoutes from './routes/marks/marks.route';
+import semesterRoutes from './routes/semester/semester.route';
+import batchRoutes from './routes/batch/batch.route';
+import programOutcomeRoutes from './routes/programOutcome/programOutcome.route';
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -33,11 +36,14 @@ app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/subjects', subjectRoutes);
 app.use('/api/v1/units', unitRoutes);
-app.use('/api/v1/course-outcomes', courseOutcomeRoutes);
+// app.use('/api/v1/course-outcomes', courseOutcomeRoutes);
+app.use('/api/v1/batche', batchRoutes);
+app.use('/api/v1/semesters', semesterRoutes);
 app.use('/api/v1/faculty', facultyRoutes);
 app.use('/api/v1/enrollments', enrollmentRoutes);
 app.use('/api/v1/exams', examRoutes);
 app.use('/api/v1/marks', marksRoutes);
+app.use('/api/v1/program-outcomes', programOutcomeRoutes);
 
 app.get('/', (req: Request, res: Response) => {
     res.send('Hello, world!');
