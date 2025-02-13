@@ -323,3 +323,128 @@ export const getAllUnits = async (req: Request, res: Response): Promise<any> => 
     }
   };
   
+
+  const bulkCreateUnitsSchema = zod.array(
+    zod.object({
+      unitNumber: zod.number().min(1, "Unit number must be greater than 0"),
+      subjectId: zod.number().int().positive("Subject ID must be a positive integer"),
+      description: zod.string().optional(),
+    })
+  );
+  
+  // ✅ Bulk Create Units
+  export const bulkCreateUnits = async (req: Request, res: Response): Promise<any> => {
+    try {
+      const result = bulkCreateUnitsSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid inputs",
+          errors: result.error.format(),
+        });
+      }
+  
+      const createdUnits = await prisma.unit.createMany({
+        data: result.data,
+      });
+  
+      return res.status(201).json({
+        success: true,
+        message: "Units created successfully",
+        data: createdUnits,
+      });
+    } catch (error) {
+      console.error("Error in bulkCreateUnits controller", (error as Error).message);
+      return res.status(500).json({
+        success: false,
+        message: "Internal Server Error",
+      });
+    }
+  };
+  
+  // ✅ Get Units by Semester
+  export const getUnitsBySemester = async (req: Request, res: Response): Promise<any> => {
+    try {
+      const { semesterId } = req.params;
+      const units = await prisma.unit.findMany({
+        where: {
+          subject: {
+            semesterId: Number(semesterId),
+          },
+        },
+        include: { subject: true },
+      });
+  
+      return res.status(200).json({ success: true, data: units });
+    } catch (error) {
+      console.error("Error in getUnitsBySemester controller", (error as Error).message);
+      return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+  };
+  
+  // ✅ Get Units by Course
+  export const getUnitsByCourse = async (req: Request, res: Response): Promise<any> => {
+    try {
+      const { courseId } = req.params;
+      const units = await prisma.unit.findMany({
+        where: {
+          subject: {
+            semester: {
+              courseId: Number(courseId),
+            },
+          },
+        },
+        include: { subject: true },
+      });
+  
+      return res.status(200).json({ success: true, data: units });
+    } catch (error) {
+      console.error("Error in getUnitsByCourse controller", (error as Error).message);
+      return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+  };
+  
+  // ✅ Bulk Delete Units
+  export const bulkDeleteUnits = async (req: Request, res: Response): Promise<any> => {
+    try {
+      const { unitIds } = req.body;
+  
+      if (!Array.isArray(unitIds) || unitIds.length === 0) {
+        return res.status(400).json({ success: false, message: "Invalid unit IDs" });
+      }
+  
+      await prisma.unit.deleteMany({
+        where: { id: { in: unitIds } },
+      });
+  
+      return res.status(200).json({ success: true, message: "Units deleted successfully" });
+    } catch (error) {
+      console.error("Error in bulkDeleteUnits controller", (error as Error).message);
+      return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+  };
+  
+  // ✅ Reorder Units
+  export const reorderUnits = async (req: Request, res: Response): Promise<any> => {
+    try {
+      const { unitOrders } = req.body;
+  
+      if (!Array.isArray(unitOrders) || unitOrders.length === 0) {
+        return res.status(400).json({ success: false, message: "Invalid unit order data" });
+      }
+  
+      const updatePromises = unitOrders.map(({ unitId, newOrder }) =>
+        prisma.unit.update({
+          where: { id: unitId },
+          data: { unitNumber: newOrder },
+        })
+      );
+  
+      await Promise.all(updatePromises);
+  
+      return res.status(200).json({ success: true, message: "Units reordered successfully" });
+    } catch (error) {
+      console.error("Error in reorderUnits controller", (error as Error).message);
+      return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};

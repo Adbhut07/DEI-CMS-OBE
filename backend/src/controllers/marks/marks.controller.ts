@@ -123,7 +123,7 @@ export const updateMarks = async (req: Request, res: Response): Promise<any> => 
   }
 };
 
-export const deleteMarks = async (req: Request, res: Response) => {
+export const deleteMarks = async (req: Request, res: Response): Promise<any> => {
   const { studentId, questionId, examId } = req.params;
 
   try {
@@ -141,5 +141,31 @@ export const deleteMarks = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error deleting marks:', error);
     res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+
+export const getMarksByBatch = async (req: Request, res: Response): Promise<any> => {
+  const { batchId } = req.params;
+  try {
+    const studentsInBatch = await prisma.enrollment.findMany({
+      where: { batchId: Number(batchId) },
+      select: { studentId: true },
+    });
+
+    const studentIds = studentsInBatch.map((s) => s.studentId);
+
+    const marks = await prisma.marks.findMany({
+      where: { studentId: { in: studentIds } },
+      include: {
+        student: { select: { id: true, name: true, email: true } },
+        question: { select: { id: true, questionText: true } },
+      },
+    });
+
+    res.status(200).json({ success: true, data: marks });
+  } catch (error) {
+    console.error("Error fetching batch marks:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };

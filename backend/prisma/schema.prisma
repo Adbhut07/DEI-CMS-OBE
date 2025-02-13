@@ -113,6 +113,8 @@ model CO_PO_Mapping {
   programOutcome ProgramOutcome @relation(fields: [poId], references: [id])
   poId         Int
   weightage    Float           // Weightage of CO in PO (e.g., 0.3 means 30%)
+
+  @@unique([coId, poId])
 }
 
 model CO_Attainment {
