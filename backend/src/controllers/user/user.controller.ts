@@ -196,6 +196,56 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
   }
 };
 
+//create a controller function for updating an user
+export const updateUser = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const userId = req.params.id; 
+    const { name, email, role, profileDetails } = req.body;
+
+    const existingUser = await prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: parseInt(userId) },
+      data: {
+        name,
+        email,
+        role,
+        profileDetails: profileDetails || existingUser.profileDetails,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        profileDetails: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: updatedUser,
+      message: "User updated successfully",
+    });
+  } catch (error) {
+    console.error("Error in updateUser:", (error as Error).message);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
 export const getUsers = async (req: Request, res: Response): Promise<any> => {
   try {
     const users = await prisma.user.findMany({

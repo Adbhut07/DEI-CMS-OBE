@@ -18,7 +18,7 @@ const zod_1 = __importDefault(require("zod"));
 const prisma = new client_1.PrismaClient();
 exports.createCourseSchema = zod_1.default.object({
     courseName: zod_1.default.string().min(3, "Course name must be at least 3 characters long"),
-    createdById: zod_1.default.number().int().positive("Invalid user ID"),
+    // createdById: z.number().int().positive("Invalid user ID"),
     semesters: zod_1.default.array(zod_1.default.object({
         name: zod_1.default.string().min(3, "Semester name must be at least 3 characters long"),
         subjects: zod_1.default.array(zod_1.default.object({
@@ -33,6 +33,7 @@ exports.createCourseSchema = zod_1.default.object({
     })).nonempty("At least one semester is required"),
 });
 const createCourse = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         const result = exports.createCourseSchema.safeParse(req.body);
         if (!result.success) {
@@ -42,7 +43,11 @@ const createCourse = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 errors: result.error.format(),
             });
         }
-        const { courseName, createdById, semesters } = result.data;
+        const { courseName, semesters } = result.data;
+        const createdById = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        if (!createdById) {
+            return res.status(400).json({ success: false, message: "Invalid req.user ID" });
+        }
         const existingCourse = yield prisma.course.findFirst({
             where: { courseName },
         });
@@ -242,7 +247,6 @@ const updateCourse = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 errors: validationResult.error.format(),
             });
         }
-        console.log("Request Body:", JSON.stringify(req.body, null, 2));
         const { courseName, semesters } = validationResult.data;
         const existingCourse = yield prisma.course.findUnique({
             where: { id },

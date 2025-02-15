@@ -5,7 +5,7 @@ import { assignFacultyToSubject, createSubject, deleteSubject, getSubject, getSu
 const router = Router();
 
 router.post("/create", createSubject);
-router.post("/:courseId/assign-faculty", assignFacultyToSubject);
+router.post("/:courseId/assign-faculty", assignFacultyToSubject);   // error in this regarding course Id we dont need it
 router.get("/getAll", getSubjects); //pass semester id in query for getting subjects of a course
 router.get("/getSubject/:id", getSubject);
 router.patch("/:id", updateSubject);

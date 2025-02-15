@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { z } from 'zod';
 
 const prisma = new PrismaClient();
@@ -265,7 +265,7 @@ export const updateSemester = async (req: Request, res: Response) => {
 };
 
 // Delete Semester
-export const deleteSemester = async (req: Request, res: Response) => {
+export const deleteSemester = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const semesterId = parseInt(id);
@@ -278,11 +278,24 @@ export const deleteSemester = async (req: Request, res: Response) => {
       return;
     }
 
-    // Check if semester exists
+    // Check if semester exists with subjects
     const semester = await prisma.semester.findUnique({
       where: { id: semesterId },
       include: {
-        subjects: true
+        subjects: {
+          include: {
+            units: {
+              include: {
+                coMappings: true
+              }
+            },
+            exams: {
+              include: {
+                questions: true
+              }
+            }
+          }
+        }
       }
     });
 
@@ -294,24 +307,67 @@ export const deleteSemester = async (req: Request, res: Response) => {
       return;
     }
 
-    // Check for associated subjects
-    if (semester.subjects.length > 0) {
-      res.status(400).json({
-        success: false,
-        message: "Cannot delete semester with associated subjects. Please delete the subjects first."
-      });
-      return;
-    }
+    // Remove the check for associated subjects since we're handling them in the transaction
 
-    await prisma.semester.delete({
-      where: { id: semesterId }
+    // Delete structural elements while preserving historical data
+    await prisma.$transaction(async (prisma) => {
+      // For each subject in the semester
+      for (const subject of semester.subjects) {
+        // Delete structural elements only
+        for (const unit of subject.units) {
+          // Delete CO_PO_Mappings as they are structural relationships
+          await prisma.cO_PO_Mapping.deleteMany({
+            where: { coId: unit.id }
+          });
+        }
+
+        // Delete units
+        await prisma.unit.deleteMany({
+          where: { subjectId: subject.id }
+        });
+
+        // Delete questions (structural part of exams)
+        for (const exam of subject.exams) {
+          await prisma.question.deleteMany({
+            where: { examId: exam.id }
+          });
+        }
+
+        // Delete exams
+        await prisma.exam.deleteMany({
+          where: { subjectId: subject.id }
+        });
+
+        // Delete the subject
+        await prisma.subject.delete({
+          where: { id: subject.id }
+        });
+      }
+
+      // Finally delete the semester
+      await prisma.semester.delete({
+        where: { id: semesterId }
+      });
     });
-    res.status(204).json({
+
+    res.status(200).json({
       success: true,
-      message: "Semester deleted successfully"
+      message: "Semester and associated data deleted successfully"
     });
   } catch (error) {
-    console.error("Error in deleteSemester controller:", (error as Error).message);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error("Error in deleteSemester controller:", error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2003') {
+        res.status(400).json({
+          success: false,
+          message: "Cannot delete semester due to existing references"
+        });
+        return;
+      }
+    }
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error"
+    });
   }
 };

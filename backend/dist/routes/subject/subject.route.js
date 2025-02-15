@@ -4,7 +4,7 @@ const express_1 = require("express");
 const subject_controller_1 = require("../../controllers/subject/subject.controller");
 const router = (0, express_1.Router)();
 router.post("/create", subject_controller_1.createSubject);
-router.post("/:courseId/assign-faculty", subject_controller_1.assignFacultyToSubject);
+router.post("/:courseId/assign-faculty", subject_controller_1.assignFacultyToSubject); // error in this regarding course Id we dont need it
 router.get("/getAll", subject_controller_1.getSubjects); //pass semester id in query for getting subjects of a course
 router.get("/getSubject/:id", subject_controller_1.getSubject);
 router.patch("/:id", subject_controller_1.updateSubject);

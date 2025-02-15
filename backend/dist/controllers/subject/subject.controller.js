@@ -309,21 +309,57 @@ const deleteSubject = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     try {
         const id = parseInt(req.params.id);
         if (isNaN(id)) {
-            res.status(400).json({
+            return res.status(400).json({
                 success: false,
                 message: "Invalid subject ID"
             });
-            return;
         }
-        const subjectExists = yield prisma.subject.findUnique({ where: { id } });
+        const subjectExists = yield prisma.subject.findUnique({
+            where: { id },
+            include: {
+                units: true,
+                exams: true,
+                coAttainments: true
+            }
+        });
         if (!subjectExists) {
             return res.status(404).json({
                 success: false,
                 message: "Subject not found",
             });
         }
-        yield prisma.subject.delete({ where: { id } });
-        res.status(200).json({
+        // Delete all related records in a transaction
+        yield prisma.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
+            // Delete CO_Attainments
+            yield prisma.cO_Attainment.deleteMany({
+                where: { subjectId: id }
+            });
+            // Delete all questions related to the subject's exams
+            for (const exam of subjectExists.exams) {
+                yield prisma.question.deleteMany({
+                    where: { examId: exam.id }
+                });
+            }
+            // Delete all exams
+            yield prisma.exam.deleteMany({
+                where: { subjectId: id }
+            });
+            // Delete all CO_PO_Mappings related to the subject's units
+            for (const unit of subjectExists.units) {
+                yield prisma.cO_PO_Mapping.deleteMany({
+                    where: { coId: unit.id }
+                });
+            }
+            // Delete all units
+            yield prisma.unit.deleteMany({
+                where: { subjectId: id }
+            });
+            // Finally, delete the subject
+            yield prisma.subject.delete({
+                where: { id }
+            });
+        }));
+        return res.status(200).json({
             success: true,
             message: "Subject deleted successfully",
         });
@@ -332,14 +368,13 @@ const deleteSubject = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         console.error("Error in deleteSubject:", error);
         if (error instanceof client_1.Prisma.PrismaClientKnownRequestError) {
             if (error.code === 'P2003') {
-                res.status(400).json({
+                return res.status(400).json({
                     success: false,
                     message: "Cannot delete subject with existing references"
                 });
-                return;
             }
         }
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             message: "Internal Server Error"
         });

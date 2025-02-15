@@ -267,11 +267,24 @@ const deleteSemester = (req, res) => __awaiter(void 0, void 0, void 0, function*
             });
             return;
         }
-        // Check if semester exists
+        // Check if semester exists with subjects
         const semester = yield prisma.semester.findUnique({
             where: { id: semesterId },
             include: {
-                subjects: true
+                subjects: {
+                    include: {
+                        units: {
+                            include: {
+                                coMappings: true
+                            }
+                        },
+                        exams: {
+                            include: {
+                                questions: true
+                            }
+                        }
+                    }
+                }
             }
         });
         if (!semester) {
@@ -281,25 +294,62 @@ const deleteSemester = (req, res) => __awaiter(void 0, void 0, void 0, function*
             });
             return;
         }
-        // Check for associated subjects
-        if (semester.subjects.length > 0) {
-            res.status(400).json({
-                success: false,
-                message: "Cannot delete semester with associated subjects. Please delete the subjects first."
+        // Remove the check for associated subjects since we're handling them in the transaction
+        // Delete structural elements while preserving historical data
+        yield prisma.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
+            // For each subject in the semester
+            for (const subject of semester.subjects) {
+                // Delete structural elements only
+                for (const unit of subject.units) {
+                    // Delete CO_PO_Mappings as they are structural relationships
+                    yield prisma.cO_PO_Mapping.deleteMany({
+                        where: { coId: unit.id }
+                    });
+                }
+                // Delete units
+                yield prisma.unit.deleteMany({
+                    where: { subjectId: subject.id }
+                });
+                // Delete questions (structural part of exams)
+                for (const exam of subject.exams) {
+                    yield prisma.question.deleteMany({
+                        where: { examId: exam.id }
+                    });
+                }
+                // Delete exams
+                yield prisma.exam.deleteMany({
+                    where: { subjectId: subject.id }
+                });
+                // Delete the subject
+                yield prisma.subject.delete({
+                    where: { id: subject.id }
+                });
+            }
+            // Finally delete the semester
+            yield prisma.semester.delete({
+                where: { id: semesterId }
             });
-            return;
-        }
-        yield prisma.semester.delete({
-            where: { id: semesterId }
-        });
-        res.status(204).json({
+        }));
+        res.status(200).json({
             success: true,
-            message: "Semester deleted successfully"
+            message: "Semester and associated data deleted successfully"
         });
     }
     catch (error) {
-        console.error("Error in deleteSemester controller:", error.message);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
+        console.error("Error in deleteSemester controller:", error);
+        if (error instanceof client_1.Prisma.PrismaClientKnownRequestError) {
+            if (error.code === 'P2003') {
+                res.status(400).json({
+                    success: false,
+                    message: "Cannot delete semester due to existing references"
+                });
+                return;
+            }
+        }
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
     }
 });
 exports.deleteSemester = deleteSemester;

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateUserPassword = exports.updateUserRole = exports.getUserByEmail = exports.deleteUser = exports.getUsers = exports.createUser = exports.updateUserProfile = exports.getUsersByRole = exports.getUserProfile = void 0;
+exports.updateUserPassword = exports.updateUserRole = exports.getUserByEmail = exports.deleteUser = exports.getUsers = exports.updateUser = exports.createUser = exports.updateUserProfile = exports.getUsersByRole = exports.getUserProfile = void 0;
 const client_1 = require("@prisma/client");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const zod_1 = __importDefault(require("zod"));
@@ -194,6 +194,53 @@ const createUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.createUser = createUser;
+//create a controller function for updating an user
+const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const userId = req.params.id;
+        const { name, email, role, profileDetails } = req.body;
+        const existingUser = yield prisma.user.findUnique({
+            where: { id: parseInt(userId) },
+        });
+        if (!existingUser) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found",
+            });
+        }
+        const updatedUser = yield prisma.user.update({
+            where: { id: parseInt(userId) },
+            data: {
+                name,
+                email,
+                role,
+                profileDetails: profileDetails || existingUser.profileDetails,
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                profileDetails: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
+        res.status(200).json({
+            success: true,
+            data: updatedUser,
+            message: "User updated successfully",
+        });
+    }
+    catch (error) {
+        console.error("Error in updateUser:", error.message);
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+        });
+    }
+});
+exports.updateUser = updateUser;
 const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const users = yield prisma.user.findMany({

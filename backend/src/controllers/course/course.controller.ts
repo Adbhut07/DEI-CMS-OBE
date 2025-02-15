@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 export const createCourseSchema = z.object({
   courseName: z.string().min(3, "Course name must be at least 3 characters long"),
-  createdById: z.number().int().positive("Invalid user ID"),
+  // createdById: z.number().int().positive("Invalid user ID"),
   semesters: z.array(
     z.object({
       name: z.string().min(3, "Semester name must be at least 3 characters long"),
@@ -38,7 +38,12 @@ export const createCourse = async (req: Request, res: Response): Promise<any> =>
       });
     }
 
-    const { courseName, createdById, semesters } = result.data;
+    const { courseName, semesters } = result.data;
+
+    const createdById = req.user?.id;
+    if(!createdById) {
+      return res.status(400).json({ success: false, message: "Invalid req.user ID" });
+    }
 
     const existingCourse = await prisma.course.findFirst({
       where: { courseName },
@@ -248,8 +253,6 @@ export const updateCourse = async (req: Request, res: Response): Promise<any> =>
         errors: validationResult.error.format(),
       });
     }
-
-    console.log("Request Body:", JSON.stringify(req.body, null, 2));
 
     const { courseName, semesters } = validationResult.data;
 

@@ -329,14 +329,21 @@ export const deleteSubject = async (req: Request, res: Response): Promise<any> =
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: "Invalid subject ID"
       });
-      return;
     }
 
-    const subjectExists = await prisma.subject.findUnique({ where: { id } });
+    const subjectExists = await prisma.subject.findUnique({ 
+      where: { id },
+      include: {
+        units: true,
+        exams: true,
+        coAttainments: true
+      }
+    });
+
     if (!subjectExists) {
       return res.status(404).json({
         success: false,
@@ -344,9 +351,44 @@ export const deleteSubject = async (req: Request, res: Response): Promise<any> =
       });
     }
 
-    await prisma.subject.delete({ where: { id } });
+    // Delete all related records in a transaction
+    await prisma.$transaction(async (prisma) => {
+      // Delete CO_Attainments
+      await prisma.cO_Attainment.deleteMany({
+        where: { subjectId: id }
+      });
 
-    res.status(200).json({
+      // Delete all questions related to the subject's exams
+      for (const exam of subjectExists.exams) {
+        await prisma.question.deleteMany({
+          where: { examId: exam.id }
+        });
+      }
+
+      // Delete all exams
+      await prisma.exam.deleteMany({
+        where: { subjectId: id }
+      });
+
+      // Delete all CO_PO_Mappings related to the subject's units
+      for (const unit of subjectExists.units) {
+        await prisma.cO_PO_Mapping.deleteMany({
+          where: { coId: unit.id }
+        });
+      }
+
+      // Delete all units
+      await prisma.unit.deleteMany({
+        where: { subjectId: id }
+      });
+
+      // Finally, delete the subject
+      await prisma.subject.delete({
+        where: { id }
+      });
+    });
+
+    return res.status(200).json({
       success: true,
       message: "Subject deleted successfully",
     });
@@ -354,14 +396,13 @@ export const deleteSubject = async (req: Request, res: Response): Promise<any> =
     console.error("Error in deleteSubject:", error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2003') {
-        res.status(400).json({
+        return res.status(400).json({
           success: false,
           message: "Cannot delete subject with existing references"
         });
-        return;
       }
     }
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Internal Server Error"
     });
