@@ -7,6 +7,7 @@ const prisma = new PrismaClient();
 const enrollmentSchema = zod.object({
   studentId: zod.number().int().positive("Student ID must be a positive integer"),
   batchId: zod.number().int().positive("Batch ID must be a positive integer"),
+  rollNo: zod.string().min(1, "Roll number is required")
 });
 
 export const createEnrollment = async (req: Request, res: Response): Promise<any> => {
@@ -20,7 +21,7 @@ export const createEnrollment = async (req: Request, res: Response): Promise<any
       });
     }
 
-    const { studentId, batchId } = req.body;
+    const { studentId, batchId, rollNo } = req.body;
 
     const existingEnrollment = await prisma.enrollment.findFirst({
       where: { studentId, batchId },
@@ -33,9 +34,20 @@ export const createEnrollment = async (req: Request, res: Response): Promise<any
       });
     }
 
+    const rollNoExists = await prisma.enrollment.findFirst({
+      where: { batchId, rollNo },
+    });
+
+    if (rollNoExists) {
+      return res.status(400).json({
+        success: false,
+        message: "This roll number is already assigned in this batch",
+      });
+    }
+
     // Create Enrollment
     const enrollment = await prisma.enrollment.create({
-      data: { studentId, batchId },
+      data: { studentId, batchId, rollNo },
     });
 
     return res.status(201).json({
@@ -93,7 +105,10 @@ export const getEnrollmentsByCourseAndBatch = async (req: Request, res: Response
         courseId: batch.course.id,
         courseName: batch.course.courseName,
         batchYear: batch.batchYear,
-        students: enrollments.map((enrollment) => enrollment.student),
+        students: enrollments.map((enrollment) => ({
+          ...enrollment.student,
+          rollNo: enrollment.rollNo,
+        })),
       });
     } catch (error) {
       console.error("Error fetching enrollments by course and batch:", (error as Error).message);
@@ -102,7 +117,7 @@ export const getEnrollmentsByCourseAndBatch = async (req: Request, res: Response
         message: "Internal Server Error",
       });
     }
-  };
+};
   
 
 // ✅ Get All Enrolled Students in a Batch
@@ -128,7 +143,10 @@ export const getEnrollmentsByBatch = async (req: Request, res: Response): Promis
 
     return res.status(200).json({
       success: true,
-      data: enrollments,
+      data: enrollments.map((enrollment) => ({
+        ...enrollment,
+        student: { ...enrollment.student, rollNo: enrollment.rollNo },
+      })),
     });
   } catch (error) {
     console.error("Error fetching enrollments:", (error as Error).message);
@@ -162,7 +180,10 @@ export const getStudentEnrollment = async (req: Request, res: Response): Promise
 
     return res.status(200).json({
       success: true,
-      data: enrollment,
+      data: enrollment.map((e) => ({
+        ...e,
+        rollNo: e.rollNo,
+      })),
     });
   } catch (error) {
     console.error("Error fetching student's enrollment:", (error as Error).message);
@@ -197,6 +218,37 @@ export const removeEnrollment = async (req: Request, res: Response): Promise<any
     });
   } catch (error) {
     console.error("Error removing enrollment:", (error as Error).message);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+
+export const updateEnrollmentStatus = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const enrollmentId = parseInt(req.params.enrollmentId);
+    const isActive = req.body.isActive;
+
+    if (isNaN(enrollmentId) || typeof isActive !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid input data",
+      });
+    }
+
+    await prisma.enrollment.update({
+      where: { id: enrollmentId },
+      data: { isActive },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Enrollment status updated successfully",
+    });
+  } catch (error) {
+    console.error("Error updating enrollment status:", (error as Error).message);
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",

@@ -12,13 +12,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeEnrollment = exports.getStudentEnrollment = exports.getEnrollmentsByBatch = exports.getEnrollmentsByCourseAndBatch = exports.createEnrollment = void 0;
+exports.updateEnrollmentStatus = exports.removeEnrollment = exports.getStudentEnrollment = exports.getEnrollmentsByBatch = exports.getEnrollmentsByCourseAndBatch = exports.createEnrollment = void 0;
 const client_1 = require("@prisma/client");
 const zod_1 = __importDefault(require("zod"));
 const prisma = new client_1.PrismaClient();
 const enrollmentSchema = zod_1.default.object({
     studentId: zod_1.default.number().int().positive("Student ID must be a positive integer"),
     batchId: zod_1.default.number().int().positive("Batch ID must be a positive integer"),
+    rollNo: zod_1.default.string().min(1, "Roll number is required")
 });
 const createEnrollment = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -30,7 +31,7 @@ const createEnrollment = (req, res) => __awaiter(void 0, void 0, void 0, functio
                 errors: result.error.format(),
             });
         }
-        const { studentId, batchId } = req.body;
+        const { studentId, batchId, rollNo } = req.body;
         const existingEnrollment = yield prisma.enrollment.findFirst({
             where: { studentId, batchId },
         });
@@ -40,9 +41,18 @@ const createEnrollment = (req, res) => __awaiter(void 0, void 0, void 0, functio
                 message: "Student is already enrolled in this batch",
             });
         }
+        const rollNoExists = yield prisma.enrollment.findFirst({
+            where: { batchId, rollNo },
+        });
+        if (rollNoExists) {
+            return res.status(400).json({
+                success: false,
+                message: "This roll number is already assigned in this batch",
+            });
+        }
         // Create Enrollment
         const enrollment = yield prisma.enrollment.create({
-            data: { studentId, batchId },
+            data: { studentId, batchId, rollNo },
         });
         return res.status(201).json({
             success: true,
@@ -95,7 +105,7 @@ const getEnrollmentsByCourseAndBatch = (req, res) => __awaiter(void 0, void 0, v
             courseId: batch.course.id,
             courseName: batch.course.courseName,
             batchYear: batch.batchYear,
-            students: enrollments.map((enrollment) => enrollment.student),
+            students: enrollments.map((enrollment) => (Object.assign(Object.assign({}, enrollment.student), { rollNo: enrollment.rollNo }))),
         });
     }
     catch (error) {
@@ -127,7 +137,7 @@ const getEnrollmentsByBatch = (req, res) => __awaiter(void 0, void 0, void 0, fu
         });
         return res.status(200).json({
             success: true,
-            data: enrollments,
+            data: enrollments.map((enrollment) => (Object.assign(Object.assign({}, enrollment), { student: Object.assign(Object.assign({}, enrollment.student), { rollNo: enrollment.rollNo }) }))),
         });
     }
     catch (error) {
@@ -159,7 +169,7 @@ const getStudentEnrollment = (req, res) => __awaiter(void 0, void 0, void 0, fun
         });
         return res.status(200).json({
             success: true,
-            data: enrollment,
+            data: enrollment.map((e) => (Object.assign(Object.assign({}, e), { rollNo: e.rollNo }))),
         });
     }
     catch (error) {
@@ -200,3 +210,31 @@ const removeEnrollment = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.removeEnrollment = removeEnrollment;
+const updateEnrollmentStatus = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const enrollmentId = parseInt(req.params.enrollmentId);
+        const isActive = req.body.isActive;
+        if (isNaN(enrollmentId) || typeof isActive !== "boolean") {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid input data",
+            });
+        }
+        yield prisma.enrollment.update({
+            where: { id: enrollmentId },
+            data: { isActive },
+        });
+        return res.status(200).json({
+            success: true,
+            message: "Enrollment status updated successfully",
+        });
+    }
+    catch (error) {
+        console.error("Error updating enrollment status:", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+        });
+    }
+});
+exports.updateEnrollmentStatus = updateEnrollmentStatus;

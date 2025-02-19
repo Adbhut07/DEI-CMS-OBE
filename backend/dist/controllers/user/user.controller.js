@@ -270,9 +270,23 @@ exports.getUsers = getUsers;
 //create a controller function for deleting a user
 const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const userId = req.params.id;
+        const userId = parseInt(req.params.id);
+        if (isNaN(userId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid user ID",
+            });
+        }
+        // Check if the user exists
         const existingUser = yield prisma.user.findUnique({
-            where: { id: parseInt(userId) },
+            where: { id: userId },
+            include: {
+                enrollments: true,
+                uploadedMarks: true,
+                marksReceived: true,
+                assignedSubjects: true,
+                createdCourses: true,
+            },
         });
         if (!existingUser) {
             return res.status(404).json({
@@ -280,9 +294,36 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 message: "User not found",
             });
         }
-        yield prisma.user.delete({
-            where: { id: parseInt(userId) },
-        });
+        // Handle dependencies before deletion (if necessary)
+        yield prisma.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
+            // Remove enrollments (if any)
+            if (existingUser.enrollments.length > 0) {
+                yield prisma.enrollment.deleteMany({ where: { studentId: userId } });
+            }
+            // Remove marks uploaded by the user
+            if (existingUser.uploadedMarks.length > 0) {
+                yield prisma.marks.deleteMany({ where: { uploadedById: userId } });
+            }
+            // Remove marks received by the user
+            if (existingUser.marksReceived.length > 0) {
+                yield prisma.marks.deleteMany({ where: { studentId: userId } });
+            }
+            // Unassign subjects
+            if (existingUser.assignedSubjects.length > 0) {
+                yield prisma.subject.updateMany({
+                    where: { facultyId: userId },
+                    data: { facultyId: null },
+                });
+            }
+            // Delete courses created by the user (only if necessary)
+            if (existingUser.createdCourses.length > 0) {
+                yield prisma.course.deleteMany({ where: { createdById: userId } });
+            }
+            // Now, safely delete the user
+            yield prisma.user.delete({
+                where: { id: userId },
+            });
+        }));
         res.status(200).json({
             success: true,
             message: "User deleted successfully",

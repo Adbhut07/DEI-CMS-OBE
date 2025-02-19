@@ -275,10 +275,25 @@ export const getUsers = async (req: Request, res: Response): Promise<any> => {
 //create a controller function for deleting a user
 export const deleteUser = async (req: Request, res: Response): Promise<any> => {
   try {
-    const userId = req.params.id; 
+    const userId = parseInt(req.params.id); 
 
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID",
+      });
+    }
+
+    // Check if the user exists
     const existingUser = await prisma.user.findUnique({
-      where: { id: parseInt(userId) },
+      where: { id: userId },
+      include: {
+        enrollments: true,
+        uploadedMarks: true,
+        marksReceived: true,
+        assignedSubjects: true,
+        createdCourses: true,
+      },
     });
 
     if (!existingUser) {
@@ -288,8 +303,40 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
       });
     }
 
-    await prisma.user.delete({
-      where: { id: parseInt(userId) },
+    // Handle dependencies before deletion (if necessary)
+    await prisma.$transaction(async (prisma) => {
+      // Remove enrollments (if any)
+      if (existingUser.enrollments.length > 0) {
+        await prisma.enrollment.deleteMany({ where: { studentId: userId } });
+      }
+
+      // Remove marks uploaded by the user
+      if (existingUser.uploadedMarks.length > 0) {
+        await prisma.marks.deleteMany({ where: { uploadedById: userId } });
+      }
+
+      // Remove marks received by the user
+      if (existingUser.marksReceived.length > 0) {
+        await prisma.marks.deleteMany({ where: { studentId: userId } });
+      }
+
+      // Unassign subjects
+      if (existingUser.assignedSubjects.length > 0) {
+        await prisma.subject.updateMany({
+          where: { facultyId: userId },
+          data: { facultyId: null },
+        });
+      }
+
+      // Delete courses created by the user (only if necessary)
+      if (existingUser.createdCourses.length > 0) {
+        await prisma.course.deleteMany({ where: { createdById: userId } });
+      }
+
+      // Now, safely delete the user
+      await prisma.user.delete({
+        where: { id: userId },
+      });
     });
 
     res.status(200).json({
@@ -304,6 +351,7 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
     });
   }
 };
+
 
 export const getUserByEmail = async (req: Request, res: Response): Promise<any> => {
   try {

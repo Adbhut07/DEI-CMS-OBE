@@ -151,9 +151,13 @@ model Enrollment {
   studentId  Int
   batch      Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
   batchId    Int
-  isActive   Boolean  @default(true) // NEW - To track dropouts
+  rollNo     String?
+  isActive   Boolean  @default(true) 
   createdAt  DateTime @default(now())
+
+  @@unique([batchId, rollNo]) 
 }
+
 
 
 model Exam {

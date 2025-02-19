@@ -37,7 +37,7 @@ app.use('/api/v1/courses', course_route_1.default);
 app.use('/api/v1/subjects', subject_route_1.default);
 app.use('/api/v1/units', unit_route_1.default);
 // app.use('/api/v1/course-outcomes', courseOutcomeRoutes);
-app.use('/api/v1/batche', batch_route_1.default);
+app.use('/api/v1/batch', batch_route_1.default);
 app.use('/api/v1/semesters', semester_route_1.default);
 app.use('/api/v1/faculty', faculty_route_1.default);
 app.use('/api/v1/enrollments', enrollment_route_1.default);
