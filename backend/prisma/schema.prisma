@@ -17,24 +17,38 @@ model User {
   enrollments      Enrollment[]
   uploadedMarks    Marks[]      @relation("UploadedMarks")
   marksReceived    Marks[]      @relation("StudentMarks")
-  assignedSubjects Subject[]    @relation("FacultySubjects")
+  facultySubjects  CourseSubject[] @relation("FacultySubjects")
   createdCourses   Course[]     @relation("CreatedCourses")
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 }
- 
+
 model Course {
   id              Int               @id @default(autoincrement())
   courseName      String
-  createdBy   User     @relation(fields: [createdById], references: [id], name: "CreatedCourses")
-  createdById Int
-  semesters       Semester[]
+  createdBy       User              @relation(fields: [createdById], references: [id], name: "CreatedCourses")
+  createdById     Int
   batches         Batch[]
   programOutcomes ProgramOutcome[]  
+  subjects        CourseSubject[]   // ✅ Many-to-Many Mapping
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 }
 
+model CourseSubject {
+  id        Int     @id @default(autoincrement())
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId  Int
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subjectId Int
+  semester  Int     // Defines which semester this subject is in (1,2,3,...)
+  faculty   User?   @relation("FacultySubjects", fields: [facultyId], references: [id])
+  facultyId Int?
+  batch     Batch   @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  batchId   Int
+
+  @@unique([courseId, subjectId, semester, batchId])
+}
 
 model Batch {
   id              Int              @id @default(autoincrement())
@@ -45,44 +59,29 @@ model Batch {
   programOutcomes ProgramOutcome[] // ✅ Add this
   coAttainments   CO_Attainment[]  // ✅ Add this
   poAttainments   PO_Attainment[]  // ✅ Add this
+  courseSubjects  CourseSubject[]  // ✅ Add this
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 }
 
-
-model Semester {
-  id          Int          @id @default(autoincrement())
-  name        String // Example: "Semester 1", "Semester 2"
-  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  courseId    Int
-  subjects    Subject[]
-  // enrollments Enrollment[]
-  // exams       Exam[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-}
-
 model Subject {
-  id             Int             @id @default(autoincrement())
-  subjectName    String
-  subjectCode    String
-  semester       Semester        @relation(fields: [semesterId], references: [id])
-  semesterId     Int
-  faculty        User?           @relation("FacultySubjects", fields: [facultyId], references: [id])
-  facultyId      Int?
-  units          Unit[]
-  exams          Exam[]
-  coAttainments  CO_Attainment[]
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id            Int             @id @default(autoincrement())
+  subjectName   String
+  subjectCode   String          @unique
+  units         Unit[]
+  exams         Exam[]
+  coAttainments CO_Attainment[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  courseMappings CourseSubject[] // ✅ Many-to-Many Mapping
 }
 
 model ProgramOutcome {
   id          Int       @id @default(autoincrement())
   course      Course    @relation(fields: [courseId], references: [id])
   courseId    Int
-  batch       Batch?    @relation(fields: [batchId], references: [id]) // New relation
-  batchId     Int?
+  batch       Batch     @relation(fields: [batchId], references: [id]) // ✅ Required now
+  batchId     Int
   description String    // Example: "Ability to apply mathematics in engineering"
   coMappings  CO_PO_Mapping[]
   attainment  Float     @default(0.0) // Auto-calculated
@@ -157,8 +156,6 @@ model Enrollment {
 
   @@unique([batchId, rollNo]) 
 }
-
-
 
 model Exam {
   id         Int        @id @default(autoincrement())

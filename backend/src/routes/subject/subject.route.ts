@@ -1,14 +1,14 @@
 import { Router } from "express";
-import { assignFacultyToSubject, createSubject, deleteSubject, getSubject, getSubjects, updateSubject } from "../../controllers/subject/subject.controller";
+import { createSubject, deleteSubject, getAllSubjects, getAllSubjectsDetails, getSubjectById, updateSubject } from "../../controllers/subject/subject.controller";
 
 
 const router = Router();
 
-router.post("/create", createSubject);
-router.post("/:courseId/assign-faculty", assignFacultyToSubject);   // error in this regarding course Id we dont need it
-router.get("/getAll", getSubjects); //pass semester id in query for getting subjects of a course
-router.get("/getSubject/:id", getSubject);
-router.patch("/:id", updateSubject);
-router.delete("/:id", deleteSubject);
+router.post('/create', createSubject);
+router.get('/getAllSubjects', getAllSubjects);
+router.get('/get-all-subjects-details', getAllSubjectsDetails);
+router.get('/:subjectId', getSubjectById);
+router.put('/:subjectId', updateSubject);
+router.delete('/:subjectId', deleteSubject);
 
 export default router;

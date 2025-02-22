@@ -6,6 +6,7 @@ const prisma = new PrismaClient();
 
 const createProgramOutcomeSchema = zod.object({
   courseId: zod.number().int().positive(),
+  batchId: zod.number().int().positive(),
   description: zod.string().min(5),
 });
 
@@ -20,8 +21,27 @@ export const createProgramOutcome = async (req: Request, res: Response): Promise
       });
     }
 
+    // Verify that the batch belongs to the specified course
+    const batch = await prisma.batch.findUnique({
+      where: {
+        id: result.data.batchId,
+        courseId: result.data.courseId
+      }
+    });
+
+    if (!batch) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid batch ID or batch does not belong to the specified course"
+      });
+    }
+
     const programOutcome = await prisma.programOutcome.create({
       data: result.data,
+      include: {
+        course: true,
+        batch: true
+      }
     });
 
     return res.status(201).json({
@@ -35,11 +55,13 @@ export const createProgramOutcome = async (req: Request, res: Response): Promise
   }
 };
 
-export const getAllProgramOutcomes = async (req: Request, res: Response): Promise<any>=> {
+export const getAllProgramOutcomes = async (req: Request, res: Response): Promise<any> => {
   try {
     const programOutcomes = await prisma.programOutcome.findMany({
       include: {
         course: true,
+        batch: true,
+        poAttainments: true
       },
     });
     return res.status(200).json({ success: true, data: programOutcomes });
@@ -49,16 +71,27 @@ export const getAllProgramOutcomes = async (req: Request, res: Response): Promis
   }
 };
 
-export const getProgramOutcomesByCourse = async (req: Request, res: Response): Promise<any>=> {
+export const getProgramOutcomesByCourse = async (req: Request, res: Response): Promise<any> => {
   try {
     const courseId = parseInt(req.params.courseId);
+    const batchId = parseInt(req.query.batchId as string);
+
     if (isNaN(courseId) || courseId <= 0) {
       return res.status(400).json({ success: false, message: "Invalid course ID" });
     }
 
+    const whereClause: any = { courseId };
+    if (!isNaN(batchId) && batchId > 0) {
+      whereClause.batchId = batchId;
+    }
+
     const programOutcomes = await prisma.programOutcome.findMany({
-      where: { courseId },
-      include: { course: true },
+      where: whereClause,
+      include: {
+        course: true,
+        batch: true,
+        poAttainments: true
+      },
     });
     return res.status(200).json({ success: true, data: programOutcomes });
   } catch (error) {
@@ -70,27 +103,47 @@ export const getProgramOutcomesByCourse = async (req: Request, res: Response): P
 export const getCourseOutcomesByCourse = async (req: Request, res: Response): Promise<any> => {
   try {
     const courseId = parseInt(req.params.courseId);
+    const batchId = parseInt(req.query.batchId as string);
+
     if (isNaN(courseId) || courseId <= 0) {
       return res.status(400).json({ success: false, message: "Invalid course ID" });
     }
 
-    const courseOutcomes = await prisma.unit.findMany({
+    // Build the where clause for CourseSubject
+    const whereClause: any = {
+      courseId
+    };
+    if (!isNaN(batchId) && batchId > 0) {
+      whereClause.batchId = batchId;
+    }
+
+    const units = await prisma.unit.findMany({
       where: {
         subject: {
-          semester: {
-            courseId: courseId
+          courseMappings: {
+            some: whereClause
           }
         }
       },
       include: {
         subject: {
           include: {
-            semester: true
+            courseMappings: {
+              where: whereClause,
+              include: {
+                batch: true
+              }
+            }
+          }
+        },
+        coAttainments: {
+          where: {
+            batchId: !isNaN(batchId) ? batchId : undefined
           }
         }
       }
     });
-    return res.status(200).json({ success: true, data: courseOutcomes });
+    return res.status(200).json({ success: true, data: units });
   } catch (error) {
     console.error("Error in getCourseOutcomesByCourse", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
@@ -98,14 +151,16 @@ export const getCourseOutcomesByCourse = async (req: Request, res: Response): Pr
 };
 
 const createCOPOMappingSchema = zod.object({
-  coId: zod.number().int().positive(), // Maps to Unit (Course Outcome)
-  poId: zod.number().int().positive(), // Maps to ProgramOutcome
+  coId: zod.number().int().positive(),
+  poId: zod.number().int().positive(),
   weightage: zod.number().min(0).max(1),
 });
 
 export const createCOPOMapping = async (req: Request, res: Response): Promise<any> => {
   try {
     const courseId = parseInt(req.params.courseId);
+    const batchId = parseInt(req.query.batchId as string);
+
     if (isNaN(courseId) || courseId <= 0) {
       return res.status(400).json({
         success: false,
@@ -122,12 +177,16 @@ export const createCOPOMapping = async (req: Request, res: Response): Promise<an
       });
     }
 
+    // Verify the Unit belongs to a subject in this course
     const courseOutcome = await prisma.unit.findFirst({
       where: {
         id: result.data.coId,
         subject: {
-          semester: {
-            courseId: courseId
+          courseMappings: {
+            some: {
+              courseId,
+              batchId: !isNaN(batchId) ? batchId : undefined
+            }
           }
         }
       }
@@ -136,35 +195,27 @@ export const createCOPOMapping = async (req: Request, res: Response): Promise<an
     if (!courseOutcome) {
       return res.status(404).json({
         success: false,
-        message: "Course Outcome not found or doesn't belong to this course"
+        message: "Course Outcome not found or doesn't belong to this course/batch"
       });
     }
 
+    // Verify the Program Outcome belongs to this course and batch
+    const whereClause: any = {
+      id: result.data.poId,
+      courseId
+    };
+    if (!isNaN(batchId)) {
+      whereClause.batchId = batchId;
+    }
+
     const programOutcome = await prisma.programOutcome.findFirst({
-      where: {
-        id: result.data.poId,
-        courseId: courseId
-      }
+      where: whereClause
     });
 
     if (!programOutcome) {
       return res.status(404).json({
         success: false,
-        message: "Program Outcome not found or doesn't belong to this course"
-      });
-    }
-
-    const existingMapping = await prisma.cO_PO_Mapping.findFirst({
-      where: {
-        coId: result.data.coId,
-        poId: result.data.poId
-      }
-    });
-
-    if (existingMapping) {
-      return res.status(409).json({
-        success: false,
-        message: "Mapping already exists between this CO and PO"
+        message: "Program Outcome not found or doesn't belong to this course/batch"
       });
     }
 
@@ -176,7 +227,11 @@ export const createCOPOMapping = async (req: Request, res: Response): Promise<an
             subject: true
           }
         },
-        programOutcome: true
+        programOutcome: {
+          include: {
+            batch: true
+          }
+        }
       }
     });
 
@@ -194,22 +249,35 @@ export const createCOPOMapping = async (req: Request, res: Response): Promise<an
 export const getCOPOMappings = async (req: Request, res: Response): Promise<any> => {
   try {
     const courseId = parseInt(req.params.courseId);
+    const batchId = parseInt(req.query.batchId as string);
+
     if (isNaN(courseId) || courseId <= 0) {
       return res.status(400).json({ success: false, message: "Invalid course ID" });
     }
 
+    const whereClause: any = {
+      programOutcome: {
+        courseId
+      }
+    };
+    if (!isNaN(batchId)) {
+      whereClause.programOutcome.batchId = batchId;
+    }
+
     const mappings = await prisma.cO_PO_Mapping.findMany({
-      where: {
-        programOutcome: {
-          courseId: courseId
-        }
-      },
+      where: whereClause,
       select: {
         weightage: true,
         programOutcome: {
           select: {
             id: true,
-            description: true
+            description: true,
+            batch: {
+              select: {
+                id: true,
+                batchYear: true
+              }
+            }
           }
         },
         courseOutcome: {
@@ -232,15 +300,15 @@ export const getCOPOMappings = async (req: Request, res: Response): Promise<any>
     if (!mappings.length) {
       return res.status(404).json({ 
         success: false, 
-        message: "No CO-PO mappings found for this course" 
+        message: "No CO-PO mappings found for this course/batch" 
       });
     }
 
-    // Transform the data for a cleaner response
     const formattedMappings = mappings.map(mapping => ({
       programOutcome: {
         id: mapping.programOutcome.id,
-        description: mapping.programOutcome.description
+        description: mapping.programOutcome.description,
+        batch: mapping.programOutcome.batch
       },
       courseOutcome: {
         id: mapping.courseOutcome.id,
@@ -265,32 +333,28 @@ export const getCOPOMappings = async (req: Request, res: Response): Promise<any>
   }
 };
 
-// Validation schema for single mapping update
 const updateMappingSchema = zod.object({
   coId: zod.number().int().positive(),
   poId: zod.number().int().positive(),
   weightage: zod.number().min(0).max(1)
 });
 
-// Validation schema for bulk update request
 const updateCOPOMappingsSchema = zod.object({
   updates: zod.array(updateMappingSchema)
 });
 
 export const updateCOPOMappings = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { courseId } = req.params;
+    const courseId = parseInt(req.params.courseId);
+    const batchId = parseInt(req.query.batchId as string);
     
-    // Validate courseId
-    const parsedCourseId = parseInt(courseId);
-    if (isNaN(parsedCourseId) || parsedCourseId <= 0) {
+    if (isNaN(courseId) || courseId <= 0) {
       return res.status(400).json({
         success: false,
         message: "Invalid course ID"
       });
     }
 
-    // Validate request body
     const result = updateCOPOMappingsSchema.safeParse(req.body);
     if (!result.success) {
       return res.status(400).json({
@@ -300,12 +364,15 @@ export const updateCOPOMappings = async (req: Request, res: Response): Promise<a
       });
     }
 
-    // Verify all COs belong to the specified course
+    // Verify all Units belong to subjects in this course
     const courseOutcomes = await prisma.unit.findMany({
       where: {
         subject: {
-          semester: {
-            courseId: parsedCourseId
+          courseMappings: {
+            some: {
+              courseId,
+              batchId: !isNaN(batchId) ? batchId : undefined
+            }
           }
         }
       },
@@ -318,14 +385,19 @@ export const updateCOPOMappings = async (req: Request, res: Response): Promise<a
     if (invalidCOs.length > 0) {
       return res.status(400).json({
         success: false,
-        message: "Some Course Outcomes do not belong to this course",
+        message: "Some Course Outcomes do not belong to this course/batch",
         invalidCOs: invalidCOs.map(co => co.coId)
       });
     }
 
-    // Verify all POs belong to the specified course
+    // Verify all POs belong to this course and batch
+    const whereClause: any = { courseId };
+    if (!isNaN(batchId)) {
+      whereClause.batchId = batchId;
+    }
+
     const programOutcomes = await prisma.programOutcome.findMany({
-      where: { courseId: parsedCourseId },
+      where: whereClause,
       select: { id: true }
     });
 
@@ -335,17 +407,16 @@ export const updateCOPOMappings = async (req: Request, res: Response): Promise<a
     if (invalidPOs.length > 0) {
       return res.status(400).json({
         success: false,
-        message: "Some Program Outcomes do not belong to this course",
+        message: "Some Program Outcomes do not belong to this course/batch",
         invalidPOs: invalidPOs.map(po => po.poId)
       });
     }
 
-    // Perform updates in a transaction
     const updateResults = await prisma.$transaction(
       result.data.updates.map(update => 
         prisma.cO_PO_Mapping.upsert({
           where: {
-            coId_poId: {  // This will now work with the compound unique constraint
+            coId_poId: {
               coId: update.coId,
               poId: update.poId
             }
