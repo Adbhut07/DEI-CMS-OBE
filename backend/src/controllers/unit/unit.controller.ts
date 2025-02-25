@@ -399,16 +399,35 @@ export const bulkDeleteUnits = async (req: Request, res: Response): Promise<any>
       return res.status(400).json({ success: false, message: "Invalid unit IDs" });
     }
 
+    // Convert unitIds to numbers & filter out NaNs
+    const validUnitIds = unitIds.map((id: any) => parseInt(id, 10)).filter((id: number) => !isNaN(id));
+
+    if (validUnitIds.length === 0) {
+      return res.status(400).json({ success: false, message: "No valid unit IDs provided" });
+    }
+
+    // Check if units exist before deleting
+    const existingUnits = await prisma.unit.findMany({
+      where: { id: { in: validUnitIds } }
+    });
+
+    if (existingUnits.length === 0) {
+      return res.status(404).json({ success: false, message: "No valid units found to delete" });
+    }
+
+    // Delete units
     await prisma.unit.deleteMany({
-      where: { id: { in: unitIds } },
+      where: { id: { in: validUnitIds } }
     });
 
     return res.status(200).json({ success: true, message: "Units deleted successfully" });
+
   } catch (error) {
     console.error("Error in bulkDeleteUnits controller", (error as Error).message);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
+
 
 export const deleteUnit = async (req: Request, res: Response): Promise<any> => {
   try {

@@ -17,9 +17,9 @@ const faculty_route_1 = __importDefault(require("./routes/faculty/faculty.route"
 const enrollment_route_1 = __importDefault(require("./routes/enrollment/enrollment.route"));
 const exam_route_1 = __importDefault(require("./routes/exam/exam.route"));
 const marks_route_1 = __importDefault(require("./routes/marks/marks.route"));
-const semester_route_1 = __importDefault(require("./routes/semester/semester.route"));
 const batch_route_1 = __importDefault(require("./routes/batch/batch.route"));
 const programOutcome_route_1 = __importDefault(require("./routes/programOutcome/programOutcome.route"));
+const course_subject_mapping_route_1 = __importDefault(require("./routes/course/course-subject-mapping.route"));
 const app = (0, express_1.default)();
 const port = process.env.PORT || 5000;
 const corsOptions = {
@@ -38,12 +38,12 @@ app.use('/api/v1/subjects', subject_route_1.default);
 app.use('/api/v1/units', unit_route_1.default);
 // app.use('/api/v1/course-outcomes', courseOutcomeRoutes);
 app.use('/api/v1/batch', batch_route_1.default);
-app.use('/api/v1/semesters', semester_route_1.default);
 app.use('/api/v1/faculty', faculty_route_1.default);
 app.use('/api/v1/enrollments', enrollment_route_1.default);
 app.use('/api/v1/exams', exam_route_1.default);
 app.use('/api/v1/marks', marks_route_1.default);
 app.use('/api/v1/program-outcomes', programOutcome_route_1.default);
+app.use('/api/v1/course-subject-mapping', course_subject_mapping_route_1.default);
 app.get('/', (req, res) => {
     res.send('Hello, world!');
 });

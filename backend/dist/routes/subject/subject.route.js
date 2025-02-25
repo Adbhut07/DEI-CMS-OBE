@@ -3,10 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const subject_controller_1 = require("../../controllers/subject/subject.controller");
 const router = (0, express_1.Router)();
-router.post("/create", subject_controller_1.createSubject);
-router.post("/:courseId/assign-faculty", subject_controller_1.assignFacultyToSubject); // error in this regarding course Id we dont need it
-router.get("/getAll", subject_controller_1.getSubjects); //pass semester id in query for getting subjects of a course
-router.get("/getSubject/:id", subject_controller_1.getSubject);
-router.patch("/:id", subject_controller_1.updateSubject);
-router.delete("/:id", subject_controller_1.deleteSubject);
+router.post('/create', subject_controller_1.createSubject);
+router.get('/getAllSubjects', subject_controller_1.getAllSubjects);
+router.get('/get-all-subjects-details', subject_controller_1.getAllSubjectsDetails);
+router.get('/:subjectId', subject_controller_1.getSubjectById);
+router.put('/:subjectId', subject_controller_1.updateSubject);
+router.delete('/:subjectId', subject_controller_1.deleteSubject);
 exports.default = router;

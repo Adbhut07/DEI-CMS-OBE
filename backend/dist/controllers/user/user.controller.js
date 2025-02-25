@@ -284,7 +284,7 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 enrollments: true,
                 uploadedMarks: true,
                 marksReceived: true,
-                assignedSubjects: true,
+                facultySubjects: true,
                 createdCourses: true,
             },
         });
@@ -308,9 +308,9 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             if (existingUser.marksReceived.length > 0) {
                 yield prisma.marks.deleteMany({ where: { studentId: userId } });
             }
-            // Unassign subjects
-            if (existingUser.assignedSubjects.length > 0) {
-                yield prisma.subject.updateMany({
+            // Unassign faculty from course subjects
+            if (existingUser.facultySubjects.length > 0) {
+                yield prisma.courseSubject.updateMany({
                     where: { facultyId: userId },
                     data: { facultyId: null },
                 });

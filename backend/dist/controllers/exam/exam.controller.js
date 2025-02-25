@@ -16,24 +16,30 @@ exports.deleteExam = exports.updateExam = exports.createExam = exports.getExamBy
 const client_1 = require("@prisma/client");
 const zod_1 = __importDefault(require("zod"));
 const prisma = new client_1.PrismaClient();
+const EXAM_TYPES_WITH_QUESTIONS = [
+    client_1.ExamType.CT1,
+    client_1.ExamType.CT2,
+    client_1.ExamType.ESE
+];
+const INTERNAL_ASSESSMENT_TYPES = [
+    client_1.ExamType.DHA,
+    client_1.ExamType.CA,
+    client_1.ExamType.AA,
+    client_1.ExamType.ATT
+];
+const regularQuestionSchema = zod_1.default.array(zod_1.default.object({
+    text: zod_1.default.string(),
+    marksAllocated: zod_1.default.number().positive(),
+    unitId: zod_1.default.number().int().positive(),
+}));
+// Schema for internal assessment exams
+const internalAssessmentSchema = zod_1.default.object({
+    totalMarks: zod_1.default.number().positive()
+});
 const createExamSchema = zod_1.default.object({
     examType: zod_1.default.nativeEnum(client_1.ExamType),
     subjectId: zod_1.default.number().int().positive(),
-    questions: zod_1.default.array(zod_1.default.object({
-        text: zod_1.default.string(),
-        marksAllocated: zod_1.default.number().positive(),
-        unitId: zod_1.default.number().int().positive(),
-    })),
-});
-const updateExamSchema = zod_1.default.object({
-    examType: zod_1.default.nativeEnum(client_1.ExamType),
-    subjectId: zod_1.default.number().int().positive(),
-    questions: zod_1.default.array(zod_1.default.object({
-        id: zod_1.default.number().optional(),
-        text: zod_1.default.string(),
-        marksAllocated: zod_1.default.number().positive(),
-        unitId: zod_1.default.number().int().positive(),
-    })),
+    questions: zod_1.default.union([regularQuestionSchema, internalAssessmentSchema])
 });
 // Get all exams with course information
 const getExams = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -42,9 +48,10 @@ const getExams = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             include: {
                 subject: {
                     include: {
-                        semester: {
+                        courseMappings: {
                             include: {
-                                course: true
+                                course: true,
+                                batch: true
                             }
                         }
                     }
@@ -84,9 +91,10 @@ const getExamsBySubject = (req, res) => __awaiter(void 0, void 0, void 0, functi
             include: {
                 subject: {
                     include: {
-                        semester: {
+                        courseMappings: {
                             include: {
-                                course: true
+                                course: true,
+                                batch: true
                             }
                         }
                     }
@@ -112,45 +120,6 @@ const getExamsBySubject = (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
 });
 exports.getExamsBySubject = getExamsBySubject;
-// export const getExamsByCourseAndSemester = async (req: Request, res: Response): Promise<any> => {
-//   const { courseId, semesterId } = req.params;
-//   try {
-//     if (!courseId || !semesterId) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "courseId and semesterId are required",
-//       });
-//     }
-//     const exams = await prisma.exam.findMany({
-//       where: {
-//         semester: {
-//           id: Number(semesterId),
-//           courseId: Number(courseId),
-//         },
-//       },
-//       include: {
-//         semester: {
-//           include: {
-//             course: true,
-//           },
-//         },
-//         subject: true, 
-//         questions: true, 
-//       },
-//     });
-//     if (exams.length === 0) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "No exams found for the given course and semester",
-//       });
-//     }
-//     res.json({ success: true, exams });
-//   } catch (error) {
-//     console.error("Error in getExamsByCourseAndSemester controller:", (error as Error).message);
-//     res.status(500).json({ success: false, message: "Internal Server Error" });
-//   }
-// };
-// Get a specific exam by ID with course information
 const getExamById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     try {
@@ -159,9 +128,10 @@ const getExamById = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             include: {
                 subject: {
                     include: {
-                        semester: {
+                        courseMappings: {
                             include: {
-                                course: true
+                                course: true,
+                                batch: true
                             }
                         }
                     }
@@ -188,9 +158,24 @@ exports.getExamById = getExamById;
 const createExam = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { examType, subjectId, questions } = req.body;
     try {
+        const validationResult = createExamSchema.safeParse(req.body);
+        if (!validationResult.success) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid request data",
+                errors: validationResult.error.errors
+            });
+        }
         const subject = yield prisma.subject.findUnique({
             where: { id: subjectId },
-            include: { semester: true },
+            include: {
+                courseMappings: true,
+                units: {
+                    orderBy: {
+                        unitNumber: 'asc'
+                    }
+                }
+            },
         });
         if (!subject) {
             return res.status(404).json({
@@ -198,21 +183,20 @@ const createExam = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 message: "Subject not found.",
             });
         }
-        const { semesterId } = subject;
-        const semester = yield prisma.semester.findUnique({
-            where: { id: semesterId },
-        });
-        if (!semester) {
-            return res.status(404).json({
+        if (subject.courseMappings.length === 0) {
+            return res.status(400).json({
                 success: false,
-                message: "Semester not found.",
+                message: "Subject is not mapped to any course.",
+            });
+        }
+        if (subject.units.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Subject has no units defined.",
             });
         }
         const existingExam = yield prisma.exam.findFirst({
-            where: {
-                examType,
-                subjectId,
-            },
+            where: { examType, subjectId },
         });
         if (existingExam) {
             return res.status(400).json({
@@ -220,37 +204,69 @@ const createExam = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 message: "An exam with this type already exists for this subject.",
             });
         }
-        for (const q of questions) {
-            const unit = yield prisma.unit.findFirst({
-                where: { id: q.unitId, subjectId },
-            });
-            if (!unit) {
-                return res.status(400).json({
-                    success: false,
-                    message: `Unit with ID ${q.unitId} not found or does not belong to the specified subject.`,
-                });
+        let questionsToCreate;
+        if (EXAM_TYPES_WITH_QUESTIONS.includes(examType)) {
+            // For CT1, CT2, ESE - validate and use regular questions
+            for (const q of questions) {
+                const unit = subject.units.find(u => u.id === q.unitId);
+                if (!unit) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Unit with ID ${q.unitId} not found or does not belong to this subject.`,
+                    });
+                }
             }
+            questionsToCreate = questions.map((q) => ({
+                questionText: q.text,
+                marksAllocated: q.marksAllocated,
+                unitId: q.unitId,
+            }));
         }
-        const newExam = yield prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
-            const createdExam = yield tx.exam.create({
-                data: {
-                    examType,
-                    subjectId,
-                    questions: {
-                        create: questions.map((q) => ({
-                            questionText: q.text,
-                            marksAllocated: q.marksAllocated,
-                            unitId: q.unitId,
-                        })),
-                    },
-                },
-                include: {
-                    subject: true,
-                    questions: true,
-                },
+        else if (INTERNAL_ASSESSMENT_TYPES.includes(examType)) {
+            // For internal assessments - create equal distribution across units
+            const totalMarks = questions.totalMarks;
+            const numUnits = subject.units.length;
+            const marksPerUnit = Math.floor(totalMarks / numUnits);
+            const remainingMarks = totalMarks % numUnits;
+            questionsToCreate = subject.units.map((unit, index) => ({
+                questionText: `${examType} assessment for Unit ${unit.unitNumber}`,
+                // Add extra mark to first few units if there are remaining marks
+                marksAllocated: marksPerUnit + (index < remainingMarks ? 1 : 0),
+                unitId: unit.id,
+            }));
+        }
+        else {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid exam type",
             });
-            return createdExam;
-        }));
+        }
+        const newExam = yield prisma.exam.create({
+            data: {
+                examType,
+                subjectId,
+                questions: {
+                    create: questionsToCreate,
+                },
+            },
+            include: {
+                subject: {
+                    include: {
+                        courseMappings: {
+                            include: {
+                                course: true,
+                                batch: true
+                            }
+                        }
+                    }
+                },
+                questions: {
+                    include: {
+                        unit: true
+                    }
+                },
+            },
+        });
         res.status(201).json({
             success: true,
             message: "Exam created successfully.",
@@ -269,7 +285,18 @@ const updateExam = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     try {
         const existingExam = yield prisma.exam.findUnique({
             where: { id: Number(id) },
-            include: { questions: true }
+            include: {
+                questions: true,
+                subject: {
+                    include: {
+                        units: {
+                            orderBy: {
+                                unitNumber: 'asc'
+                            }
+                        }
+                    }
+                }
+            }
         });
         if (!existingExam) {
             return res.status(404).json({
@@ -277,79 +304,97 @@ const updateExam = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 message: "Exam not found"
             });
         }
-        const subject = yield prisma.subject.findUnique({
-            where: { id: subjectId },
-            include: { semester: true }
-        });
-        if (!subject) {
-            return res.status(404).json({
-                success: false,
-                message: "Subject not found.",
-            });
-        }
-        for (const q of questions) {
-            if (!q.id) {
-                const unit = yield prisma.unit.findUnique({
-                    where: {
-                        id: q.unitId,
-                        subjectId: subjectId
-                    },
+        // If exam type is changing between regular and internal, verify it's allowed
+        if (existingExam.examType !== examType) {
+            const wasRegular = EXAM_TYPES_WITH_QUESTIONS.includes(existingExam.examType);
+            const willBeRegular = EXAM_TYPES_WITH_QUESTIONS.includes(examType);
+            if (wasRegular !== willBeRegular) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Cannot change between regular and internal assessment exam types"
                 });
+            }
+        }
+        let questionsToUpdate; //will change later
+        if (EXAM_TYPES_WITH_QUESTIONS.includes(examType)) {
+            // Handle regular questions update
+            const existingQuestions = questions.filter((q) => q.id);
+            const newQuestions = questions.filter((q) => !q.id);
+            // Validate all units belong to subject
+            for (const q of [...existingQuestions, ...newQuestions]) {
+                const unit = existingExam.subject.units.find(u => u.id === q.unitId);
                 if (!unit) {
                     return res.status(400).json({
                         success: false,
-                        message: `Unit with ID ${q.unitId} not found or does not belong to the specified subject.`,
+                        message: `Unit with ID ${q.unitId} not found or does not belong to this subject.`,
                     });
                 }
             }
-        }
-        const duplicateExam = yield prisma.exam.findFirst({
-            where: {
-                examType,
-                subjectId,
-                NOT: {
-                    id: Number(id)
-                }
-            },
-        });
-        if (duplicateExam) {
-            return res.status(400).json({
-                success: false,
-                message: "An exam with the same type already exists for this subject.",
-            });
-        }
-        const existingQuestions = questions.filter((q) => q.id);
-        const newQuestions = questions.filter((q) => !q.id);
-        const updatedExam = yield prisma.exam.update({
-            where: { id: Number(id) },
-            data: {
-                examType,
-                subjectId,
-                questions: {
-                    update: existingQuestions.map((q) => ({
-                        where: { id: q.id },
-                        data: {
-                            questionText: q.text,
-                            marksAllocated: q.marksAllocated,
-                            unitId: q.unitId,
-                        }
-                    })),
-                    create: newQuestions.map((q) => ({
+            questionsToUpdate = {
+                update: existingQuestions.map((q) => ({
+                    where: { id: q.id },
+                    data: {
                         questionText: q.text,
                         marksAllocated: q.marksAllocated,
                         unitId: q.unitId,
-                    }))
-                }
-            },
-            include: {
-                subject: {
-                    include: {
-                        semester: true
                     }
+                })),
+                create: newQuestions.map((q) => ({
+                    questionText: q.text,
+                    marksAllocated: q.marksAllocated,
+                    unitId: q.unitId,
+                }))
+            };
+        }
+        else if (INTERNAL_ASSESSMENT_TYPES.includes(examType)) {
+            // Update internal assessment marks distribution
+            const totalMarks = questions.totalMarks;
+            const numUnits = existingExam.subject.units.length;
+            const marksPerUnit = Math.floor(totalMarks / numUnits);
+            const remainingMarks = totalMarks % numUnits;
+            // Create update operations for existing questions or create new ones if needed
+            questionsToUpdate = {
+                deleteMany: {
+                    examId: Number(id)
                 },
-                questions: true,
-            },
-        });
+                create: existingExam.subject.units.map((unit, index) => ({
+                    questionText: `${examType} assessment for Unit ${unit.unitNumber}`,
+                    marksAllocated: marksPerUnit + (index < remainingMarks ? 1 : 0),
+                    unitId: unit.id,
+                }))
+            };
+        }
+        const updatedExam = yield prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
+            // Delete related marks if they exist
+            yield tx.marks.deleteMany({
+                where: { examId: Number(id) }
+            });
+            return tx.exam.update({
+                where: { id: Number(id) },
+                data: {
+                    examType,
+                    subjectId,
+                    questions: questionsToUpdate
+                },
+                include: {
+                    subject: {
+                        include: {
+                            courseMappings: {
+                                include: {
+                                    course: true,
+                                    batch: true
+                                }
+                            }
+                        }
+                    },
+                    questions: {
+                        include: {
+                            unit: true
+                        }
+                    },
+                },
+            });
+        }));
         res.json({
             success: true,
             data: updatedExam

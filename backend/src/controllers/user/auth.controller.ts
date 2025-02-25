@@ -60,7 +60,7 @@ export const signup = async (req: Request, res: Response): Promise<any> => {
         email,
         password: hashedPassword,
         role,
-        profileDetails: profileDetails || {}, // Save profile details if provided
+        profileDetails: profileDetails || {}, 
       },
       select: {
         id: true,

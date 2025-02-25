@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.reorderUnits = exports.bulkDeleteUnits = exports.getUnitsByCourse = exports.getUnitsBySemester = exports.bulkCreateUnits = exports.getAllUnits = exports.getUnit = exports.deleteUnit = exports.updateUnit = exports.createUnit = void 0;
+exports.reorderUnits = exports.deleteUnit = exports.bulkDeleteUnits = exports.getUnitsByCourse = exports.bulkCreateUnits = exports.getAllUnits = exports.getUnit = exports.updateUnit = exports.createUnit = void 0;
 const client_1 = require("@prisma/client");
 const zod_1 = __importDefault(require("zod"));
 const prisma = new client_1.PrismaClient();
@@ -26,6 +26,11 @@ const updateUnitSchema = zod_1.default.object({
     subjectId: zod_1.default.number().int().positive("Subject ID must be a positive integer"),
     description: zod_1.default.string().optional(),
 });
+const bulkCreateUnitsSchema = zod_1.default.array(zod_1.default.object({
+    unitNumber: zod_1.default.number().min(1, "Unit number must be greater than 0"),
+    subjectId: zod_1.default.number().int().positive("Subject ID must be a positive integer"),
+    description: zod_1.default.string().optional(),
+}));
 const createUnit = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const result = createUnitSchema.safeParse(req.body);
@@ -40,7 +45,7 @@ const createUnit = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         const subject = yield prisma.subject.findUnique({
             where: { id: subjectId },
             include: {
-                semester: {
+                courseMappings: {
                     include: {
                         course: true,
                     },
@@ -53,10 +58,10 @@ const createUnit = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 message: "Subject not found",
             });
         }
-        if (!subject.semester) {
+        if (subject.courseMappings.length === 0) {
             return res.status(400).json({
                 success: false,
-                message: "Subject is not associated with any semester",
+                message: "Subject is not associated with any course",
             });
         }
         const unit = yield prisma.unit.create({
@@ -66,9 +71,26 @@ const createUnit = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 description,
             },
             include: {
-                subject: true,
-                coMappings: true,
-                questions: true,
+                subject: {
+                    include: {
+                        courseMappings: {
+                            include: {
+                                course: true,
+                                faculty: true,
+                            },
+                        },
+                    },
+                },
+                coMappings: {
+                    include: {
+                        programOutcome: true,
+                    },
+                },
+                questions: {
+                    include: {
+                        exam: true,
+                    },
+                },
                 coAttainments: true,
             },
         });
@@ -111,7 +133,7 @@ const updateUnit = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         const subject = yield prisma.subject.findUnique({
             where: { id: subjectId },
             include: {
-                semester: {
+                courseMappings: {
                     include: {
                         course: true,
                     },
@@ -124,10 +146,10 @@ const updateUnit = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 message: "Subject not found",
             });
         }
-        if (!subject.semester) {
+        if (subject.courseMappings.length === 0) {
             return res.status(400).json({
                 success: false,
-                message: "The subject is not associated with a valid semester",
+                message: "Subject is not associated with any course",
             });
         }
         const updatedUnit = yield prisma.unit.update({
@@ -138,9 +160,26 @@ const updateUnit = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 description,
             },
             include: {
-                subject: true,
-                coMappings: true,
-                questions: true,
+                subject: {
+                    include: {
+                        courseMappings: {
+                            include: {
+                                course: true,
+                                faculty: true,
+                            },
+                        },
+                    },
+                },
+                coMappings: {
+                    include: {
+                        programOutcome: true,
+                    },
+                },
+                questions: {
+                    include: {
+                        exam: true,
+                    },
+                },
                 coAttainments: true,
             },
         });
@@ -159,44 +198,6 @@ const updateUnit = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.updateUnit = updateUnit;
-const deleteUnit = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { unitId } = req.params;
-        const unit = yield prisma.unit.findUnique({
-            where: { id: Number(unitId) },
-            include: {
-                coMappings: true,
-                questions: true,
-                coAttainments: true,
-            }
-        });
-        if (!unit) {
-            return res.status(404).json({
-                success: false,
-                message: "Unit not found",
-            });
-        }
-        // Delete related records first (if cascade delete is not set up)
-        yield prisma.$transaction([
-            prisma.cO_PO_Mapping.deleteMany({ where: { coId: Number(unitId) } }),
-            prisma.cO_Attainment.deleteMany({ where: { coId: Number(unitId) } }),
-            prisma.question.deleteMany({ where: { unitId: Number(unitId) } }),
-            prisma.unit.delete({ where: { id: Number(unitId) } }),
-        ]);
-        return res.status(200).json({
-            success: true,
-            message: "Unit and related records deleted successfully",
-        });
-    }
-    catch (error) {
-        console.error("Error in deleteUnit controller", error.message);
-        return res.status(500).json({
-            success: false,
-            message: "Internal Server Error",
-        });
-    }
-});
-exports.deleteUnit = deleteUnit;
 const getUnit = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { unitId } = req.params;
@@ -205,9 +206,11 @@ const getUnit = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             include: {
                 subject: {
                     include: {
-                        semester: {
+                        courseMappings: {
                             include: {
                                 course: true,
+                                faculty: true,
+                                batch: true,
                             },
                         },
                     },
@@ -222,6 +225,7 @@ const getUnit = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                         exam: true,
                     },
                 },
+                coAttainments: true,
             },
         });
         if (!unit) {
@@ -256,7 +260,7 @@ const getAllUnits = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         const subject = yield prisma.subject.findUnique({
             where: { id: Number(subjectId) },
             include: {
-                semester: true,
+                courseMappings: true,
             },
         });
         if (!subject) {
@@ -272,7 +276,13 @@ const getAllUnits = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             include: {
                 subject: {
                     include: {
-                        semester: true,
+                        courseMappings: {
+                            include: {
+                                course: true,
+                                faculty: true,
+                                batch: true,
+                            },
+                        },
                     },
                 },
                 coMappings: {
@@ -285,17 +295,12 @@ const getAllUnits = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                         exam: true,
                     },
                 },
+                coAttainments: true,
             },
             orderBy: {
                 unitNumber: 'asc',
             },
         });
-        if (units.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "No units found for this subject",
-            });
-        }
         return res.status(200).json({
             success: true,
             data: units,
@@ -311,12 +316,6 @@ const getAllUnits = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.getAllUnits = getAllUnits;
-const bulkCreateUnitsSchema = zod_1.default.array(zod_1.default.object({
-    unitNumber: zod_1.default.number().min(1, "Unit number must be greater than 0"),
-    subjectId: zod_1.default.number().int().positive("Subject ID must be a positive integer"),
-    description: zod_1.default.string().optional(),
-}));
-// ✅ Bulk Create Units
 const bulkCreateUnits = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const result = bulkCreateUnitsSchema.safeParse(req.body);
@@ -345,39 +344,32 @@ const bulkCreateUnits = (req, res) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.bulkCreateUnits = bulkCreateUnits;
-// ✅ Get Units by Semester
-const getUnitsBySemester = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { semesterId } = req.params;
-        const units = yield prisma.unit.findMany({
-            where: {
-                subject: {
-                    semesterId: Number(semesterId),
-                },
-            },
-            include: { subject: true },
-        });
-        return res.status(200).json({ success: true, data: units });
-    }
-    catch (error) {
-        console.error("Error in getUnitsBySemester controller", error.message);
-        return res.status(500).json({ success: false, message: "Internal Server Error" });
-    }
-});
-exports.getUnitsBySemester = getUnitsBySemester;
-// ✅ Get Units by Course
 const getUnitsByCourse = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { courseId } = req.params;
         const units = yield prisma.unit.findMany({
             where: {
                 subject: {
-                    semester: {
-                        courseId: Number(courseId),
+                    courseMappings: {
+                        some: {
+                            courseId: Number(courseId),
+                        },
                     },
                 },
             },
-            include: { subject: true },
+            include: {
+                subject: {
+                    include: {
+                        courseMappings: {
+                            include: {
+                                course: true,
+                                faculty: true,
+                                batch: true,
+                            },
+                        },
+                    },
+                },
+            },
         });
         return res.status(200).json({ success: true, data: units });
     }
@@ -387,15 +379,27 @@ const getUnitsByCourse = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.getUnitsByCourse = getUnitsByCourse;
-// ✅ Bulk Delete Units
 const bulkDeleteUnits = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { unitIds } = req.body;
         if (!Array.isArray(unitIds) || unitIds.length === 0) {
             return res.status(400).json({ success: false, message: "Invalid unit IDs" });
         }
+        // Convert unitIds to numbers & filter out NaNs
+        const validUnitIds = unitIds.map((id) => parseInt(id, 10)).filter((id) => !isNaN(id));
+        if (validUnitIds.length === 0) {
+            return res.status(400).json({ success: false, message: "No valid unit IDs provided" });
+        }
+        // Check if units exist before deleting
+        const existingUnits = yield prisma.unit.findMany({
+            where: { id: { in: validUnitIds } }
+        });
+        if (existingUnits.length === 0) {
+            return res.status(404).json({ success: false, message: "No valid units found to delete" });
+        }
+        // Delete units
         yield prisma.unit.deleteMany({
-            where: { id: { in: unitIds } },
+            where: { id: { in: validUnitIds } }
         });
         return res.status(200).json({ success: true, message: "Units deleted successfully" });
     }
@@ -405,7 +409,56 @@ const bulkDeleteUnits = (req, res) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.bulkDeleteUnits = bulkDeleteUnits;
-// ✅ Reorder Units
+const deleteUnit = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { unitId } = req.params;
+        const unit = yield prisma.unit.findUnique({
+            where: { id: Number(unitId) },
+            include: {
+                coMappings: true,
+                questions: true,
+                coAttainments: true,
+            }
+        });
+        if (!unit) {
+            return res.status(404).json({
+                success: false,
+                message: "Unit not found",
+            });
+        }
+        // Delete related records in a transaction to maintain data consistency
+        yield prisma.$transaction([
+            // Delete CO-PO mappings
+            prisma.cO_PO_Mapping.deleteMany({
+                where: { coId: Number(unitId) }
+            }),
+            // Delete CO attainments
+            prisma.cO_Attainment.deleteMany({
+                where: { coId: Number(unitId) }
+            }),
+            // Delete questions
+            prisma.question.deleteMany({
+                where: { unitId: Number(unitId) }
+            }),
+            // Finally delete the unit
+            prisma.unit.delete({
+                where: { id: Number(unitId) }
+            })
+        ]);
+        return res.status(200).json({
+            success: true,
+            message: "Unit and related records deleted successfully",
+        });
+    }
+    catch (error) {
+        console.error("Error in deleteUnit controller", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+        });
+    }
+});
+exports.deleteUnit = deleteUnit;
 const reorderUnits = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { unitOrders } = req.body;

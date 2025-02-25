@@ -291,7 +291,7 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
         enrollments: true,
         uploadedMarks: true,
         marksReceived: true,
-        assignedSubjects: true,
+        facultySubjects: true,
         createdCourses: true,
       },
     });
@@ -320,9 +320,9 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
         await prisma.marks.deleteMany({ where: { studentId: userId } });
       }
 
-      // Unassign subjects
-      if (existingUser.assignedSubjects.length > 0) {
-        await prisma.subject.updateMany({
+      // Unassign faculty from course subjects
+      if (existingUser.facultySubjects.length > 0) {
+        await prisma.courseSubject.updateMany({
           where: { facultyId: userId },
           data: { facultyId: null },
         });

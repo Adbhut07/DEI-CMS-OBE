@@ -64,7 +64,7 @@ const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 email,
                 password: hashedPassword,
                 role,
-                profileDetails: profileDetails || {}, // Save profile details if provided
+                profileDetails: profileDetails || {},
             },
             select: {
                 id: true,
