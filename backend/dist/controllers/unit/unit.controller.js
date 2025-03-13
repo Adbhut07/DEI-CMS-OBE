@@ -58,10 +58,16 @@ const createUnit = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 message: "Subject not found",
             });
         }
-        if (subject.courseMappings.length === 0) {
-            return res.status(400).json({
+        const existingUnit = yield prisma.unit.findFirst({
+            where: {
+                unitNumber,
+                subjectId,
+            },
+        });
+        if (existingUnit) {
+            return res.status(409).json({
                 success: false,
-                message: "Subject is not associated with any course",
+                message: `Unit number ${unitNumber} already exists for this subject`,
             });
         }
         const unit = yield prisma.unit.create({
@@ -146,10 +152,19 @@ const updateUnit = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 message: "Subject not found",
             });
         }
-        if (subject.courseMappings.length === 0) {
-            return res.status(400).json({
+        const existingUnit = yield prisma.unit.findFirst({
+            where: {
+                unitNumber,
+                subjectId,
+                id: {
+                    not: Number(unitId)
+                }
+            },
+        });
+        if (existingUnit) {
+            return res.status(409).json({
                 success: false,
-                message: "Subject is not associated with any course",
+                message: `Unit number ${unitNumber} already exists for this subject`,
             });
         }
         const updatedUnit = yield prisma.unit.update({
@@ -326,8 +341,41 @@ const bulkCreateUnits = (req, res) => __awaiter(void 0, void 0, void 0, function
                 errors: result.error.format(),
             });
         }
+        const unitsToCreate = result.data;
+        // Check for duplicate unit numbers within the same subject in the request
+        const duplicatesInRequest = findDuplicatesInBulkCreate(unitsToCreate);
+        if (duplicatesInRequest.length > 0) {
+            return res.status(409).json({
+                success: false,
+                message: "Duplicate unit numbers detected in request",
+                duplicates: duplicatesInRequest,
+            });
+        }
+        // Check against existing units in the database
+        const existingConflicts = [];
+        for (const unit of unitsToCreate) {
+            const existingUnit = yield prisma.unit.findFirst({
+                where: {
+                    unitNumber: unit.unitNumber,
+                    subjectId: unit.subjectId,
+                },
+            });
+            if (existingUnit) {
+                existingConflicts.push({
+                    subjectId: unit.subjectId,
+                    unitNumber: unit.unitNumber
+                });
+            }
+        }
+        if (existingConflicts.length > 0) {
+            return res.status(409).json({
+                success: false,
+                message: "Some units already exist with the same unit number for the subject",
+                conflicts: existingConflicts,
+            });
+        }
         const createdUnits = yield prisma.unit.createMany({
-            data: result.data,
+            data: unitsToCreate,
         });
         return res.status(201).json({
             success: true,
@@ -344,6 +392,20 @@ const bulkCreateUnits = (req, res) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.bulkCreateUnits = bulkCreateUnits;
+function findDuplicatesInBulkCreate(units) {
+    const uniqueKeys = new Map();
+    const duplicates = [];
+    for (const unit of units) {
+        const key = `${unit.subjectId}-${unit.unitNumber}`;
+        if (uniqueKeys.has(key)) {
+            duplicates.push(unit);
+        }
+        else {
+            uniqueKeys.set(key, unit);
+        }
+    }
+    return duplicates;
+}
 const getUnitsByCourse = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { courseId } = req.params;
@@ -464,6 +526,37 @@ const reorderUnits = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         const { unitOrders } = req.body;
         if (!Array.isArray(unitOrders) || unitOrders.length === 0) {
             return res.status(400).json({ success: false, message: "Invalid unit order data" });
+        }
+        // Check for duplicate unit numbers after reordering
+        const unitIds = unitOrders.map(order => order.unitId);
+        // Get all units to be reordered
+        const unitsToUpdate = yield prisma.unit.findMany({
+            where: { id: { in: unitIds } }
+        });
+        // Group units by subject ID to ensure we don't create duplicates within the same subject
+        const unitsBySubject = new Map();
+        for (const unit of unitsToUpdate) {
+            if (!unitsBySubject.has(unit.subjectId)) {
+                unitsBySubject.set(unit.subjectId, new Set());
+            }
+        }
+        // Check for potential duplicates after reordering
+        for (const order of unitOrders) {
+            const unit = unitsToUpdate.find(u => u.id === order.unitId);
+            if (!unit)
+                continue;
+            const subjectUnits = unitsBySubject.get(unit.subjectId);
+            if (subjectUnits.has(order.newOrder)) {
+                return res.status(409).json({
+                    success: false,
+                    message: "Reordering would create duplicate unit numbers within the same subject",
+                    conflict: {
+                        subjectId: unit.subjectId,
+                        unitNumber: order.newOrder
+                    }
+                });
+            }
+            subjectUnits.add(order.newOrder);
         }
         const updatePromises = unitOrders.map(({ unitId, newOrder }) => prisma.unit.update({
             where: { id: unitId },

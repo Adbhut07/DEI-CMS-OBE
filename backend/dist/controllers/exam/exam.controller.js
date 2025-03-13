@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteExam = exports.updateExam = exports.createExam = exports.getExamById = exports.getExamsBySubject = exports.getExams = void 0;
+exports.deleteExam = exports.updateExam = exports.createExam = exports.getExamById = exports.getOnlyExamsBySubject = exports.getExamsBySubject = exports.getExams = void 0;
 const client_1 = require("@prisma/client");
 const zod_1 = __importDefault(require("zod"));
 const prisma = new client_1.PrismaClient();
@@ -120,6 +120,49 @@ const getExamsBySubject = (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
 });
 exports.getExamsBySubject = getExamsBySubject;
+//************************** */
+const getOnlyExamsBySubject = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { subjectId } = req.params;
+    try {
+        const subject = yield prisma.subject.findUnique({
+            where: { id: Number(subjectId) }
+        });
+        if (!subject) {
+            return res.status(404).json({
+                success: false,
+                message: "Subject not found"
+            });
+        }
+        const exams = yield prisma.exam.findMany({
+            where: {
+                subjectId: Number(subjectId),
+            },
+            include: {
+                // subject: {
+                //   include: {
+                //     courseMappings: {
+                //       include: {
+                //         course: true,
+                //         batch: true
+                //       }
+                //     }
+                //   }
+                // },
+                questions: true,
+            },
+        });
+        return res.json({
+            success: true,
+            data: exams,
+            message: exams.length === 0 ? "No exams found for this subject" : undefined
+        });
+    }
+    catch (error) {
+        console.error("Error in getExamsBySubject controller:", error.message);
+        res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+});
+exports.getOnlyExamsBySubject = getOnlyExamsBySubject;
 const getExamById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     try {

@@ -43,7 +43,16 @@ export const createCourse = async (req: Request, res: Response): Promise<any> =>
 
 export const getAllCourses = async (_req: Request, res: Response): Promise<any> => {
   try {
-    const courses = await prisma.course.findMany({ include: { createdBy: true } });
+    const courses = await prisma.course.findMany({ 
+      include: { 
+        createdBy: true,
+        subjects: {
+          include: {
+            subject: true
+          }
+        }
+      }
+    });
     return res.status(200).json({ success: true, data: courses });
   } catch (error) {
     console.error("Error fetching courses:", (error as Error).message);

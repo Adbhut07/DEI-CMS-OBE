@@ -9,6 +9,7 @@ const router = express_1.default.Router();
 router.get('/', exam_controller_1.getExams);
 router.get('/:id', exam_controller_1.getExamById);
 router.get('/subject/:subjectId', exam_controller_1.getExamsBySubject);
+router.get('/getExamsBySubject/:subjectId', exam_controller_1.getOnlyExamsBySubject);
 router.post('/', exam_controller_1.createExam);
 router.put('/:id', exam_controller_1.updateExam);
 router.delete('/:id', exam_controller_1.deleteExam);

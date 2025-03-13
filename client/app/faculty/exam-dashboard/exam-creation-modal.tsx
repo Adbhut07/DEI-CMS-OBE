@@ -9,26 +9,42 @@ import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
-interface Subject {
+interface SubjectDetail {
   id: number
   subjectName: string
-  semesterId: number
-  semester: {
+  subjectCode: string
+  units: {
     id: number
-    name: string
-  }
-}
-
-interface Unit {
-  id: number
-  unitNumber: number
-  description: string
+    unitNumber: number
+    description: string
+    subjectId: number
+    attainment: number
+    createdAt: string
+    updatedAt: string
+  }[]
+  courseMappings: {
+    id: number
+    courseId: number
+    subjectId: number
+    semester: number
+    facultyId: number
+    batchId: number
+    course: {
+      id: number
+      courseName: string
+    }
+    faculty: {
+      id: number
+      name: string
+      email: string
+      role: string
+    }
+  }[]
 }
 
 interface ExamForm {
   examType: string
   subjectId: number
-  semesterId: number
   questions: {
     text: string
     marksAllocated: number
@@ -36,14 +52,25 @@ interface ExamForm {
   }[]
 }
 
+interface SubjectProps {
+  id: number
+  name: string
+  code: string
+  semester: number
+  courseId: number
+  courseName: string
+  batchId: number
+  batchYear: number
+}
+
 interface ExamCreationModalProps {
   isOpen: boolean
   onClose: () => void
-  subject: Subject
+  subject: SubjectProps
 }
 
 export function ExamCreationModal({ isOpen, onClose, subject }: ExamCreationModalProps) {
-  const [units, setUnits] = useState<Unit[]>([])
+  const [subjectDetail, setSubjectDetail] = useState<SubjectDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -51,7 +78,6 @@ export function ExamCreationModal({ isOpen, onClose, subject }: ExamCreationModa
     defaultValues: {
       examType: "",
       subjectId: subject.id,
-      semesterId: subject.semesterId,
       questions: [{ text: "", marksAllocated: 0, unitId: 0 }],
     },
   })
@@ -64,16 +90,24 @@ export function ExamCreationModal({ isOpen, onClose, subject }: ExamCreationModa
   useEffect(() => {
     if (isOpen) {
       fetchSubjectDetails(subject.id)
+      // Reset form with new subject ID when modal opens
+      reset({
+        examType: "",
+        subjectId: subject.id,
+        questions: [{ text: "", marksAllocated: 0, unitId: 0 }],
+      })
     }
-  }, [isOpen, subject.id])
+  }, [isOpen, subject.id, reset])
 
   const fetchSubjectDetails = async (subjectId: number) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/subjects/getSubject/${subjectId}`)
+      const response = await fetch(`http://localhost:8000/api/v1/subjects/${subjectId}`, {
+        credentials: "include",
+      })
       if (!response.ok) throw new Error("Failed to fetch subject details")
       const result = await response.json()
       if (result.success && result.data) {
-        setUnits(result.data.units)
+        setSubjectDetail(result.data)
       } else {
         throw new Error("Invalid data format for subject details")
       }
@@ -91,6 +125,7 @@ export function ExamCreationModal({ isOpen, onClose, subject }: ExamCreationModa
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify(data),
       })
       if (!response.ok) throw new Error("Failed to create exam")
@@ -105,8 +140,8 @@ export function ExamCreationModal({ isOpen, onClose, subject }: ExamCreationModa
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[525px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Exam</DialogTitle>
         </DialogHeader>
@@ -125,23 +160,56 @@ export function ExamCreationModal({ isOpen, onClose, subject }: ExamCreationModa
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="subject" className="text-right">
+                Subject
+              </Label>
+              <Input 
+                id="subject" 
+                className="col-span-3" 
+                disabled 
+                value={`${subject.name} (${subject.code})`} 
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="course" className="text-right">
+                Course
+              </Label>
+              <Input 
+                id="course" 
+                className="col-span-3" 
+                disabled 
+                value={subject.courseName} 
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="semester" className="text-right">
                 Semester
               </Label>
-              <Input id="semester" className="col-span-3" disabled value={subject.semester.name} />
+              <Input 
+                id="semester" 
+                className="col-span-3" 
+                disabled 
+                value={`Semester ${subject.semester}`} 
+              />
             </div>
+            <Input 
+              type="hidden" 
+              {...register("subjectId", { required: true, valueAsNumber: true })} 
+              value={subject.id}
+            />
           </div>
 
           <div className="space-y-4">
+            <h3 className="font-medium text-lg">Questions</h3>
             {fields.map((field, index) => (
-              <div key={field.id} className="space-y-2">
+              <div key={field.id} className="p-3 border rounded space-y-3">
                 <Label htmlFor={`questions.${index}.text`}>Question {index + 1}</Label>
                 <Input
                   id={`questions.${index}.text`}
                   {...register(`questions.${index}.text`, { required: true })}
                   placeholder="Enter question text"
                 />
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor={`questions.${index}.marksAllocated`}>Marks</Label>
                     <Input
@@ -158,16 +226,22 @@ export function ExamCreationModal({ isOpen, onClose, subject }: ExamCreationModa
                         <SelectValue placeholder="Select a unit" />
                       </SelectTrigger>
                       <SelectContent>
-                        {units.map((unit) => (
+                        {subjectDetail?.units.map((unit) => (
                           <SelectItem key={unit.id} value={unit.id.toString()}>
-                            {unit.unitNumber} - {unit.description}
+                            Unit {unit.unitNumber} - {unit.description}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
-                <Button type="button" variant="destructive" onClick={() => remove(index)}>
+                <Button 
+                  type="button" 
+                  variant="destructive" 
+                  onClick={() => fields.length > 1 && remove(index)}
+                  disabled={fields.length <= 1}
+                  size="sm"
+                >
                   Remove Question
                 </Button>
               </div>
@@ -177,7 +251,7 @@ export function ExamCreationModal({ isOpen, onClose, subject }: ExamCreationModa
             </Button>
           </div>
 
-          <div className="mt-4 flex justify-end space-x-2">
+          <div className="mt-6 flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
@@ -197,4 +271,3 @@ export function ExamCreationModal({ isOpen, onClose, subject }: ExamCreationModa
     </Dialog>
   )
 }
-

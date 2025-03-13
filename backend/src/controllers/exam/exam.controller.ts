@@ -117,6 +117,53 @@ export const getExamsBySubject = async (req: Request, res: Response): Promise<an
   }
 };
 
+
+//************************** */
+
+export const getOnlyExamsBySubject = async (req: Request, res: Response): Promise<any> => {
+  const { subjectId } = req.params;
+  try {
+    const subject = await prisma.subject.findUnique({
+      where: { id: Number(subjectId) }
+    });
+
+    if (!subject) {
+      return res.status(404).json({
+        success: false,
+        message: "Subject not found"
+      });
+    }
+
+    const exams = await prisma.exam.findMany({
+      where: {
+        subjectId: Number(subjectId),
+      },
+      include: {
+        // subject: {
+        //   include: {
+        //     courseMappings: {
+        //       include: {
+        //         course: true,
+        //         batch: true
+        //       }
+        //     }
+        //   }
+        // },
+        questions: true,
+      },
+    });
+    
+    return res.json({
+      success: true,
+      data: exams,
+      message: exams.length === 0 ? "No exams found for this subject" : undefined
+    });
+  } catch (error) {
+    console.error("Error in getExamsBySubject controller:", (error as Error).message);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
 export const getExamById = async (req: Request, res: Response): Promise<any> => {
   const { id } = req.params;
   try {

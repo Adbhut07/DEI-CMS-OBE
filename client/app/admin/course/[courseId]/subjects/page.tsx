@@ -1,251 +1,3 @@
-// 'use client'
-
-// import { useState, useEffect } from 'react'
-// import { useParams } from 'next/navigation'
-// import { Button } from "@/components/ui/button"
-// import { Input } from "@/components/ui/input"
-// import {
-//   Table,
-//   TableBody,
-//   TableCell,
-//   TableHead,
-//   TableHeader,
-//   TableRow,
-// } from "@/components/ui/table"
-// import { PlusCircle, Edit, Trash2 } from 'lucide-react'
-// import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
-// // Assume we have a list of faculty members
-// const facultyMembers = [
-//   { id: 1, name: 'Dr. John Doe' },
-//   { id: 2, name: 'Prof. Jane Smith' },
-//   { id: 3, name: 'Dr. Bob Johnson' },
-// ]
-
-// interface Subject {
-//   id: string
-//   name: string
-//   facultyId: number
-//   units: { unitNumber: number; description: string }[]
-// }
-
-// interface EditSubjectModalProps {
-//   isOpen: boolean
-//   onClose: () => void
-//   onSave: (subject: Subject) => void
-//   subject?: Subject
-// }
-
-// export default function SubjectsPage() {
-//   const params = useParams()
-//   const courseId = params.courseId as string
-//   const [subjects, setSubjects] = useState<Subject[]>([])
-//   const [isModalOpen, setIsModalOpen] = useState(false)
-//   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null)
-
-//   useEffect(() => {
-//     // Fetch subjects for the course
-//     // This is where you'd typically make an API call
-//     setSubjects([
-//       { id: '1', name: 'Programming Basics', facultyId: 1, units: [{ unitNumber: 1, description: 'Introduction to Programming' }] },
-//       { id: '2', name: 'Data Structures', facultyId: 2, units: [{ unitNumber: 1, description: 'Arrays and Linked Lists' }] },
-//     ])
-//   }, [courseId])
-
-//   const handleAddSubject = () => {
-//     setSelectedSubject(null)
-//     setIsModalOpen(true)
-//   }
-
-//   const handleEditSubject = (subject: Subject) => {
-//     setSelectedSubject(subject)
-//     setIsModalOpen(true)
-//   }
-
-//   const handleDeleteSubject = (id: string) => {
-//     if (window.confirm('Are you sure you want to delete this subject?')) {
-//       setSubjects(subjects.filter(subject => subject.id !== id))
-//     }
-//   }
-
-//   const handleSaveSubject = (updatedSubject: Subject) => {
-//     if (selectedSubject) {
-//       setSubjects(subjects.map(subject => subject.id === updatedSubject.id ? updatedSubject : subject))
-//     } else {
-//       setSubjects([...subjects, { ...updatedSubject, id: (subjects.length + 1).toString() }])
-//     }
-//     setIsModalOpen(false)
-//   }
-
-//   return (
-//     <div className="container mx-auto p-4">
-//       <h1 className="text-3xl font-bold mb-6">Manage Subjects</h1>
-      
-//       <Button onClick={handleAddSubject} className="mb-4">
-//         <PlusCircle className="mr-2 h-4 w-4" /> Add Subject
-//       </Button>
-
-//       <Table>
-//         <TableHeader>
-//           <TableRow>
-//             <TableHead>Subject Name</TableHead>
-//             <TableHead>Faculty</TableHead>
-//             <TableHead>Units</TableHead>
-//             <TableHead>Actions</TableHead>
-//           </TableRow>
-//         </TableHeader>
-//         <TableBody>
-//           {subjects.map((subject) => (
-//             <TableRow key={subject.id}>
-//               <TableCell>{subject.name}</TableCell>
-//               <TableCell>{facultyMembers.find(f => f.id === subject.facultyId)?.name}</TableCell>
-//               <TableCell>{subject.units.length}</TableCell>
-//               <TableCell>
-//                 <div className="flex space-x-2">
-//                   <Button variant="outline" size="sm" onClick={() => handleEditSubject(subject)}>
-//                     <Edit className="h-4 w-4 mr-1" /> Edit
-//                   </Button>
-//                   <Button variant="destructive" size="sm" onClick={() => handleDeleteSubject(subject.id)}>
-//                     <Trash2 className="h-4 w-4 mr-1" /> Delete
-//                   </Button>
-//                 </div>
-//               </TableCell>
-//             </TableRow>
-//           ))}
-//         </TableBody>
-//       </Table>
-
-//       <EditSubjectModal
-//         isOpen={isModalOpen}
-//         onClose={() => setIsModalOpen(false)}
-//         onSave={handleSaveSubject}
-//         subject={selectedSubject || undefined}
-//       />
-//     </div>
-//   )
-// }
-
-// function EditSubjectModal({ isOpen, onClose, onSave, subject }: EditSubjectModalProps) {
-//   const [formData, setFormData] = useState<Subject>({
-//     id: '',
-//     name: '',
-//     facultyId: 0,
-//     units: []
-//   })
-
-//   useEffect(() => {
-//     if (subject) {
-//       setFormData(subject)
-//     } else {
-//       setFormData({
-//         id: '',
-//         name: '',
-//         facultyId: 0,
-//         units: []
-//       })
-//     }
-//   }, [subject])
-
-//   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     const { name, value } = e.target
-//     setFormData(prev => ({ ...prev, [name]: value }))
-//   }
-
-//   const handleFacultyChange = (value: string) => {
-//     setFormData(prev => ({ ...prev, facultyId: parseInt(value) }))
-//   }
-
-//   const handleAddUnit = () => {
-//     setFormData(prev => ({
-//       ...prev,
-//       units: [...prev.units, { unitNumber: prev.units.length + 1, description: '' }]
-//     }))
-//   }
-
-//   const handleUnitChange = (index: number, field: 'unitNumber' | 'description', value: string) => {
-//     setFormData(prev => ({
-//       ...prev,
-//       units: prev.units.map((unit, i) => 
-//         i === index ? { ...unit, [field]: field === 'unitNumber' ? parseInt(value) : value } : unit
-//       )
-//     }))
-//   }
-
-//   const handleSubmit = (e: React.FormEvent) => {
-//     e.preventDefault()
-//     onSave(formData)
-//   }
-
-//   return (
-//     <Dialog open={isOpen} onOpenChange={onClose}>
-//       <DialogContent>
-//         <DialogHeader>
-//           <DialogTitle>{subject ? 'Edit Subject' : 'Add New Subject'}</DialogTitle>
-//         </DialogHeader>
-//         <form onSubmit={handleSubmit}>
-//           <div className="grid gap-4 py-4">
-//             <div className="grid grid-cols-4 items-center gap-4">
-//               <label htmlFor="name">Subject Name</label>
-//               <Input
-//                 id="name"
-//                 name="name"
-//                 value={formData.name}
-//                 onChange={handleChange}
-//                 className="col-span-3"
-//               />
-//             </div>
-//             <div className="grid grid-cols-4 items-center gap-4">
-//               <label htmlFor="faculty">Faculty</label>
-//               <Select
-//                 value={formData.facultyId.toString()}
-//                 onValueChange={handleFacultyChange}
-//               >
-//                 <SelectTrigger className="col-span-3">
-//                   <SelectValue placeholder="Select faculty" />
-//                 </SelectTrigger>
-//                 <SelectContent>
-//                   {facultyMembers.map((faculty) => (
-//                     <SelectItem key={faculty.id} value={faculty.id.toString()}>
-//                       {faculty.name}
-//                     </SelectItem>
-//                   ))}
-//                 </SelectContent>
-//               </Select>
-//             </div>
-//             <div>
-//               <h4 className="mb-2">Units</h4>
-//               {formData.units.map((unit, index) => (
-//                 <div key={index} className="flex gap-2 mb-2">
-//                   <Input
-//                     type="number"
-//                     value={unit.unitNumber}
-//                     onChange={(e) => handleUnitChange(index, 'unitNumber', e.target.value)}
-//                     placeholder="Unit Number"
-//                     className="w-20"
-//                   />
-//                   <Input
-//                     value={unit.description}
-//                     onChange={(e) => handleUnitChange(index, 'description', e.target.value)}
-//                     placeholder="Unit Description"
-//                     className="flex-grow"
-//                   />
-//                 </div>
-//               ))}
-//               <Button type="button" onClick={handleAddUnit} variant="outline" size="sm">
-//                 <PlusCircle className="h-4 w-4 mr-2" /> Add Unit
-//               </Button>
-//             </div>
-//           </div>
-//           <DialogFooter>
-//             <Button type="submit">Save Subject</Button>
-//           </DialogFooter>
-//         </form>
-//       </DialogContent>
-//     </Dialog>
-//   )
-// }
-
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -265,294 +17,390 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from '@/hooks/use-toast'
 
-// Assume we have a list of faculty members
-const facultyMembers = [
-  { id: 1, name: 'Dr. John Doe' },
-  { id: 2, name: 'Prof. Jane Smith' },
-  { id: 3, name: 'Dr. Bob Johnson' },
-]
-
 interface Subject {
-  id: string
-  name: string
-  facultyId: number
-  units: { unitNumber: number; description: string }[]
+  id: number;
+  subjectName: string;
+  subjectCode: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-interface EditSubjectModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSave: (subject: Subject) => void
-  subject?: Subject
+interface Batch {
+  id: number;
+  batchYear: number;
+  courseId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface CourseSubjectMapping {
+  id: number;
+  courseId: number;
+  subjectId: number;
+  semester: number;
+  facultyId: number | null;
+  batchId: number;
+  subject: Subject;
+}
+
+interface MapSubjectModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (mapping: { subjectId: number; semester: number; batchId: number }) => void;
+  subjects: Subject[];
+  batches: Batch[];
 }
 
 export default function SubjectsPage() {
-  const params = useParams()
-  const courseId = params.courseId as string
-  const [subjects, setSubjects] = useState<Subject[]>([])
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const { toast } = useToast()
+  const params = useParams();
+  const courseId = parseInt(params.courseId as string);
+  const [courseSubjects, setCourseSubjects] = useState<CourseSubjectMapping[]>([]);
+  const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
+  const [batches, setBatches] = useState<Batch[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isMappingLoading, setIsMappingLoading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
-    fetchSubjects()
-  }, [courseId])
+    if (courseId) {
+      fetchCourseSubjects();
+      fetchAllSubjects();
+      fetchBatches();
+    }
+  }, [courseId]);
 
-  const fetchSubjects = async () => {
-    setIsLoading(true)
+  const fetchCourseSubjects = async () => {
+    setIsLoading(true);
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/courses/${courseId}/subjects`)
-      if (!response.ok) throw new Error('Failed to fetch subjects')
-      const data = await response.json()
-      setSubjects(data)
+      const response = await fetch(`http://localhost:8000/api/v1/courses/getAllCourses`, {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to fetch course subjects');
+      const result = await response.json();
+      if (result.success) {
+        const course = result.data.find((c: any) => c.id === courseId);
+        if (course) {
+          setCourseSubjects(course.subjects || []);
+        } else {
+          throw new Error('Course not found');
+        }
+      }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to fetch subjects. Please try again.",
+        description: "Failed to fetch course subjects. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  const handleAddSubject = () => {
-    setSelectedSubject(null)
-    setIsModalOpen(true)
-  }
-
-  const handleEditSubject = (subject: Subject) => {
-    setSelectedSubject(subject)
-    setIsModalOpen(true)
-  }
-
-  const handleDeleteSubject = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this subject?')) {
-      setIsLoading(true)
-      try {
-        const response = await fetch(`http://localhost:3000/api/v1/courses/${courseId}/subjects/${id}`, {
-          method: 'DELETE',
-        })
-        if (!response.ok) throw new Error('Failed to delete subject')
-        await fetchSubjects()
-        toast({
-          title: "Success",
-          description: "Subject deleted successfully.",
-        })
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to delete subject. Please try again.",
-          variant: "destructive",
-        })
-      } finally {
-        setIsLoading(false)
-      }
-    }
-  }
-
-  const handleSaveSubject = async (updatedSubject: Subject) => {
-    setIsLoading(true)
+  const fetchAllSubjects = async () => {
     try {
-      const url = selectedSubject
-        ? `http://localhost:3000/api/v1/courses/${courseId}/subjects/${selectedSubject.id}`
-        : `http://localhost:3000/api/v1/courses/${courseId}/subjects`
-      const method = selectedSubject ? 'PUT' : 'POST'
-      const response = await fetch(url, {
-        method,
+      const response = await fetch('http://localhost:8000/api/v1/subjects/getAllSubjects', {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to fetch subjects');
+      const result = await response.json();
+      if (result.success) {
+        setAllSubjects(result.data);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch all subjects. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchBatches = async () => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/v1/batch/course/${courseId}`, {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to fetch batches');
+      const result = await response.json();
+      if (result.success) {
+        setBatches(result.data);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch batches. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleMapSubject = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleSaveMapping = async (mapping: { subjectId: number; semester: number; batchId: number }) => {
+    setIsMappingLoading(true);
+    try {
+      const payload = {
+        courseId,
+        subjectId: mapping.subjectId,
+        semester: mapping.semester,
+        batchId: mapping.batchId
+      };
+      
+      const response = await fetch('http://localhost:8000/api/v1/course-subject-mapping/map', {
+        method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(updatedSubject),
-      })
-      if (!response.ok) throw new Error('Failed to save subject')
-      await fetchSubjects()
-      setIsModalOpen(false)
+        body: JSON.stringify(payload),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to map subject');
+      }
+      
+      await fetchCourseSubjects();
+      setIsModalOpen(false);
+      
       toast({
         title: "Success",
-        description: `Subject ${selectedSubject ? 'updated' : 'added'} successfully.`,
-      })
+        description: "Subject mapped successfully to the course.",
+      });
     } catch (error) {
       toast({
         title: "Error",
-        description: `Failed to ${selectedSubject ? 'update' : 'add'} subject. Please try again.`,
+        description: error instanceof Error ? error.message : "Failed to map subject. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsMappingLoading(false);
     }
-  }
+  };
+
+  const handleDeleteMapping = async (id: number) => {
+    if (window.confirm('Are you sure you want to remove this subject from the course?')) {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`http://localhost:8000/api/v1/course-subject-mapping/unmap/${id}`, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to remove subject mapping');
+        }
+        
+        await fetchCourseSubjects();
+        
+        toast({
+          title: "Success",
+          description: "Subject mapping removed successfully.",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to remove subject mapping. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  // Get already mapped subject IDs to filter out from available subjects
+  const mappedSubjectIds = courseSubjects.map(cs => cs.subjectId);
+  const availableSubjects = allSubjects.filter(subject => !mappedSubjectIds.includes(subject.id));
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Manage Subjects</h1>
+      <h1 className="text-3xl font-bold mb-6">Manage Course Subjects</h1>
       
-      <Button onClick={handleAddSubject} className="mb-4" disabled={isLoading}>
-        <PlusCircle className="mr-2 h-4 w-4" /> Add Subject
+      <Button 
+        onClick={handleMapSubject} 
+        className="mb-4" 
+        disabled={isLoading || availableSubjects.length === 0 || batches.length === 0}
+      >
+        <PlusCircle className="mr-2 h-4 w-4" /> Map Subject to Course
       </Button>
-
-      {isLoading ? (
-        <div className="text-center">Loading...</div>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Subject Name</TableHead>
-              <TableHead>Faculty</TableHead>
-              <TableHead>Units</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {subjects.map((subject) => (
-              <TableRow key={subject.id}>
-                <TableCell>{subject.name}</TableCell>
-                <TableCell>{facultyMembers.find(f => f.id === subject.facultyId)?.name}</TableCell>
-                <TableCell>{subject.units.length}</TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="sm" onClick={() => handleEditSubject(subject)}>
-                      <Edit className="h-4 w-4 mr-1" /> Edit
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDeleteSubject(subject.id)}>
-                      <Trash2 className="h-4 w-4 mr-1" /> Delete
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      
+      {batches.length === 0 && (
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
+          <p>No batches available for this course. Please create a batch first.</p>
+        </div>
       )}
 
-      <EditSubjectModal
+      {isLoading ? (
+        <div className="text-center py-8">Loading...</div>
+      ) : courseSubjects.length === 0 ? (
+        <div className="text-center py-8 border rounded-md">
+          <p className="text-gray-500">No subjects mapped to this course yet.</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Subject Code</TableHead>
+                <TableHead>Subject Name</TableHead>
+                <TableHead>Semester</TableHead>
+                <TableHead>Batch</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {courseSubjects.map((mapping) => (
+                <TableRow key={mapping.id}>
+                  <TableCell>{mapping.subject.subjectCode}</TableCell>
+                  <TableCell>{mapping.subject.subjectName}</TableCell>
+                  <TableCell>Semester {mapping.semester}</TableCell>
+                  <TableCell>
+                    {batches.find(b => b.id === mapping.batchId)?.batchYear || 'Unknown'}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant="destructive" 
+                        size="sm" 
+                        onClick={() => handleDeleteMapping(mapping.id)}
+                        disabled={isLoading}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" /> Remove
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      <MapSubjectModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveSubject}
-        subject={selectedSubject || undefined}
+        onSave={handleSaveMapping}
+        subjects={availableSubjects}
+        batches={batches}
       />
     </div>
-  )
+  );
 }
 
-function EditSubjectModal({ isOpen, onClose, onSave, subject }: EditSubjectModalProps) {
-  const [formData, setFormData] = useState<Subject>({
-    id: '',
-    name: '',
-    facultyId: 0,
-    units: []
-  })
+function MapSubjectModal({ isOpen, onClose, onSave, subjects, batches }: MapSubjectModalProps) {
+  const [formData, setFormData] = useState({
+    subjectId: 0,
+    semester: 1,
+    batchId: 0,
+  });
 
   useEffect(() => {
-    if (subject) {
-      setFormData(subject)
-    } else {
+    // Reset form or set initial values when modal opens
+    if (isOpen) {
       setFormData({
-        id: '',
-        name: '',
-        facultyId: 0,
-        units: []
-      })
+        subjectId: subjects.length > 0 ? subjects[0].id : 0,
+        semester: 1,
+        batchId: batches.length > 0 ? batches[0].id : 0,
+      });
     }
-  }, [subject])
+  }, [isOpen, subjects, batches]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleFacultyChange = (value: string) => {
-    setFormData(prev => ({ ...prev, facultyId: parseInt(value) }))
-  }
-
-  const handleAddUnit = () => {
-    setFormData(prev => ({
-      ...prev,
-      units: [...prev.units, { unitNumber: prev.units.length + 1, description: '' }]
-    }))
-  }
-
-  const handleUnitChange = (index: number, field: 'unitNumber' | 'description', value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      units: prev.units.map((unit, i) => 
-        i === index ? { ...unit, [field]: field === 'unitNumber' ? parseInt(value) : value } : unit
-      )
-    }))
-  }
+  const handleChange = (field: string, value: string | number) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSave(formData)
-  }
+    e.preventDefault();
+    
+    if (formData.subjectId === 0) {
+      alert('Please select a subject');
+      return;
+    }
+    
+    if (formData.batchId === 0) {
+      alert('Please select a batch');
+      return;
+    }
+    
+    onSave(formData);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{subject ? 'Edit Subject' : 'Add New Subject'}</DialogTitle>
+          <DialogTitle>Map Subject to Course</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="name">Subject Name</label>
-              <Input
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="faculty">Faculty</label>
+              <label htmlFor="subject">Subject</label>
               <Select
-                value={formData.facultyId.toString()}
-                onValueChange={handleFacultyChange}
+                value={formData.subjectId.toString()}
+                onValueChange={(value) => handleChange('subjectId', parseInt(value))}
+                disabled={subjects.length === 0}
               >
                 <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select faculty" />
+                  <SelectValue placeholder="Select subject" />
                 </SelectTrigger>
                 <SelectContent>
-                  {facultyMembers.map((faculty) => (
-                    <SelectItem key={faculty.id} value={faculty.id.toString()}>
-                      {faculty.name}
+                  {subjects.map((subject) => (
+                    <SelectItem key={subject.id} value={subject.id.toString()}>
+                      {subject.subjectCode} - {subject.subjectName}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <h4 className="mb-2">Units</h4>
-              {formData.units.map((unit, index) => (
-                <div key={index} className="flex gap-2 mb-2">
-                  <Input
-                    type="number"
-                    value={unit.unitNumber}
-                    onChange={(e) => handleUnitChange(index, 'unitNumber', e.target.value)}
-                    placeholder="Unit Number"
-                    className="w-20"
-                  />
-                  <Input
-                    value={unit.description}
-                    onChange={(e) => handleUnitChange(index, 'description', e.target.value)}
-                    placeholder="Unit Description"
-                    className="flex-grow"
-                  />
-                </div>
-              ))}
-              <Button type="button" onClick={handleAddUnit} variant="outline" size="sm">
-                <PlusCircle className="h-4 w-4 mr-2" /> Add Unit
-              </Button>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="semester">Semester</label>
+              <Input
+                id="semester"
+                type="number"
+                min="1"
+                max="8"
+                value={formData.semester}
+                onChange={(e) => handleChange('semester', parseInt(e.target.value))}
+                className="col-span-3"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="batch">Batch</label>
+              <Select
+                value={formData.batchId.toString()}
+                onValueChange={(value) => handleChange('batchId', parseInt(value))}
+                disabled={batches.length === 0}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select batch" />
+                </SelectTrigger>
+                <SelectContent>
+                  {batches.map((batch) => (
+                    <SelectItem key={batch.id} value={batch.id.toString()}>
+                      {batch.batchYear}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit">Save Subject</Button>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={subjects.length === 0 || batches.length === 0}>
+              Map Subject
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
-

@@ -1,9 +1,29 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { AssignedSubjects } from "@/components/faculty/assigned-subjects"
-import { useToast } from "@/hooks/use-toast"
+import { Card, CardContent} from "@/components/ui/card"
+import { MarksEntryTable } from "@/components/marks-management/marks-entry-table"
+import { ExamSelector } from "@/components/marks-management/exam-selector"
+import { SubjectSelector } from "@/components/marks-management/subject-selector"
+import { FileText } from "lucide-react"
+
+interface SubjectData {
+  id: number
+  subject: {
+    id: number
+    name: string
+    code: string
+  }
+  course: {
+    id: number
+    name: string
+  }
+  batch: {
+    id: number
+    year: number
+  }
+  semester: number
+}
 
 interface DashboardStats {
   totalAssignedSubjects: number
@@ -11,86 +31,69 @@ interface DashboardStats {
   upcomingDeadlines: number
 }
 
-export default function FacultyDashboard() {
-  const [stats, setStats] = useState<DashboardStats>({
-    totalAssignedSubjects: 0,
-    pendingMarkUploads: 0,
-    upcomingDeadlines: 0,
-  })
-  const [isLoading, setIsLoading] = useState(true)
-  const { toast } = useToast()
+export default function MarksManagementPage() {
+  const [selectedSubject, setSelectedSubject] = useState<any>(null)
+  const [selectedExam, setSelectedExam] = useState<any>(null)
+  const [examData, setExamData] = useState<any>(null)
 
+  // Reset exam selection when subject changes
   useEffect(() => {
-    const fetchDashboardStats = async () => {
-      try {
-        const response = await fetch("http://localhost:8000/api/v1/faculty/get-assigned-subjects", {
-          credentials: "include",
-        })
-        if (!response.ok) {
-          throw new Error("Failed to fetch dashboard stats")
-        }
-        const data = await response.json()
-        if (data.success) {
-          const totalAssignedSubjects = data.data.length
-          
-          setStats({
-            totalAssignedSubjects,
-            pendingMarkUploads: 5, 
-            upcomingDeadlines: 3,  
-          })
-        } else {
-          throw new Error("Unexpected response format")
-        }
-      } catch (error) {
-        console.error("Error fetching dashboard stats:", error)
-        toast({
-          title: "Error",
-          description: "Failed to fetch dashboard stats. Please try again.",
-          variant: "destructive",
-        })
-      } finally {
-        setIsLoading(false)
-      }
+    setSelectedExam(null)
+    setExamData(null)
+  }, [selectedSubject])
+
+  // Fetch exam data when an exam is selected
+  useEffect(() => {
+    if (selectedExam) {
+      // We already have the exam data from the ExamSelector component
+      setExamData(selectedExam)
     }
-
-    fetchDashboardStats()
-  }, [toast])
-
-  if (isLoading) {
-    return <div>Loading dashboard...</div>
-  }
+  }, [selectedExam])
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Welcome, Professor</h1>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Total Assigned Subjects</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{stats.totalAssignedSubjects}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Pending Mark Uploads</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{stats.pendingMarkUploads}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Upcoming Deadlines</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{stats.upcomingDeadlines}</p>
-          </CardContent>
-        </Card>
+    <div className="container mx-auto py-8 px-4">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-3">
+          <FileText className="h-8 w-8 text-primary" />
+          <h1 className="text-2xl font-bold">Student Marks Management</h1>
+        </div>
+        <div className="flex gap-4">
+          <button className="flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-gray-50">
+            <span>Import Students</span>
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-gray-50">
+            <span>Export Marks</span>
+          </button>
+        </div>
       </div>
-      <AssignedSubjects />
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="md:col-span-1">
+          <CardContent className="p-4">
+            <h2 className="text-xl font-bold mb-1">Exam Selection</h2>
+            <p className="text-gray-500 text-sm mb-4">Choose an exam to input marks for</p>
+
+            <SubjectSelector onSubjectSelect={setSelectedSubject} selectedSubject={selectedSubject} />
+
+            {selectedSubject && (
+              <ExamSelector subjectId={selectedSubject.id} onExamSelect={setSelectedExam} selectedExam={selectedExam} />
+            )}
+          </CardContent>
+        </Card>
+
+        {selectedExam && examData && (
+          <Card className="md:col-span-3">
+            <CardContent className="p-4">
+              <h2 className="text-xl font-bold mb-1">{selectedExam.examType} Marks Entry</h2>
+              <p className="text-gray-500 text-sm mb-4">Enter marks for each student and question</p>
+
+              <MarksEntryTable examData={examData} />
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   )
 }
+
 

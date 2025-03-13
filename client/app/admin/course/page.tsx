@@ -1,384 +1,3 @@
-// // 'use client'
-
-// // import { useState } from 'react'
-// // import { Button } from "@/components/ui/button"
-// // import { Input } from "@/components/ui/input"
-// // import {
-// //   Table,
-// //   TableBody,
-// //   TableCell,
-// //   TableHead,
-// //   TableHeader,
-// //   TableRow,
-// // } from "@/components/ui/table"
-// // import { PlusCircle, Search, Edit, Trash2 } from 'lucide-react'
-// // import AddEditCourseModal from './add-edit-course-modal'
-// // import Link from 'next/link'
-
-// // // Sample data structure
-// // interface Course {
-// //   id: string
-// //   name: string
-// //   semesters: { id: string; name: string }[]
-// // }
-
-// // const sampleCourses: Course[] = [
-// //   { 
-// //     id: '1', 
-// //     name: 'Introduction to Computer Science',
-// //     semesters: [
-// //       { id: '1', name: 'Semester 1' },
-// //       { id: '2', name: 'Semester 2' }
-// //     ]
-// //   },
-// //   { 
-// //     id: '2', 
-// //     name: 'Data Structures and Algorithms',
-// //     semesters: [
-// //       { id: '3', name: 'Semester 1' },
-// //       { id: '4', name: 'Semester 2' }
-// //     ]
-// //   },
-// // ]
-
-// // export default function CourseManagement() {
-// //   const [courses, setCourses] = useState<Course[]>(sampleCourses)
-// //   const [searchTerm, setSearchTerm] = useState('')
-// //   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-// //   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
-
-// //   const filteredCourses = courses.filter(course =>
-// //     course.name.toLowerCase().includes(searchTerm.toLowerCase())
-// //   )
-
-// //   const handleAddCourse = (newCourse: any) => {
-// //     // Here you would typically make an API call to save the course
-// //     console.log('New course data:', newCourse)
-// //     // For demonstration, we'll just add it to the local state
-// //     setCourses([...courses, { ...newCourse, id: (courses.length + 1).toString() }])
-// //   }
-
-// //   const handleEditCourse = (course: Course) => {
-// //     setSelectedCourse(course)
-// //     setIsAddModalOpen(true)
-// //   }
-
-// //   const handleDeleteCourse = (id: string) => {
-// //     if (window.confirm('Are you sure you want to delete this course?')) {
-// //       setCourses(courses.filter(course => course.id !== id))
-// //     }
-// //   }
-
-// //   return (
-// //     <div className="container mx-auto p-4">
-// //       <h1 className="text-3xl font-bold mb-6">Course Management</h1>
-      
-// //       <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-// //         <div className="relative w-full sm:w-64">
-// //           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
-// //           <Input
-// //             type="text"
-// //             placeholder="Search courses..."
-// //             className="pl-8"
-// //             value={searchTerm}
-// //             onChange={(e) => setSearchTerm(e.target.value)}
-// //           />
-// //         </div>
-// //         <Button onClick={() => setIsAddModalOpen(true)}>
-// //           <PlusCircle className="mr-2 h-4 w-4" /> Add Course
-// //         </Button>
-// //       </div>
-
-// //       <div className="overflow-x-auto">
-// //         <Table>
-// //           <TableHeader>
-// //             <TableRow>
-// //               <TableHead>Course Name</TableHead>
-// //               <TableHead>Semesters</TableHead>
-// //               <TableHead>Actions</TableHead>
-// //             </TableRow>
-// //           </TableHeader>
-// //           <TableBody>
-// //             {filteredCourses.map((course) => (
-// //               <TableRow key={course.id}>
-// //                 <TableCell>{course.name}</TableCell>
-// //                 <TableCell>{course.semesters.length}</TableCell>
-// //                 <TableCell>
-// //                   <div className="flex space-x-2">
-// //                     <Button
-// //                       variant="outline"
-// //                       size="sm"
-// //                       onClick={() => handleEditCourse(course)}
-// //                     >
-// //                       <Edit className="h-4 w-4 mr-1" /> Edit
-// //                     </Button>
-// //                     <Link href={`/course-management/${course.id}/subjects`} passHref>
-// //                       <Button variant="outline" size="sm">
-// //                         Edit Subjects
-// //                       </Button>
-// //                     </Link>
-// //                     <Link href={`/course-management/${course.id}/semesters`} passHref>
-// //                       <Button variant="outline" size="sm">
-// //                         Edit Semesters
-// //                       </Button>
-// //                     </Link>
-// //                     <Button
-// //                       variant="destructive"
-// //                       size="sm"
-// //                       onClick={() => handleDeleteCourse(course.id)}
-// //                     >
-// //                       <Trash2 className="h-4 w-4 mr-1" /> Delete
-// //                     </Button>
-// //                   </div>
-// //                 </TableCell>
-// //               </TableRow>
-// //             ))}
-// //           </TableBody>
-// //         </Table>
-// //       </div>
-
-// //       <AddEditCourseModal
-// //         isOpen={isAddModalOpen}
-// //         onClose={() => {
-// //           setIsAddModalOpen(false)
-// //           setSelectedCourse(null)
-// //         }}
-// //         onSave={handleAddCourse}
-// //         course={selectedCourse}
-// //       />
-// //     </div>
-// //   )
-// // }
-
-// 'use client'
-
-// import { useState, useEffect } from 'react'
-// import { Button } from "@/components/ui/button"
-// import { Input } from "@/components/ui/input"
-// import {
-//   Table,
-//   TableBody,
-//   TableCell,
-//   TableHead,
-//   TableHeader,
-//   TableRow,
-// } from "@/components/ui/table"
-// import { PlusCircle, Search, Edit, Trash2 } from 'lucide-react'
-// import AddEditCourseModal from './add-edit-course-modal'
-// import Link from 'next/link'
-// import { useToast } from "@/components/ui/use-toast"
-
-// interface Course {
-//   id: string
-//   name: string
-//   semesters: { id: string; name: string }[]
-// }
-
-// export default function CourseManagement() {
-//   const [courses, setCourses] = useState<Course[]>([])
-//   const [searchTerm, setSearchTerm] = useState('')
-//   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-//   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
-//   const [isLoading, setIsLoading] = useState(false)
-//   const { toast } = useToast()
-
-//   useEffect(() => {
-//     fetchCourses()
-//   }, [])
-
-//   const fetchCourses = async () => {
-//     setIsLoading(true)
-//     try {
-//       const response = await fetch('http://localhost:3000/api/v1/courses')
-//       if (!response.ok) throw new Error('Failed to fetch courses')
-//       const data = await response.json()
-//       setCourses(data)
-//     } catch (error) {
-//       toast({
-//         title: "Error",
-//         description: "Failed to fetch courses. Please try again.",
-//         variant: "destructive",
-//       })
-//     } finally {
-//       setIsLoading(false)
-//     }
-//   }
-
-//   const filteredCourses = courses.filter(course =>
-//     course.name.toLowerCase().includes(searchTerm.toLowerCase())
-//   )
-
-//   const handleAddCourse = async (newCourse: any) => {
-//     setIsLoading(true)
-//     try {
-//       const response = await fetch('http://localhost:3000/api/v1/courses/create', {
-//         method: 'POST',
-//         headers: {
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify(newCourse),
-//       })
-//       if (!response.ok) throw new Error('Failed to create course')
-//       await fetchCourses()
-//       setIsAddModalOpen(false)
-//       toast({
-//         title: "Success",
-//         description: "Course created successfully.",
-//       })
-//     } catch (error) {
-//       toast({
-//         title: "Error",
-//         description: "Failed to create course. Please try again.",
-//         variant: "destructive",
-//       })
-//     } finally {
-//       setIsLoading(false)
-//     }
-//   }
-
-//   const handleEditCourse = (course: Course) => {
-//     setSelectedCourse(course)
-//     setIsAddModalOpen(true)
-//   }
-
-//   const handleUpdateCourse = async (updatedCourse: any) => {
-//     setIsLoading(true)
-//     try {
-//       const response = await fetch(`http://localhost:3000/api/v1/courses/${updatedCourse.id}`, {
-//         method: 'PUT',
-//         headers: {
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify(updatedCourse),
-//       })
-//       if (!response.ok) throw new Error('Failed to update course')
-//       await fetchCourses()
-//       setIsAddModalOpen(false)
-//       toast({
-//         title: "Success",
-//         description: "Course updated successfully.",
-//       })
-//     } catch (error) {
-//       toast({
-//         title: "Error",
-//         description: "Failed to update course. Please try again.",
-//         variant: "destructive",
-//       })
-//     } finally {
-//       setIsLoading(false)
-//     }
-//   }
-
-//   const handleDeleteCourse = async (id: string) => {
-//     if (window.confirm('Are you sure you want to delete this course?')) {
-//       setIsLoading(true)
-//       try {
-//         const response = await fetch(`http://localhost:3000/api/v1/courses/${id}`, {
-//           method: 'DELETE',
-//         })
-//         if (!response.ok) throw new Error('Failed to delete course')
-//         await fetchCourses()
-//         toast({
-//           title: "Success",
-//           description: "Course deleted successfully.",
-//         })
-//       } catch (error) {
-//         toast({
-//           title: "Error",
-//           description: "Failed to delete course. Please try again.",
-//           variant: "destructive",
-//         })
-//       } finally {
-//         setIsLoading(false)
-//       }
-//     }
-//   }
-
-//   return (
-//     <div className="container mx-auto p-4">
-//       <h1 className="text-3xl font-bold mb-6">Course Management</h1>
-      
-//       <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-//         <div className="relative w-full sm:w-64">
-//           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
-//           <Input
-//             type="text"
-//             placeholder="Search courses..."
-//             className="pl-8"
-//             value={searchTerm}
-//             onChange={(e) => setSearchTerm(e.target.value)}
-//           />
-//         </div>
-//         <Button onClick={() => setIsAddModalOpen(true)} disabled={isLoading}>
-//           <PlusCircle className="mr-2 h-4 w-4" /> Add Course
-//         </Button>
-//       </div>
-
-//       {isLoading ? (
-//         <div className="text-center">Loading...</div>
-//       ) : (
-//         <div className="overflow-x-auto">
-//           <Table>
-//             <TableHeader>
-//               <TableRow>
-//                 <TableHead>Course Name</TableHead>
-//                 <TableHead>Semesters</TableHead>
-//                 <TableHead>Actions</TableHead>
-//               </TableRow>
-//             </TableHeader>
-//             <TableBody>
-//               {filteredCourses.map((course) => (
-//                 <TableRow key={course.id}>
-//                   <TableCell>{course.name}</TableCell>
-//                   <TableCell>{course.semesters.length}</TableCell>
-//                   <TableCell>
-//                     <div className="flex space-x-2">
-//                       <Button
-//                         variant="outline"
-//                         size="sm"
-//                         onClick={() => handleEditCourse(course)}
-//                       >
-//                         <Edit className="h-4 w-4 mr-1" /> Edit
-//                       </Button>
-//                       <Link href={`/course-management/${course.id}/subjects`} passHref>
-//                         <Button variant="outline" size="sm">
-//                           Edit Subjects
-//                         </Button>
-//                       </Link>
-//                       <Link href={`/course-management/${course.id}/semesters`} passHref>
-//                         <Button variant="outline" size="sm">
-//                           Edit Semesters
-//                         </Button>
-//                       </Link>
-//                       <Button
-//                         variant="destructive"
-//                         size="sm"
-//                         onClick={() => handleDeleteCourse(course.id)}
-//                       >
-//                         <Trash2 className="h-4 w-4 mr-1" /> Delete
-//                       </Button>
-//                     </div>
-//                   </TableCell>
-//                 </TableRow>
-//               ))}
-//             </TableBody>
-//           </Table>
-//         </div>
-//       )}
-
-//       <AddEditCourseModal
-//         isOpen={isAddModalOpen}
-//         onClose={() => {
-//           setIsAddModalOpen(false)
-//           setSelectedCourse(null)
-//         }}
-//         onSave={selectedCourse ? handleUpdateCourse : handleAddCourse}
-//         course={selectedCourse}
-//       />
-//     </div>
-//   )
-// }
-
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -392,44 +11,57 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { PlusCircle, Search, Edit, Trash2 } from 'lucide-react'
+import { PlusCircle, Search, Edit, Trash2, Users } from 'lucide-react'
 import AddEditCourseModal from './add-edit-course-modal'
 import { useToast } from '@/hooks/use-toast'
 import Link from 'next/link'
 
-interface Unit {
-    id?: number;
-    unitNumber: number;
-    description: string;
-  }
-  
-  interface Subject {
-    id?: number;
-    subjectName: string;
-    units?: Unit[];
-  }
-  
-  interface Semester {
-    id?: number;
-    name: string;
-    subjects?: Subject[];
-  }
-  
-  interface Course {
-    id: number;
-    courseName: string;
-    semesters: Semester[];
-    createdById?: number;
-  }
+interface Subject {
+  id: number;
+  subjectName: string;
+  subjectCode: string;
+}
+
+interface CourseSubject {
+  id: number;
+  courseId: number;
+  subjectId: number;
+  semester: number;
+  facultyId: number | null;
+  batchId: number;
+  subject: Subject;
+}
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface Course {
+  id: number;
+  courseName: string;
+  createdById: number;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: User;
+  subjects: CourseSubject[];
+}
 
 export default function CourseManagement() {
-    const [courses, setCourses] = useState<Course[]>([])
-    const [searchTerm, setSearchTerm] = useState('')
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-    const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
-    const [isLoading, setIsLoading] = useState(false)
-    const { toast } = useToast()
+  const [courses, setCourses] = useState<Course[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
+  const [newCourseName, setNewCourseName] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const { toast } = useToast()
   
+  // New state for batch modal
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false)
+  const [batchYear, setBatchYear] = useState<number>(new Date().getFullYear() + 1)
+  const [selectedCourseForBatch, setSelectedCourseForBatch] = useState<Course | null>(null)
 
   useEffect(() => {
     fetchCourses()
@@ -463,122 +95,95 @@ export default function CourseManagement() {
     course.courseName.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-const handleAddCourse = async (newCourse: any) => {
+  const handleAddCourse = async () => {
+    if (!newCourseName.trim()) {
+      toast({
+        title: "Error",
+        description: "Course name cannot be empty",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsLoading(true)
     try {
-        // Verify and convert unitNumber to number if it's a string
-        const verifiedCourse = {
-            ...newCourse,
-            semesters: newCourse.semesters.map((semester: Semester) => ({
-                ...semester,
-                subjects: semester.subjects?.map((subject: Subject) => ({
-                    ...subject,
-                    units: subject.units?.map((unit: Unit) => ({
-                        ...unit,
-                        unitNumber: typeof unit.unitNumber === 'string' 
-                            ? parseInt(unit.unitNumber) 
-                            : unit.unitNumber,
-                    })),
-                })),
-            })),
-        }
-
-        console.log("creating course ....", verifiedCourse);
-        const response = await fetch('http://localhost:8000/api/v1/courses/create', {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(verifiedCourse),
-        })
-        if (!response.ok) {
-            const errorData = await response.json()
-            throw new Error(errorData.message || 'Failed to create course')
-        }
-        await fetchCourses()
-        setIsAddModalOpen(false)
-        toast({
-            title: "Success",
-            description: "Course created successfully.",
-        })
+      const response = await fetch('http://localhost:8000/api/v1/courses/create', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ courseName: newCourseName }),
+      })
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to create course')
+      }
+      await fetchCourses()
+      setIsAddModalOpen(false)
+      setNewCourseName('')
+      toast({
+        title: "Success",
+        description: "Course created successfully.",
+      })
     } catch (error) {
-        toast({
-            title: "Error",
-            description: "Failed to create course. Please try again.",
-            variant: "destructive",
-        })
+      toast({
+        title: "Error",
+        description: "Failed to create course. Please try again.",
+        variant: "destructive",
+      })
     } finally {
-        setIsLoading(false)
+      setIsLoading(false)
     }
-}
+  }
 
   const handleEditCourse = (course: Course) => {
-    // Clone the course to avoid direct state modification
-    setSelectedCourse({
-      ...course,
-      semesters: course.semesters.map(semester => ({
-        ...semester,
-        subjects: semester.subjects?.map(subject => ({
-          ...subject,
-          units: subject.units?.map(unit => ({
-            ...unit
-          }))
-        }))
-      }))
-    })
+    setSelectedCourse(course)
+    setNewCourseName(course.courseName)
     setIsAddModalOpen(true)
   }
 
-  const handleUpdateCourse = async (updatedCourse: any) => {
+  const handleUpdateCourse = async () => {
+    if (!selectedCourse || !newCourseName.trim()) {
+      toast({
+        title: "Error",
+        description: "Course name cannot be empty",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsLoading(true)
     try {
-        const updatePayload = {
-            courseName: updatedCourse.courseName,
-            semesters: updatedCourse.semesters.map((semester: Semester) => ({
-              id: semester.id, // Include semester ID for existing semesters
-              name: semester.name,
-              subjects: semester.subjects?.map(subject => ({
-                id: subject.id, // Include subject ID for existing subjects
-                subjectName: subject.subjectName,
-                units: subject.units?.map(unit => ({
-                  id: unit.id, // Include unit ID for existing units
-                  unitNumber: typeof unit.unitNumber === 'string' 
-                    ? parseInt(unit.unitNumber) 
-                    : unit.unitNumber,
-                  description: unit.description
-                }))
-              }))
-            }))
-          };
-      
-          console.log('Sending update payload:', JSON.stringify(updatePayload, null, 2));
-      const response = await fetch(`http://localhost:8000/api/v1/courses/update/${updatedCourse.id}`, {
+      const response = await fetch(`http://localhost:8000/api/v1/courses/update/${selectedCourse.id}`, {
         method: 'PUT',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(updatePayload),
+        body: JSON.stringify({ courseName: newCourseName }),
       })
+      
       if (!response.ok) {
         const errorData = await response.json()
-        console.error('Update error:', errorData);
         throw new Error(errorData.message || 'Failed to update course')
       }
+      
       await fetchCourses()
       setIsAddModalOpen(false)
       setSelectedCourse(null)
+      setNewCourseName('')
+      
       toast({
         title: "Success",
         description: "Course updated successfully.",
       })
     } catch (error) {
-        toast({
-            title: "Error",
-            description: error instanceof Error ? error.message : "Failed to update course. Please try again.",
-            variant: "destructive",
-        })
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update course. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -593,8 +198,8 @@ const handleAddCourse = async (newCourse: any) => {
           credentials: 'include',
         })
         if (!response.ok) {
-            const errorData = await response.json()
-            throw new Error(errorData.message || 'Failed to delete course')
+          const errorData = await response.json()
+          throw new Error(errorData.message || 'Failed to delete course')
         }
         await fetchCourses()
         toast({
@@ -613,6 +218,66 @@ const handleAddCourse = async (newCourse: any) => {
     }
   }
 
+  // New function to open the batch modal
+  const handleAddBatch = (course: Course) => {
+    setSelectedCourseForBatch(course)
+    setBatchYear(new Date().getFullYear() + 1) // Default to next year
+    setIsBatchModalOpen(true)
+  }
+
+  // New function to create a batch
+  const handleCreateBatch = async () => {
+    if (!selectedCourseForBatch) {
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const response = await fetch('http://localhost:8000/api/v1/batch/', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          batchYear: batchYear,
+          courseId: selectedCourseForBatch.id
+        }),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to create batch')
+      }
+      
+      setIsBatchModalOpen(false)
+      setSelectedCourseForBatch(null)
+      
+      toast({
+        title: "Success",
+        description: `Batch ${batchYear} created successfully for ${selectedCourseForBatch.courseName}.`,
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create batch. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getUniqueSemesters = (course: Course) => {
+    const semesters = new Set(course.subjects.map(subject => subject.semester));
+    return Array.from(semesters).sort((a, b) => a - b);
+  }
+
+  // Count subjects per semester
+  const countSubjectsBySemester = (course: Course, semester: number) => {
+    return course.subjects.filter(subject => subject.semester === semester).length;
+  }
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6">Course Management</h1>
@@ -628,74 +293,145 @@ const handleAddCourse = async (newCourse: any) => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Button onClick={() => setIsAddModalOpen(true)} disabled={isLoading}>
+        <Button onClick={() => {
+          setSelectedCourse(null)
+          setNewCourseName('')
+          setIsAddModalOpen(true)
+        }} disabled={isLoading}>
           <PlusCircle className="mr-2 h-4 w-4" /> Add Course
         </Button>
       </div>
 
-      {isLoading ? (
-        <div className="text-center">Loading...</div>
+      {isLoading && !courses.length ? (
+        <div className="text-center py-8">Loading...</div>
       ) : (
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Course Name</TableHead>
-                <TableHead>Semesters</TableHead>
+                <TableHead>Created By</TableHead>
                 <TableHead>Total Subjects</TableHead>
+                <TableHead>Semesters</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCourses.map((course) => (
-                <TableRow key={course.id}>
-                  <TableCell>{course.courseName}</TableCell>
-                  <TableCell>{course.semesters.length}</TableCell>
-                  <TableCell>
-                    {course.semesters.reduce((total, semester) => total + (semester.subjects?.length || 0), 0)}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm" onClick={() => handleEditCourse(course)}>
-                        <Edit className="h-4 w-4 mr-1" /> Edit
-                      </Button>
-                      <Link href={`/admin/course/${course.id}/subjects`} passHref>
-                        <Button variant="outline" size="sm">
-                          Edit Subjects
-                        </Button>
-                      </Link>
-                      <Link href={`/admin/course/${course.id}/semesters`} passHref>
-                        <Button variant="outline" size="sm">
-                          Edit Semesters
-                        </Button>
-                      </Link>
-                      <Link href={`/admin/course/${course.id}/assign-faculty`} passHref>
-                        <Button variant="outline" size="sm">
-                          Assign Faculty
-                        </Button>
-                      </Link>
-                      <Button variant="destructive" size="sm" onClick={() => handleDeleteCourse(course.id)}>
-                        <Trash2 className="h-4 w-4 mr-1" /> Delete
-                      </Button>
-                    </div>
-                  </TableCell>
+              {filteredCourses.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center">No courses found</TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                filteredCourses.map((course) => {
+                  const uniqueSemesters = getUniqueSemesters(course);
+                  return (
+                    <TableRow key={course.id}>
+                      <TableCell className="font-medium">{course.courseName}</TableCell>
+                      <TableCell>{course.createdBy?.name || 'Unknown'}</TableCell>
+                      <TableCell>{course.subjects.length}</TableCell>
+                      <TableCell>
+                        {uniqueSemesters.length > 0 ? (
+                          <div className="flex flex-col gap-1">
+                            {uniqueSemesters.map(semester => (
+                              <span key={semester} className="text-sm">
+                                Semester {semester}: {countSubjectsBySemester(course, semester)} subjects
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-500">No semesters</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-2">
+                          <Button variant="outline" size="sm" onClick={() => handleEditCourse(course)}>
+                            <Edit className="h-4 w-4 mr-1" /> Edit
+                          </Button>
+                          <Link href={`/admin/course/${course.id}/subjects`} passHref>
+                            <Button variant="outline" size="sm">
+                              Manage Subjects
+                            </Button>
+                          </Link>
+                          <Button variant="outline" size="sm" onClick={() => handleAddBatch(course)}>
+                            <Users className="h-4 w-4 mr-1" /> Add Batch
+                          </Button>
+                          <Button variant="destructive" size="sm" onClick={() => handleDeleteCourse(course.id)}>
+                            <Trash2 className="h-4 w-4 mr-1" /> Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
             </TableBody>
           </Table>
         </div>
       )}
 
-      <AddEditCourseModal
-        isOpen={isAddModalOpen}
-        onClose={() => {
-          setIsAddModalOpen(false)
-          setSelectedCourse(null)
-        }}
-        onSave={selectedCourse ? handleUpdateCourse : handleAddCourse}
-        course={selectedCourse}
-      />
+      {/* Course Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">
+              {selectedCourse ? 'Edit Course' : 'Add New Course'}
+            </h2>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Course Name</label>
+              <Input
+                value={newCourseName}
+                onChange={(e) => setNewCourseName(e.target.value)}
+                placeholder="Enter course name"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => {
+                setIsAddModalOpen(false)
+                setSelectedCourse(null)
+                setNewCourseName('')
+              }}>
+                Cancel
+              </Button>
+              <Button onClick={selectedCourse ? handleUpdateCourse : handleAddCourse} disabled={isLoading}>
+                {isLoading ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Batch Modal */}
+      {isBatchModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">
+              Add New Batch for {selectedCourseForBatch?.courseName}
+            </h2>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Batch Year</label>
+              <Input
+                type="number"
+                value={batchYear}
+                onChange={(e) => setBatchYear(parseInt(e.target.value))}
+                placeholder="Enter batch year"
+                min={new Date().getFullYear()}
+                max={new Date().getFullYear() + 10}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => {
+                setIsBatchModalOpen(false)
+                setSelectedCourseForBatch(null)
+              }}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateBatch} disabled={isLoading}>
+                {isLoading ? 'Creating...' : 'Create Batch'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
-

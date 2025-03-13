@@ -55,10 +55,17 @@ export const createUnit = async (req: Request, res: Response): Promise<any> => {
       });
     }
 
-    if (subject.courseMappings.length === 0) {
-      return res.status(400).json({
+    const existingUnit = await prisma.unit.findFirst({
+      where: {
+        unitNumber,
+        subjectId,
+      },
+    });
+
+    if (existingUnit) {
+      return res.status(409).json({
         success: false,
-        message: "Subject is not associated with any course",
+        message: `Unit number ${unitNumber} already exists for this subject`,
       });
     }
 
@@ -150,10 +157,20 @@ export const updateUnit = async (req: Request, res: Response): Promise<any> => {
       });
     }
 
-    if (subject.courseMappings.length === 0) {
-      return res.status(400).json({
+    const existingUnit = await prisma.unit.findFirst({
+      where: {
+        unitNumber,
+        subjectId,
+        id: {
+          not: Number(unitId)
+        }
+      },
+    });
+
+    if (existingUnit) {
+      return res.status(409).json({
         success: false,
-        message: "Subject is not associated with any course",
+        message: `Unit number ${unitNumber} already exists for this subject`,
       });
     }
 
@@ -338,8 +355,47 @@ export const bulkCreateUnits = async (req: Request, res: Response): Promise<any>
       });
     }
 
+    const unitsToCreate = result.data;
+
+    // Check for duplicate unit numbers within the same subject in the request
+    const duplicatesInRequest = findDuplicatesInBulkCreate(unitsToCreate);
+    if (duplicatesInRequest.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: "Duplicate unit numbers detected in request",
+        duplicates: duplicatesInRequest,
+      });
+    }
+
+    // Check against existing units in the database
+    const existingConflicts: { subjectId: number; unitNumber: number }[] = [];
+    
+    for (const unit of unitsToCreate) {
+      const existingUnit = await prisma.unit.findFirst({
+        where: {
+          unitNumber: unit.unitNumber,
+          subjectId: unit.subjectId,
+        },
+      });
+
+      if (existingUnit) {
+        existingConflicts.push({
+          subjectId: unit.subjectId,
+          unitNumber: unit.unitNumber
+        });
+      }
+    }
+
+    if (existingConflicts.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: "Some units already exist with the same unit number for the subject",
+        conflicts: existingConflicts,
+      });
+    }
+
     const createdUnits = await prisma.unit.createMany({
-      data: result.data,
+      data: unitsToCreate,
     });
 
     return res.status(201).json({
@@ -355,6 +411,23 @@ export const bulkCreateUnits = async (req: Request, res: Response): Promise<any>
     });
   }
 };
+
+function findDuplicatesInBulkCreate(units: { unitNumber: number; subjectId: number }[]) {
+  const uniqueKeys = new Map<string, { unitNumber: number; subjectId: number }>();
+  const duplicates: { unitNumber: number; subjectId: number }[] = [];
+
+  for (const unit of units) {
+    const key = `${unit.subjectId}-${unit.unitNumber}`;
+    
+    if (uniqueKeys.has(key)) {
+      duplicates.push(unit);
+    } else {
+      uniqueKeys.set(key, unit);
+    }
+  }
+
+  return duplicates;
+}
 
 export const getUnitsByCourse = async (req: Request, res: Response): Promise<any> => {
   try {
@@ -488,6 +561,44 @@ export const reorderUnits = async (req: Request, res: Response): Promise<any> =>
 
     if (!Array.isArray(unitOrders) || unitOrders.length === 0) {
       return res.status(400).json({ success: false, message: "Invalid unit order data" });
+    }
+
+    // Check for duplicate unit numbers after reordering
+    const unitIds = unitOrders.map(order => order.unitId);
+    
+    // Get all units to be reordered
+    const unitsToUpdate = await prisma.unit.findMany({
+      where: { id: { in: unitIds } }
+    });
+    
+    // Group units by subject ID to ensure we don't create duplicates within the same subject
+    const unitsBySubject = new Map<number, Set<number>>();
+    
+    for (const unit of unitsToUpdate) {
+      if (!unitsBySubject.has(unit.subjectId)) {
+        unitsBySubject.set(unit.subjectId, new Set<number>());
+      }
+    }
+    
+    // Check for potential duplicates after reordering
+    for (const order of unitOrders) {
+      const unit = unitsToUpdate.find(u => u.id === order.unitId);
+      if (!unit) continue;
+      
+      const subjectUnits = unitsBySubject.get(unit.subjectId)!;
+      
+      if (subjectUnits.has(order.newOrder)) {
+        return res.status(409).json({
+          success: false,
+          message: "Reordering would create duplicate unit numbers within the same subject",
+          conflict: {
+            subjectId: unit.subjectId,
+            unitNumber: order.newOrder
+          }
+        });
+      }
+      
+      subjectUnits.add(order.newOrder);
     }
 
     const updatePromises = unitOrders.map(({ unitId, newOrder }) =>

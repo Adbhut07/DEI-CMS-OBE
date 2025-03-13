@@ -52,7 +52,16 @@ const createCourse = (req, res) => __awaiter(void 0, void 0, void 0, function* (
 exports.createCourse = createCourse;
 const getAllCourses = (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const courses = yield prisma.course.findMany({ include: { createdBy: true } });
+        const courses = yield prisma.course.findMany({
+            include: {
+                createdBy: true,
+                subjects: {
+                    include: {
+                        subject: true
+                    }
+                }
+            }
+        });
         return res.status(200).json({ success: true, data: courses });
     }
     catch (error) {

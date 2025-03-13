@@ -1,101 +1,73 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Button } from "@/components/ui/button"
-import { useToast } from "@/hooks/use-toast"
 
-interface Subject {
-  id: number
-  subjectName: string
-  semester: {
-    id: number
-    name: string
-    course: {
-      id: number
-      courseName: string
-    }
-  }
-}
+import { Card, CardContent } from "@/components/ui/card"
+import { FileText } from "lucide-react"
+import { SubjectSelector } from "@/components/marks-management/subject-selector"
+import { ExamSelector } from "@/components/marks-management/exam-selector"
+import { MarksEntryTable } from "@/components/marks-management/marks-entry-table"
 
-export default function UploadMarksPage() {
-  const [subjects, setSubjects] = useState<Subject[]>([])
-  const [selectedSubject, setSelectedSubject] = useState("")
-  const [isLoading, setIsLoading] = useState(true)
-  const { toast } = useToast()
+export default function MarksManagementPage() {
+  const [selectedSubject, setSelectedSubject] = useState<any>(null)
+  const [selectedExam, setSelectedExam] = useState<any>(null)
+  const [examData, setExamData] = useState<any>(null)
 
+  // Reset exam selection when subject changes
   useEffect(() => {
-    const fetchAssignedSubjects = async () => {
-      try {
-        const response = await fetch("http://localhost:8000/api/v1/faculty/get-assigned-subjects", {
-          credentials: "include",
-        })
-        if (!response.ok) {
-          throw new Error("Failed to fetch assigned subjects")
-        }
-        const data = await response.json()
-        if (data.success) {
-          setSubjects(data.data)
-        } else {
-          throw new Error("Unexpected response format")
-        }
-      } catch (error) {
-        console.error("Error fetching assigned subjects:", error)
-        toast({
-          title: "Error",
-          description: "Failed to fetch assigned subjects. Please try again.",
-          variant: "destructive",
-        })
-      } finally {
-        setIsLoading(false)
-      }
+    setSelectedExam(null)
+    setExamData(null)
+  }, [selectedSubject])
+
+  // Set exam data when an exam is selected
+  useEffect(() => {
+    if (selectedExam) {
+      setExamData(selectedExam)
     }
-
-    fetchAssignedSubjects()
-  }, [toast])
-
-  if (isLoading) {
-    return <div>Loading...</div>
-  }
+  }, [selectedExam])
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Upload Marks</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle>Select Subject</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Select onValueChange={setSelectedSubject} value={selectedSubject}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a subject" />
-              </SelectTrigger>
-              <SelectContent>
-                {subjects.map((subject) => (
-                  <SelectItem key={subject.id} value={subject.id.toString()}>
-                    {subject.subjectName} - {subject.semester.course.courseName} ({subject.semester.name})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button disabled={!selectedSubject}>Proceed to Upload</Button>
-          </div>
-        </CardContent>
-      </Card>
-      {selectedSubject && (
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              Upload Marks for {subjects.find((s) => s.id.toString() === selectedSubject)?.subjectName}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Mark upload functionality will be implemented here.</p>
+    <div className="container mx-auto py-8 px-4">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-3">
+          <FileText className="h-8 w-8 text-primary" />
+          <h1 className="text-2xl font-bold">Student Marks Management</h1>
+        </div>
+        <div className="flex gap-4">
+          <button className="flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-gray-50">
+            <span>Import Students</span>
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-gray-50">
+            <span>Export Marks</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="md:col-span-1">
+          <CardContent className="p-4">
+            <h2 className="text-xl font-bold mb-1">Exam Selection</h2>
+            <p className="text-gray-500 text-sm mb-4">Choose an exam to input marks for</p>
+
+            <SubjectSelector onSubjectSelect={setSelectedSubject} selectedSubject={selectedSubject} />
+
+            {selectedSubject && (
+              <ExamSelector subjectId={selectedSubject.id} onExamSelect={setSelectedExam} selectedExam={selectedExam} />
+            )}
           </CardContent>
         </Card>
-      )}
+
+        {selectedExam && examData && selectedSubject && (
+          <Card className="md:col-span-3">
+            <CardContent className="p-4">
+              <h2 className="text-xl font-bold mb-1">{selectedExam.examType} Marks Entry</h2>
+              <p className="text-gray-500 text-sm mb-4">Enter marks for each student and question</p>
+
+              <MarksEntryTable examData={examData} selectedSubject={selectedSubject} />
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   )
 }

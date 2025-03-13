@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Book, Users, LayoutDashboard, FileText, ClipboardList, BarChart, FileQuestion, Users2, Plus, UserPlus, Contact } from "lucide-react"
+import { Book, Users, LayoutDashboard, FileText, ClipboardList, BarChart, FileQuestion, Users2, Plus, UserPlus, Contact, BookOpenText } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -12,6 +12,7 @@ const navigation = [
   { name: "Users Management", href: "/admin/users", icon: Users2 },
   { name: "Create User", href: "/admin/create-user", icon: UserPlus },
   { name: "Course Management", href: "/admin/course", icon: Book },
+  { name: "Subjects", href: "/admin/subject", icon: BookOpenText },
   { name: "View Assigned Faculty", href: "/admin/view-assigned-faculty", icon: Users },
   { name: "Enrollments", href: "/admin/enrollments", icon: Contact },
   { name: "Reports", href: "/admin/reports", icon: FileText },

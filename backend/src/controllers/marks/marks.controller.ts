@@ -77,14 +77,45 @@ export const getMarksByExam = async (req: Request, res: Response): Promise<any> 
   const { examId } = req.params;
 
   try {
+    // Get all questions for the exam first
+    const examQuestions = await prisma.question.findMany({
+      where: { examId: Number(examId) },
+      select: { id: true, questionText: true },
+    });
+
+    if (!examQuestions.length) {
+      return res.status(404).json({ success: false, message: 'No questions found for the given exam.' });
+    }
+
+    // Get exam details to find subject and related info
+    const exam = await prisma.exam.findUnique({
+      where: { id: Number(examId) },
+      select: { subjectId: true }
+    });
+
+    if (!exam) {
+      return res.status(404).json({ success: false, message: 'Exam not found.' });
+    }
+
+    // Get all marks for the exam with student info
     const marks = await prisma.marks.findMany({
       where: { examId: Number(examId) },
-      include: {
+      select: {
+        studentId: true,
+        questionId: true,
+        marksObtained: true,
         student: {
-          select: { id: true, name: true, email: true },
-        },
-        question: {
-          select: { id: true, questionText: true },
+          select: { 
+            id: true, 
+            name: true, 
+            email: true,
+            enrollments: {
+              select: {
+                rollNo: true,
+                batchId: true
+              }
+            }
+          },
         },
       },
     });
@@ -93,7 +124,39 @@ export const getMarksByExam = async (req: Request, res: Response): Promise<any> 
       return res.status(404).json({ success: false, message: 'No marks found for the given exam.' });
     }
 
-    res.status(200).json({ success: true, data: marks });
+    // Group marks by student
+    const studentsMap = new Map();
+    
+    marks.forEach(mark => {
+      if (!studentsMap.has(mark.studentId)) {
+        // Find the most relevant enrollment record (assuming a student might be in multiple batches)
+        // For a more precise match, we would need to know which batch is associated with this exam
+        const enrollment = mark.student.enrollments.find(e => e.rollNo) || mark.student.enrollments[0];
+        
+        studentsMap.set(mark.studentId, {
+          id: mark.student.id,
+          name: mark.student.name,
+          email: mark.student.email,
+          rollNo: enrollment?.rollNo || null,
+          marks: {}
+        });
+      }
+      
+      // Add question marks to the student's marks object
+      studentsMap.get(mark.studentId).marks[mark.questionId] = mark.marksObtained;
+    });
+
+    // Convert map to array
+    const studentsData = Array.from(studentsMap.values());
+
+    // Format the response with questions info
+    const responseData = {
+      examId: Number(examId),
+      questions: examQuestions.map(q => ({ id: q.id, text: q.questionText })),
+      students: studentsData
+    };
+
+    res.status(200).json({ success: true, data: responseData });
   } catch (error) {
     console.error('Error fetching marks:', error);
     res.status(500).json({ success: false, message: 'Internal Server Error' });
@@ -114,6 +177,12 @@ export const updateMarks = async (req: Request, res: Response): Promise<any> => 
         },
       },
       data: { marksObtained },
+      select: {
+        studentId: true,
+        questionId: true,
+        examId: true,
+        marksObtained: true
+      }
     });
 
     res.status(200).json({ success: true, data: mark });
@@ -143,7 +212,6 @@ export const deleteMarks = async (req: Request, res: Response): Promise<any> => 
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
-
 
 export const getMarksByBatch = async (req: Request, res: Response): Promise<any> => {
   const { batchId } = req.params;

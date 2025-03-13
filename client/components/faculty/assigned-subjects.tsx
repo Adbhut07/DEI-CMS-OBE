@@ -1,63 +1,32 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { useToast } from "@/hooks/use-toast"
 
 interface Subject {
   id: number
-  subjectName: string
-  semester: {
+  subject: {
     id: number
     name: string
-    course: {
-      id: number
-      courseName: string
-    }
+    code: string
   }
+  course: {
+    id: number
+    name: string
+  }
+  batch: {
+    id: number
+    year: number
+  }
+  semester: number
 }
 
-export function AssignedSubjects() {
-  const [subjects, setSubjects] = useState<Subject[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const { toast } = useToast()
+interface AssignedSubjectsProps {
+  subjects: Subject[]
+}
 
-  useEffect(() => {
-    const fetchAssignedSubjects = async () => {
-      try {
-        const response = await fetch("http://localhost:8000/api/v1/faculty/get-assigned-subjects", {
-          credentials: "include",
-        })
-        if (!response.ok) {
-          throw new Error("Failed to fetch assigned subjects")
-        }
-        const data = await response.json()
-        if (data.success) {
-          setSubjects(data.data)
-        } else {
-          throw new Error("Unexpected response format")
-        }
-      } catch (error) {
-        console.error("Error fetching assigned subjects:", error)
-        toast({
-          title: "Error",
-          description: "Failed to fetch assigned subjects. Please try again.",
-          variant: "destructive",
-        })
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchAssignedSubjects()
-  }, [toast])
-
-  if (isLoading) {
-    return <div>Loading assigned subjects...</div>
-  }
-
+export function AssignedSubjects({ subjects }: AssignedSubjectsProps) {
   return (
     <Card>
       <CardHeader>
@@ -71,12 +40,12 @@ export function AssignedSubjects() {
             {subjects.map((subject) => (
               <div key={subject.id} className="flex items-center justify-between py-4">
                 <div>
-                  <h3 className="font-medium">{subject.subjectName}</h3>
+                  <h3 className="font-medium">{subject.subject.name} ({subject.subject.code})</h3>
                   <p className="text-sm text-gray-500">
-                    {subject.semester.course.courseName} - {subject.semester.name}
+                    {subject.course.name} - Semester {subject.semester}, Batch {subject.batch.year}
                   </p>
                 </div>
-                <Link href={`/faculty/upload-marks/${subject.id}`} passHref>
+                <Link href={`/faculty/upload-marks`} passHref>
                   <Button variant="outline">Upload Marks</Button>
                 </Link>
               </div>
@@ -87,4 +56,3 @@ export function AssignedSubjects() {
     </Card>
   )
 }
-

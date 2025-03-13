@@ -87,6 +87,13 @@ const getSubjectsByCourse = (req, res) => __awaiter(void 0, void 0, void 0, func
                         email: true,
                         role: true,
                     }
+                },
+                batch: {
+                    select: {
+                        id: true,
+                        batchYear: true,
+                        courseId: true
+                    }
                 }
             },
         });

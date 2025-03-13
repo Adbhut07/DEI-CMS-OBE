@@ -80,7 +80,14 @@ export const getSubjectsByCourse = async (req: Request, res: Response): Promise<
                         email: true,
                         role: true, 
                     }
-                }
+                },
+                batch: {
+                  select: {
+                      id: true,
+                      batchYear: true,
+                      courseId: true
+                  }
+              }
             },
         });
 
