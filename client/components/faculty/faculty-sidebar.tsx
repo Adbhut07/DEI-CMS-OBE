@@ -7,7 +7,7 @@ import { BookOpen, Home, Upload } from "lucide-react"
 const navigation = [
   { name: "Dashboard", href: "/faculty", icon: Home },
   { name: "Assigned Subjects", href: "/faculty/assigned-subjects", icon: BookOpen },
-  { name: "Upload Marks", href: "/faculty/upload-marks", icon: Upload },
+  { name: "Upload Marks", href: "/faculty/marks-dashboard", icon: Upload },
   { name: "Exam Management", href: "/faculty/exam-dashboard", icon: Upload },
 ]
 

@@ -113,7 +113,7 @@ const getMarksByExam = (req, res) => __awaiter(void 0, void 0, void 0, function*
             },
         });
         if (!marks.length) {
-            return res.status(404).json({ success: false, message: 'No marks found for the given exam.' });
+            return res.status(201).json({ success: true, message: 'No marks found for the given exam.' });
         }
         // Group marks by student
         const studentsMap = new Map();
