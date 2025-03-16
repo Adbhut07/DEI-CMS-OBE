@@ -45,7 +45,7 @@ export function AssignedSubjects({ subjects }: AssignedSubjectsProps) {
                     {subject.course.name} - Semester {subject.semester}, Batch {subject.batch.year}
                   </p>
                 </div>
-                <Link href={`/faculty/upload-marks`} passHref>
+                <Link href={`/faculty/marks-dashboard`} passHref>
                   <Button variant="outline">Upload Marks</Button>
                 </Link>
               </div>

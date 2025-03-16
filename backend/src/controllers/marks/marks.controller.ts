@@ -121,7 +121,14 @@ export const getMarksByExam = async (req: Request, res: Response): Promise<any> 
     });
 
     if (!marks.length) {
-      return res.status(201).json({ success: true, message: 'No marks found for the given exam.' });
+      return res.status(200).json({ 
+        success: true, 
+        data: {
+          examId: Number(examId),
+          questions: examQuestions.map(q => ({ id: q.id, text: q.questionText })),
+          students: []
+        } 
+      });
     }
 
     // Group marks by student
