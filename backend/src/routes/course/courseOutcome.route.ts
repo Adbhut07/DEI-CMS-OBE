@@ -1,12 +1,8 @@
-// import express from "express";
-// import { createCourseOutcome, getCourseOutcome, getCourseOutcomesBySubject } from "../../controllers/course/courseOutcome.controller";
+import express from "express";
+import { calculateCOAttainment } from "../../controllers/course/courseOutcome.controller";
 
-// const router = express.Router();
+const router = express.Router();
 
-// router.post("/create", createCourseOutcome);
-// router.get('/getCO/:subjectId/:semesterId', getCourseOutcomesBySubject);
-// router.get('/getACO/:id', getCourseOutcome);
-// router.put('/update/:id', createCourseOutcome);
-// router.delete('/delete/:id', createCourseOutcome);
+router.post('/co',calculateCOAttainment);
 
-// export default router;
+export default router;

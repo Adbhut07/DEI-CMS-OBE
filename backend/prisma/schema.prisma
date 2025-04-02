@@ -8,31 +8,33 @@ datasource db {
 }
 
 model User {
-  id               Int          @id @default(autoincrement())
-  name             String
-  email            String       @unique
-  password         String
-  role             Role
-  profileDetails   Json?
-  enrollments      Enrollment[]
-  uploadedMarks    Marks[]      @relation("UploadedMarks")
-  marksReceived    Marks[]      @relation("StudentMarks")
-  facultySubjects  CourseSubject[] @relation("FacultySubjects")
-  createdCourses   Course[]     @relation("CreatedCourses")
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  id              Int             @id @default(autoincrement())
+  name            String
+  email           String          @unique
+  password        String
+  role            Role
+  profileDetails  Json?
+  enrollments     Enrollment[]
+  uploadedStandardMarks StandardExamMarks[] @relation("UploadedStandardMarks")
+  uploadedInternalMarks InternalAssessmentMarks[] @relation("UploadedInternalMarks")
+  standardMarksReceived StandardExamMarks[] @relation("StudentStandardMarks")
+  internalMarksReceived InternalAssessmentMarks[] @relation("StudentInternalMarks")
+  facultySubjects CourseSubject[] @relation("FacultySubjects")
+  createdCourses  Course[]        @relation("CreatedCourses")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 }
 
 model Course {
-  id              Int               @id @default(autoincrement())
+  id              Int              @id @default(autoincrement())
   courseName      String
-  createdBy       User              @relation(fields: [createdById], references: [id], name: "CreatedCourses")
+  createdBy       User             @relation(fields: [createdById], references: [id], name: "CreatedCourses")
   createdById     Int
   batches         Batch[]
-  programOutcomes ProgramOutcome[]  
-  subjects        CourseSubject[]   // ✅ Many-to-Many Mapping
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  programOutcomes ProgramOutcome[]
+  subjects        CourseSubject[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 }
 
 model CourseSubject {
@@ -41,7 +43,7 @@ model CourseSubject {
   courseId  Int
   subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   subjectId Int
-  semester  Int     // Defines which semester this subject is in (1,2,3,...)
+  semester  Int 
   faculty   User?   @relation("FacultySubjects", fields: [facultyId], references: [id])
   facultyId Int?
   batch     Batch   @relation(fields: [batchId], references: [id], onDelete: Cascade)
@@ -52,152 +54,189 @@ model CourseSubject {
 
 model Batch {
   id              Int              @id @default(autoincrement())
-  batchYear       Int              // Stores admission or graduation year
+  batchYear       Int 
   course          Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId        Int
   students        Enrollment[]
-  programOutcomes ProgramOutcome[] // ✅ Add this
-  coAttainments   CO_Attainment[]  // ✅ Add this
-  poAttainments   PO_Attainment[]  // ✅ Add this
-  courseSubjects  CourseSubject[]  // ✅ Add this
+  programOutcomes ProgramOutcome[]
+  coAttainments   CO_Attainment[]
+  poAttainments   PO_Attainment[]
+  courseSubjects  CourseSubject[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 }
 
 model Subject {
-  id            Int             @id @default(autoincrement())
-  subjectName   String
-  subjectCode   String          @unique
-  units         Unit[]
-  exams         Exam[]
-  coAttainments CO_Attainment[]
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  courseMappings CourseSubject[] // ✅ Many-to-Many Mapping
+  id             Int             @id @default(autoincrement())
+  subjectName    String
+  subjectCode    String          @unique
+  units          Unit[]
+  exams          Exam[]
+  coAttainments  CO_Attainment[]
+  standardMarks  StandardExamMarks[]
+  internalMarks  InternalAssessmentMarks[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  courseMappings CourseSubject[]
 }
 
 model ProgramOutcome {
-  id          Int       @id @default(autoincrement())
-  course      Course    @relation(fields: [courseId], references: [id])
-  courseId    Int
-  batch       Batch     @relation(fields: [batchId], references: [id]) // ✅ Required now
-  batchId     Int
-  description String    // Example: "Ability to apply mathematics in engineering"
-  coMappings  CO_PO_Mapping[]
-  attainment  Float     @default(0.0) // Auto-calculated
+  id            Int             @id @default(autoincrement())
+  course        Course          @relation(fields: [courseId], references: [id])
+  courseId      Int
+  batch         Batch           @relation(fields: [batchId], references: [id])
+  batchId       Int
+  description   String
+  coMappings    CO_PO_Mapping[]
+  attainment    Float           @default(0.0)
   poAttainments PO_Attainment[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 }
 
-
 model Unit {
-  id             Int             @id @default(autoincrement())
-  unitNumber     Int
-  description    String?
-  subject        Subject         @relation(fields: [subjectId], references: [id])
-  subjectId      Int
-  coMappings     CO_PO_Mapping[]
-  questions      Question[]
-  attainment     Float    @default(0.0) // Auto-calculated
-  coAttainments  CO_Attainment[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id            Int             @id @default(autoincrement())
+  unitNumber    Int
+  description   String?
+  subject       Subject         @relation(fields: [subjectId], references: [id])
+  subjectId     Int
+  coMappings    CO_PO_Mapping[]
+  questions     Question[]
+  attainment    Float           @default(0.0)
+  coAttainments CO_Attainment[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 }
 
 model CO_PO_Mapping {
-  id           Int            @id @default(autoincrement())
-  courseOutcome Unit         @relation(fields: [coId], references: [id]) // CO = Unit
-  coId         Int
+  id             Int            @id @default(autoincrement())
+  courseOutcome  Unit           @relation(fields: [coId], references: [id])
+  coId           Int
   programOutcome ProgramOutcome @relation(fields: [poId], references: [id])
-  poId         Int
-  weightage    Float           // Weightage of CO in PO (e.g., 0.3 means 30%)
+  poId           Int
+  weightage      Float
 
   @@unique([coId, poId])
 }
 
 model CO_Attainment {
-  id          Int       @id @default(autoincrement())
-  co          Unit      @relation(fields: [coId], references: [id])
-  coId        Int
-  batch       Batch     @relation(fields: [batchId], references: [id])
-  batchId     Int
-  subject     Subject   @relation(fields: [subjectId], references: [id])
-  subjectId   Int
-  attainment  Float     @default(0.0) // Calculated per batch
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id         Int      @id @default(autoincrement())
+  co         Unit     @relation(fields: [coId], references: [id])
+  coId       Int
+  batch      Batch    @relation(fields: [batchId], references: [id])
+  batchId    Int
+  subject    Subject  @relation(fields: [subjectId], references: [id])
+  subjectId  Int
+  attainment Float    @default(0.0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  @@unique([coId, batchId, subjectId]) // Prevent duplicate entries
+  @@unique([coId, batchId, subjectId])
 }
 
 model PO_Attainment {
-  id          Int       @id @default(autoincrement())
-  po          ProgramOutcome @relation(fields: [poId], references: [id])
-  poId        Int
-  batch       Batch     @relation(fields: [batchId], references: [id])
-  batchId     Int
-  attainment  Float     @default(0.0) // Calculated per batch
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id         Int            @id @default(autoincrement())
+  po         ProgramOutcome @relation(fields: [poId], references: [id])
+  poId       Int
+  batch      Batch          @relation(fields: [batchId], references: [id])
+  batchId    Int
+  attainment Float          @default(0.0)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
 
-  @@unique([poId, batchId]) // Prevent duplicate entries
+  @@unique([poId, batchId])
 }
 
 model Enrollment {
-  id         Int      @id @default(autoincrement())
-  student    User     @relation(fields: [studentId], references: [id])
-  studentId  Int
-  batch      Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
-  batchId    Int
-  rollNo     String?
-  isActive   Boolean  @default(true) 
-  createdAt  DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  student   User     @relation(fields: [studentId], references: [id])
+  studentId Int
+  batch     Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  batchId   Int
+  rollNo    String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
 
-  @@unique([batchId, rollNo]) 
+  @@unique([batchId, rollNo])
 }
 
 model Exam {
-  id         Int        @id @default(autoincrement())
-  examType   ExamType
-  subject    Subject    @relation(fields: [subjectId], references: [id])
-  subjectId  Int
-  questions  Question[]
-  marks      Marks[]
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt 
+  id             Int                   @id @default(autoincrement())
+  examType       ExamType
+  subject        Subject               @relation(fields: [subjectId], references: [id])
+  subjectId      Int
+  marksAllocated Int?
+  questions      Question[]
+  standardMarks  StandardExamMarks[]
+  internalMarks  InternalAssessmentMarks[]
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
 
   @@unique([examType, subjectId])
 }
 
 model Question {
-  id             Int      @id @default(autoincrement())
+  id             Int                @id @default(autoincrement())
   questionText   String
   marksAllocated Int
-  exam           Exam     @relation(fields: [examId], references: [id])
+  exam           Exam               @relation(fields: [examId], references: [id], onDelete: Cascade)
   examId         Int
-  unit           Unit     @relation(fields: [unitId], references: [id])
+  unit           Unit               @relation(fields: [unitId], references: [id])
   unitId         Int
-  marks          Marks[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  marks          QuestionMark[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 }
 
-model Marks {
-  id            Int      @id @default(autoincrement())
-  student       User     @relation("StudentMarks", fields: [studentId], references: [id])
-  studentId     Int
-  question      Question @relation(fields: [questionId], references: [id])
-  questionId    Int
-  marksObtained Int
-  exam         Exam     @relation(fields: [examId], references: [id])
-  examId       Int
-  uploadedBy   User     @relation("UploadedMarks", fields: [uploadedById], references: [id])
-  uploadedById Int
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+// New model for question-specific marks (CT1, CT2, CA, ESE)
+model QuestionMark {
+  id             Int       @id @default(autoincrement())
+  marksObtained  Int
+  standardExamMark StandardExamMarks @relation(fields: [standardExamMarkId], references: [id], onDelete: Cascade)
+  standardExamMarkId Int
+  question        Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  questionId      Int
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  @@unique([studentId, questionId, examId])
+  @@unique([standardExamMarkId, questionId])
+}
+
+// Standard exam marks (CT1, CT2, CA, ESE)
+model StandardExamMarks {
+  id             Int           @id @default(autoincrement())
+  student        User          @relation("StudentStandardMarks", fields: [studentId], references: [id])
+  studentId      Int
+  exam           Exam          @relation(fields: [examId], references: [id])
+  examId         Int
+  subject        Subject       @relation(fields: [subjectId], references: [id])
+  subjectId      Int
+  totalMarks     Int
+  questionMarks  QuestionMark[]
+  uploadedBy     User          @relation("UploadedStandardMarks", fields: [uploadedById], references: [id])
+  uploadedById   Int
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([studentId, examId])
+}
+
+// Internal assessment marks (DHA, AA, ATT)
+model InternalAssessmentMarks {
+  id             Int       @id @default(autoincrement())
+  student        User      @relation("StudentInternalMarks", fields: [studentId], references: [id])
+  studentId      Int
+  exam           Exam      @relation(fields: [examId], references: [id])
+  examId         Int
+  subject        Subject   @relation(fields: [subjectId], references: [id])
+  subjectId      Int
+  marksObtained  Int
+  uploadedBy     User      @relation("UploadedInternalMarks", fields: [uploadedById], references: [id])
+  uploadedById   Int
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([studentId, examId])
 }
 
 enum Role {
@@ -209,12 +248,11 @@ enum Role {
 }
 
 enum ExamType {
-  CT1   // Class Test 1
-  CT2   // Class Test 2
-  DHA   // Daily Home Assignment
-  CA    // Class Assessment
-  AA    // Additional Assessment
-  ATT   // Attendance-Based Marks
-  ESE   // End Semester Exam **
+  CT1 // Class Test 1
+  CT2 // Class Test 2
+  DHA // Daily Home Assignment
+  CA // Class Assessment
+  AA // Additional Assessment
+  ATT // Attendance-Based Marks
+  ESE // End Semester Exam **
 }
-

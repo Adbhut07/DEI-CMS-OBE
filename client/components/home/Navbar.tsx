@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Menu, X, GraduationCap } from "lucide-react";
+import Link from "next/link";
 
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -38,8 +39,12 @@ const Navbar = () => {
         </div>
         
         <div className="hidden md:flex items-center gap-4">
-          <Button variant="outline" className="border-white/20 hover:bg-white/10 text-white">Login</Button>
-          <Button className="bg-accent hover:bg-accent/80 text-white">Get Started</Button>
+          <Link href="/signin">
+            <Button variant="outline" className="border-white/20 hover:bg-white/10 text-white">Login</Button>
+          </Link>
+          <Link href={"/signin"}>
+            <Button className="bg-accent hover:bg-accent/80 text-white">Get Started</Button>
+          </Link>
         </div>
         
         {/* Mobile Menu Button */}
@@ -59,7 +64,9 @@ const Navbar = () => {
           <a href="#demo" className="text-white/80 hover:text-white py-2 transition-colors">Demo</a>
           <a href="#testimonials" className="text-white/80 hover:text-white py-2 transition-colors">Testimonials</a>
           <div className="flex flex-col gap-3 pt-2">
-            <Button variant="outline" className="w-full border-white/20 hover:bg-white/10 text-white">Login</Button>
+            <Link href="/signin">
+              <Button variant="outline" className="w-full border-white/20 hover:bg-white/10 text-white">Login</Button>
+            </Link>
             <Button className="w-full bg-accent hover:bg-accent/80 text-white">Get Started</Button>
           </div>
         </div>

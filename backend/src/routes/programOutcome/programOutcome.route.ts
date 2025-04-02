@@ -12,9 +12,9 @@ import {
 const router = Router();
 
 // Program Outcomes routes
-router.post('/program-outcomes', createProgramOutcome);
+router.post('/create', createProgramOutcome);
 router.get('/program-outcomes', getAllProgramOutcomes);
-router.get('/program-outcomes/course/:courseId', getProgramOutcomesByCourse);
+router.get('/course/:courseId', getProgramOutcomesByCourse);
 
 // Course Outcomes routes
 router.get('/course-outcomes/course/:courseId', getCourseOutcomesByCourse);

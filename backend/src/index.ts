@@ -16,6 +16,7 @@ import marksRoutes from './routes/marks/marks.route';
 import batchRoutes from './routes/batch/batch.route';
 import programOutcomeRoutes from './routes/programOutcome/programOutcome.route';
 import courseSubjectMappingRoutes from './routes/course/course-subject-mapping.route';
+import courseOutcomeRoutes from './routes/course/courseOutcome.route'
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -43,6 +44,7 @@ app.use('/api/v1/enrollments', enrollmentRoutes);
 app.use('/api/v1/exams', examRoutes);
 app.use('/api/v1/marks', marksRoutes);
 app.use('/api/v1/program-outcomes', programOutcomeRoutes);
+app.use('/api/v1/courseOutcome', courseOutcomeRoutes);
 app.use('/api/v1/course-subject-mapping', courseSubjectMappingRoutes);
 
 
@@ -53,3 +55,29 @@ app.get('/', (req: Request, res: Response) => {
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
+
+
+
+
+
+
+
+// model Marks {
+//   id            Int       @id @default(autoincrement())
+//   student       User      @relation("StudentMarks", fields: [studentId], references: [id]) // ✅ Named Relation
+//   studentId     Int
+//   exam          Exam      @relation(fields: [examId], references: [id])
+//   examId        Int
+//   question      Question? @relation(fields: [questionId], references: [id]) // Nullable for DHA, AA, ATT
+//   questionId    Int?
+//   subject       Subject   @relation(fields: [subjectId], references: [id])
+//   subjectId     Int
+//   marksObtained Int
+//   uploadedBy    User      @relation("UploadedMarks", fields: [uploadedById], references: [id]) // ✅ Named Relation
+//   uploadedById  Int
+//   createdAt     DateTime  @default(now())
+//   updatedAt     DateTime  @updatedAt
+
+//   @@unique([studentId, examId, questionId]) // ✅ Unique if question-wise
+//   @@unique([studentId, examId, subjectId]) // ✅ Unique if subject-wise (DHA, AA, ATT)
+// }

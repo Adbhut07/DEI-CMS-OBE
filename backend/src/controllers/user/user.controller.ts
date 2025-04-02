@@ -275,7 +275,7 @@ export const getUsers = async (req: Request, res: Response): Promise<any> => {
 //create a controller function for deleting a user
 export const deleteUser = async (req: Request, res: Response): Promise<any> => {
   try {
-    const userId = parseInt(req.params.id); 
+    const userId = parseInt(req.params.id);
 
     if (isNaN(userId)) {
       return res.status(400).json({
@@ -289,8 +289,10 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
       where: { id: userId },
       include: {
         enrollments: true,
-        uploadedMarks: true,
-        marksReceived: true,
+        uploadedStandardMarks: true,
+        uploadedInternalMarks: true,
+        standardMarksReceived: true,
+        internalMarksReceived: true,
         facultySubjects: true,
         createdCourses: true,
       },
@@ -303,21 +305,35 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
       });
     }
 
-    // Handle dependencies before deletion (if necessary)
+    // Handle dependencies before deletion
     await prisma.$transaction(async (prisma) => {
-      // Remove enrollments (if any)
+      // Remove enrollments
       if (existingUser.enrollments.length > 0) {
         await prisma.enrollment.deleteMany({ where: { studentId: userId } });
       }
 
-      // Remove marks uploaded by the user
-      if (existingUser.uploadedMarks.length > 0) {
-        await prisma.marks.deleteMany({ where: { uploadedById: userId } });
+      // Remove standard exam marks uploaded by the user
+      if (existingUser.uploadedStandardMarks.length > 0) {
+        const uploadedStandardMarksIds = existingUser.uploadedStandardMarks.map((mark) => mark.id);
+        await prisma.questionMark.deleteMany({ where: { standardExamMarkId: { in: uploadedStandardMarksIds } } });
+        await prisma.standardExamMarks.deleteMany({ where: { uploadedById: userId } });
       }
 
-      // Remove marks received by the user
-      if (existingUser.marksReceived.length > 0) {
-        await prisma.marks.deleteMany({ where: { studentId: userId } });
+      // Remove internal assessment marks uploaded by the user
+      if (existingUser.uploadedInternalMarks.length > 0) {
+        await prisma.internalAssessmentMarks.deleteMany({ where: { uploadedById: userId } });
+      }
+
+      // Remove standard exam marks received by the user
+      if (existingUser.standardMarksReceived.length > 0) {
+        const receivedStandardMarksIds = existingUser.standardMarksReceived.map((mark) => mark.id);
+        await prisma.questionMark.deleteMany({ where: { standardExamMarkId: { in: receivedStandardMarksIds } } });
+        await prisma.standardExamMarks.deleteMany({ where: { studentId: userId } });
+      }
+
+      // Remove internal assessment marks received by the user
+      if (existingUser.internalMarksReceived.length > 0) {
+        await prisma.internalAssessmentMarks.deleteMany({ where: { studentId: userId } });
       }
 
       // Unassign faculty from course subjects
@@ -328,12 +344,12 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
         });
       }
 
-      // Delete courses created by the user (only if necessary)
+      // Delete courses created by the user
       if (existingUser.createdCourses.length > 0) {
         await prisma.course.deleteMany({ where: { createdById: userId } });
       }
 
-      // Now, safely delete the user
+      // Finally, delete the user
       await prisma.user.delete({
         where: { id: userId },
       });
@@ -351,6 +367,7 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
     });
   }
 };
+
 
 
 export const getUserByEmail = async (req: Request, res: Response): Promise<any> => {

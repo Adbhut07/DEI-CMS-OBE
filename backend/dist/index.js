@@ -20,6 +20,7 @@ const marks_route_1 = __importDefault(require("./routes/marks/marks.route"));
 const batch_route_1 = __importDefault(require("./routes/batch/batch.route"));
 const programOutcome_route_1 = __importDefault(require("./routes/programOutcome/programOutcome.route"));
 const course_subject_mapping_route_1 = __importDefault(require("./routes/course/course-subject-mapping.route"));
+const courseOutcome_route_1 = __importDefault(require("./routes/course/courseOutcome.route"));
 const app = (0, express_1.default)();
 const port = process.env.PORT || 5000;
 const corsOptions = {
@@ -43,6 +44,7 @@ app.use('/api/v1/enrollments', enrollment_route_1.default);
 app.use('/api/v1/exams', exam_route_1.default);
 app.use('/api/v1/marks', marks_route_1.default);
 app.use('/api/v1/program-outcomes', programOutcome_route_1.default);
+app.use('/api/v1/courseOutcome', courseOutcome_route_1.default);
 app.use('/api/v1/course-subject-mapping', course_subject_mapping_route_1.default);
 app.get('/', (req, res) => {
     res.send('Hello, world!');
@@ -50,3 +52,21 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
+// model Marks {
+//   id            Int       @id @default(autoincrement())
+//   student       User      @relation("StudentMarks", fields: [studentId], references: [id]) // ✅ Named Relation
+//   studentId     Int
+//   exam          Exam      @relation(fields: [examId], references: [id])
+//   examId        Int
+//   question      Question? @relation(fields: [questionId], references: [id]) // Nullable for DHA, AA, ATT
+//   questionId    Int?
+//   subject       Subject   @relation(fields: [subjectId], references: [id])
+//   subjectId     Int
+//   marksObtained Int
+//   uploadedBy    User      @relation("UploadedMarks", fields: [uploadedById], references: [id]) // ✅ Named Relation
+//   uploadedById  Int
+//   createdAt     DateTime  @default(now())
+//   updatedAt     DateTime  @updatedAt
+//   @@unique([studentId, examId, questionId]) // ✅ Unique if question-wise
+//   @@unique([studentId, examId, subjectId]) // ✅ Unique if subject-wise (DHA, AA, ATT)
+// }

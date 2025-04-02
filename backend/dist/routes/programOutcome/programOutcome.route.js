@@ -4,9 +4,9 @@ const express_1 = require("express");
 const programOutcome_controller_1 = require("../../controllers/programOutcome/programOutcome.controller");
 const router = (0, express_1.Router)();
 // Program Outcomes routes
-router.post('/program-outcomes', programOutcome_controller_1.createProgramOutcome);
+router.post('/create', programOutcome_controller_1.createProgramOutcome);
 router.get('/program-outcomes', programOutcome_controller_1.getAllProgramOutcomes);
-router.get('/program-outcomes/course/:courseId', programOutcome_controller_1.getProgramOutcomesByCourse);
+router.get('/course/:courseId', programOutcome_controller_1.getProgramOutcomesByCourse);
 // Course Outcomes routes
 router.get('/course-outcomes/course/:courseId', programOutcome_controller_1.getCourseOutcomesByCourse);
 // CO-PO Mapping routes

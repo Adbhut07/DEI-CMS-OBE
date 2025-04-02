@@ -130,3 +130,42 @@ export const getSubjectsWithUnitsByCourse = async (req: Request, res: Response):
         return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
+
+
+export const unmapCourseFromSubject = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const mappingId = parseInt(req.params.id);
+    
+    if (isNaN(mappingId)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid mapping ID. Please provide a valid number." 
+      });
+    }
+
+    // Check if the mapping exists
+    const existingMapping = await prisma.courseSubject.findUnique({
+      where: { id: mappingId }
+    });
+
+    if (!existingMapping) {
+      return res.status(404).json({
+        success: false,
+        message: "Course-Subject mapping not found"
+      });
+    }
+
+    // Delete the mapping
+    await prisma.courseSubject.delete({
+      where: { id: mappingId }
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Subject unmapped from course successfully"
+    });
+  } catch (error) {
+    console.error("Error unmapping subject from course:", (error as Error).message);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};

@@ -10,4 +10,5 @@ router.post('/map', course_subject_mapping_controller_1.mapCourseToSubject);
 router.post('/assign-faculty', course_subject_mapping_controller_1.assignFacultyToSubject);
 router.get('/course/:courseId/subjects', course_subject_mapping_controller_1.getSubjectsByCourse);
 router.get('/course/:courseId/subjects/units', course_subject_mapping_controller_1.getSubjectsWithUnitsByCourse);
+router.delete('/unmap/:id', course_subject_mapping_controller_1.unmapCourseFromSubject);
 exports.default = router;

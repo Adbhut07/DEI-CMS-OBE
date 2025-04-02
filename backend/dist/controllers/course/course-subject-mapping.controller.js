@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSubjectsWithUnitsByCourse = exports.getSubjectsByCourse = exports.assignFacultyToSubject = exports.mapCourseToSubject = void 0;
+exports.unmapCourseFromSubject = exports.getSubjectsWithUnitsByCourse = exports.getSubjectsByCourse = exports.assignFacultyToSubject = exports.mapCourseToSubject = void 0;
 const client_1 = require("@prisma/client");
 const zod_1 = __importDefault(require("zod"));
 const prisma = new client_1.PrismaClient();
@@ -137,3 +137,37 @@ const getSubjectsWithUnitsByCourse = (req, res) => __awaiter(void 0, void 0, voi
     }
 });
 exports.getSubjectsWithUnitsByCourse = getSubjectsWithUnitsByCourse;
+const unmapCourseFromSubject = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const mappingId = parseInt(req.params.id);
+        if (isNaN(mappingId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid mapping ID. Please provide a valid number."
+            });
+        }
+        // Check if the mapping exists
+        const existingMapping = yield prisma.courseSubject.findUnique({
+            where: { id: mappingId }
+        });
+        if (!existingMapping) {
+            return res.status(404).json({
+                success: false,
+                message: "Course-Subject mapping not found"
+            });
+        }
+        // Delete the mapping
+        yield prisma.courseSubject.delete({
+            where: { id: mappingId }
+        });
+        return res.status(200).json({
+            success: true,
+            message: "Subject unmapped from course successfully"
+        });
+    }
+    catch (error) {
+        console.error("Error unmapping subject from course:", error.message);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+});
+exports.unmapCourseFromSubject = unmapCourseFromSubject;

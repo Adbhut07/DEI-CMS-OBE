@@ -282,8 +282,10 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             where: { id: userId },
             include: {
                 enrollments: true,
-                uploadedMarks: true,
-                marksReceived: true,
+                uploadedStandardMarks: true,
+                uploadedInternalMarks: true,
+                standardMarksReceived: true,
+                internalMarksReceived: true,
                 facultySubjects: true,
                 createdCourses: true,
             },
@@ -294,19 +296,31 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 message: "User not found",
             });
         }
-        // Handle dependencies before deletion (if necessary)
+        // Handle dependencies before deletion
         yield prisma.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
-            // Remove enrollments (if any)
+            // Remove enrollments
             if (existingUser.enrollments.length > 0) {
                 yield prisma.enrollment.deleteMany({ where: { studentId: userId } });
             }
-            // Remove marks uploaded by the user
-            if (existingUser.uploadedMarks.length > 0) {
-                yield prisma.marks.deleteMany({ where: { uploadedById: userId } });
+            // Remove standard exam marks uploaded by the user
+            if (existingUser.uploadedStandardMarks.length > 0) {
+                const uploadedStandardMarksIds = existingUser.uploadedStandardMarks.map((mark) => mark.id);
+                yield prisma.questionMark.deleteMany({ where: { standardExamMarkId: { in: uploadedStandardMarksIds } } });
+                yield prisma.standardExamMarks.deleteMany({ where: { uploadedById: userId } });
             }
-            // Remove marks received by the user
-            if (existingUser.marksReceived.length > 0) {
-                yield prisma.marks.deleteMany({ where: { studentId: userId } });
+            // Remove internal assessment marks uploaded by the user
+            if (existingUser.uploadedInternalMarks.length > 0) {
+                yield prisma.internalAssessmentMarks.deleteMany({ where: { uploadedById: userId } });
+            }
+            // Remove standard exam marks received by the user
+            if (existingUser.standardMarksReceived.length > 0) {
+                const receivedStandardMarksIds = existingUser.standardMarksReceived.map((mark) => mark.id);
+                yield prisma.questionMark.deleteMany({ where: { standardExamMarkId: { in: receivedStandardMarksIds } } });
+                yield prisma.standardExamMarks.deleteMany({ where: { studentId: userId } });
+            }
+            // Remove internal assessment marks received by the user
+            if (existingUser.internalMarksReceived.length > 0) {
+                yield prisma.internalAssessmentMarks.deleteMany({ where: { studentId: userId } });
             }
             // Unassign faculty from course subjects
             if (existingUser.facultySubjects.length > 0) {
@@ -315,11 +329,11 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                     data: { facultyId: null },
                 });
             }
-            // Delete courses created by the user (only if necessary)
+            // Delete courses created by the user
             if (existingUser.createdCourses.length > 0) {
                 yield prisma.course.deleteMany({ where: { createdById: userId } });
             }
-            // Now, safely delete the user
+            // Finally, delete the user
             yield prisma.user.delete({
                 where: { id: userId },
             });
