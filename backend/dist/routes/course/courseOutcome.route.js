@@ -7,4 +7,5 @@ const express_1 = __importDefault(require("express"));
 const courseOutcome_controller_1 = require("../../controllers/course/courseOutcome.controller");
 const router = express_1.default.Router();
 router.post('/co', courseOutcome_controller_1.calculateCOAttainment);
+router.get('/co/:batchId/:courseId', courseOutcome_controller_1.getCOAttainment);
 exports.default = router;

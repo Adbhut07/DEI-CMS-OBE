@@ -424,6 +424,7 @@ export const getMarksByExam = async (req: Request, res: Response): Promise<any> 
   }
 };
 
+
 export const deleteMarks = async (req: Request, res: Response): Promise<any> => {
   const { examId, studentId } = req.params;
   const userId = req.user?.id;

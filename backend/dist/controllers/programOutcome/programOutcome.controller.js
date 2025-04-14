@@ -155,10 +155,275 @@ const getCourseOutcomesByCourse = (req, res) => __awaiter(void 0, void 0, void 0
     }
 });
 exports.getCourseOutcomesByCourse = getCourseOutcomesByCourse;
+// const createCOPOMappingSchema = zod.object({
+//   coId: zod.number().int().positive(),
+//   poId: zod.number().int().positive(),
+//   weightage: zod.number().min(0).max(1),
+// });
+// export const createCOPOMapping = async (req: Request, res: Response): Promise<any> => {
+//   try {
+//     const courseId = parseInt(req.params.courseId);
+//     const batchId = parseInt(req.query.batchId as string);
+//     if (isNaN(courseId) || courseId <= 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid course ID"
+//       });
+//     }
+//     const result = createCOPOMappingSchema.safeParse(req.body);
+//     if (!result.success) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid input",
+//         errors: result.error.format(),
+//       });
+//     }
+//     // Verify the Unit belongs to a subject in this course
+//     const courseOutcome = await prisma.unit.findFirst({
+//       where: {
+//         id: result.data.coId,
+//         subject: {
+//           courseMappings: {
+//             some: {
+//               courseId,
+//               batchId: !isNaN(batchId) ? batchId : undefined
+//             }
+//           }
+//         }
+//       }
+//     });
+//     if (!courseOutcome) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Course Outcome not found or doesn't belong to this course/batch"
+//       });
+//     }
+//     // Verify the Program Outcome belongs to this course and batch
+//     const whereClause: any = {
+//       id: result.data.poId,
+//       courseId
+//     };
+//     if (!isNaN(batchId)) {
+//       whereClause.batchId = batchId;
+//     }
+//     const programOutcome = await prisma.programOutcome.findFirst({
+//       where: whereClause
+//     });
+//     if (!programOutcome) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Program Outcome not found or doesn't belong to this course/batch"
+//       });
+//     }
+//     const mapping = await prisma.cO_PO_Mapping.create({
+//       data: result.data,
+//       include: {
+//         courseOutcome: {
+//           include: {
+//             subject: true
+//           }
+//         },
+//         programOutcome: {
+//           include: {
+//             batch: true
+//           }
+//         }
+//       }
+//     });
+//     return res.status(201).json({
+//       success: true,
+//       message: "CO-PO Mapping created successfully",
+//       data: mapping,
+//     });
+//   } catch (error) {
+//     console.error("Error in createCOPOMapping", error);
+//     return res.status(500).json({ success: false, message: "Internal Server Error" });
+//   }
+// };
+// export const getCOPOMappings = async (req: Request, res: Response): Promise<any> => {
+//   try {
+//     const courseId = parseInt(req.params.courseId);
+//     const batchId = parseInt(req.query.batchId as string);
+//     if (isNaN(courseId) || courseId <= 0) {
+//       return res.status(400).json({ success: false, message: "Invalid course ID" });
+//     }
+//     const whereClause: any = {
+//       programOutcome: {
+//         courseId
+//       }
+//     };
+//     if (!isNaN(batchId)) {
+//       whereClause.programOutcome.batchId = batchId;
+//     }
+//     const mappings = await prisma.cO_PO_Mapping.findMany({
+//       where: whereClause,
+//       select: {
+//         weightage: true,
+//         programOutcome: {
+//           select: {
+//             id: true,
+//             description: true,
+//             batch: {
+//               select: {
+//                 id: true,
+//                 batchYear: true
+//               }
+//             }
+//           }
+//         },
+//         courseOutcome: {
+//           select: {
+//             id: true,
+//             unitNumber: true,
+//             description: true,
+//             subject: {
+//               select: {
+//                 id: true,
+//                 subjectName: true,
+//                 subjectCode: true
+//               }
+//             }
+//           }
+//         }
+//       }
+//     });
+//     if (!mappings.length) {
+//       return res.status(404).json({ 
+//         success: false, 
+//         message: "No CO-PO mappings found for this course/batch" 
+//       });
+//     }
+//     const formattedMappings = mappings.map(mapping => ({
+//       programOutcome: {
+//         id: mapping.programOutcome.id,
+//         description: mapping.programOutcome.description,
+//         batch: mapping.programOutcome.batch
+//       },
+//       courseOutcome: {
+//         id: mapping.courseOutcome.id,
+//         unitNumber: mapping.courseOutcome.unitNumber,
+//         description: mapping.courseOutcome.description,
+//         subject: {
+//           id: mapping.courseOutcome.subject.id,
+//           name: mapping.courseOutcome.subject.subjectName,
+//           code: mapping.courseOutcome.subject.subjectCode
+//         }
+//       },
+//       weightage: mapping.weightage
+//     }));
+//     return res.status(200).json({ 
+//       success: true, 
+//       data: formattedMappings
+//     });
+//   } catch (error) {
+//     console.error("Error in getCOPOMappings", error);
+//     return res.status(500).json({ success: false, message: "Internal Server Error" });
+//   }
+// };
+// const updateMappingSchema = zod.object({
+//   coId: zod.number().int().positive(),
+//   poId: zod.number().int().positive(),
+//   weightage: zod.number().min(0).max(1)
+// });
+// const updateCOPOMappingsSchema = zod.object({
+//   updates: zod.array(updateMappingSchema)
+// });
+// export const updateCOPOMappings = async (req: Request, res: Response): Promise<any> => {
+//   try {
+//     const courseId = parseInt(req.params.courseId);
+//     const batchId = parseInt(req.query.batchId as string);
+//     if (isNaN(courseId) || courseId <= 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid course ID"
+//       });
+//     }
+//     const result = updateCOPOMappingsSchema.safeParse(req.body);
+//     if (!result.success) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid input data",
+//         errors: result.error.format()
+//       });
+//     }
+//     // Verify all Units belong to subjects in this course
+//     const courseOutcomes = await prisma.unit.findMany({
+//       where: {
+//         subject: {
+//           courseMappings: {
+//             some: {
+//               courseId,
+//               batchId: !isNaN(batchId) ? batchId : undefined
+//             }
+//           }
+//         }
+//       },
+//       select: { id: true }
+//     });
+//     const validCoIds = new Set(courseOutcomes.map(co => co.id));
+//     const invalidCOs = result.data.updates.filter(update => !validCoIds.has(update.coId));
+//     if (invalidCOs.length > 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Some Course Outcomes do not belong to this course/batch",
+//         invalidCOs: invalidCOs.map(co => co.coId)
+//       });
+//     }
+//     // Verify all POs belong to this course and batch
+//     const whereClause: any = { courseId };
+//     if (!isNaN(batchId)) {
+//       whereClause.batchId = batchId;
+//     }
+//     const programOutcomes = await prisma.programOutcome.findMany({
+//       where: whereClause,
+//       select: { id: true }
+//     });
+//     const validPoIds = new Set(programOutcomes.map(po => po.id));
+//     const invalidPOs = result.data.updates.filter(update => !validPoIds.has(update.poId));
+//     if (invalidPOs.length > 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Some Program Outcomes do not belong to this course/batch",
+//         invalidPOs: invalidPOs.map(po => po.poId)
+//       });
+//     }
+//     const updateResults = await prisma.$transaction(
+//       result.data.updates.map(update => 
+//         prisma.cO_PO_Mapping.upsert({
+//           where: {
+//             coId_poId: {
+//               coId: update.coId,
+//               poId: update.poId
+//             }
+//           },
+//           update: {
+//             weightage: update.weightage
+//           },
+//           create: {
+//             coId: update.coId,
+//             poId: update.poId,
+//             weightage: update.weightage
+//           }
+//         })
+//       )
+//     );
+//     return res.status(200).json({
+//       success: true,
+//       message: "CO-PO mappings updated successfully",
+//       data: updateResults
+//     });
+//   } catch (error) {
+//     console.error("Error in updateCOPOMappings:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Internal Server Error"
+//     });
+//   }
+// };
 const createCOPOMappingSchema = zod_1.default.object({
     coId: zod_1.default.number().int().positive(),
     poId: zod_1.default.number().int().positive(),
-    weightage: zod_1.default.number().min(0).max(1),
+    weightage: zod_1.default.enum(['0', '0.5', '1', '1.5', '2', '2.5', '3']).transform(val => parseFloat(val)),
 });
 const createCOPOMapping = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -327,7 +592,7 @@ exports.getCOPOMappings = getCOPOMappings;
 const updateMappingSchema = zod_1.default.object({
     coId: zod_1.default.number().int().positive(),
     poId: zod_1.default.number().int().positive(),
-    weightage: zod_1.default.number().min(0).max(1)
+    weightage: zod_1.default.enum(['0', '0.5', '1', '1.5', '2', '2.5', '3']).transform(val => parseFloat(val))
 });
 const updateCOPOMappingsSchema = zod_1.default.object({
     updates: zod_1.default.array(updateMappingSchema)
