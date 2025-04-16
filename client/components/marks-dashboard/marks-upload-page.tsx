@@ -1467,9 +1467,54 @@ export default function MarksUploadPage() {
   }, [selectedSubject]);
 
   // Fetch marks when exam is selected
+  // useEffect(() => {
+  //   if (!selectedExam) return;
+
+  //   const fetchMarks = async () => {
+  //     setLoading((prev) => ({ ...prev, marks: true }));
+  //     try {
+  //       const response = await fetch(
+  //         `http://localhost:8000/api/v1/marks/${selectedExam.id}`,
+  //         {
+  //           credentials: "include",
+  //         }
+  //       );
+  //       const data = await response.json();
+  //       if (data.success) {
+  //         // Sort marksData students by roll number in ascending order
+  //         if (data.data.students && data.data.students.length > 0) {
+  //           data.data.students.sort((a: Student, b: Student) => {
+  //             return a.rollNo.localeCompare(b.rollNo, undefined, { numeric: true, sensitivity: 'base' });
+  //           });
+  //         }
+          
+  //         setMarksData(data.data);
+
+  //         // Initialize student marks from fetched data
+  //         const initialMarks: Record<string, Record<string, number | null> | number | null> = {};
+  //         data.data.students.forEach((student: Student) => {
+  //           if (data.data.isQuestionWise) {
+  //             initialMarks[student.id] = student.questionMarks || {};
+  //           } else {
+  //             // For non-question-wise exams, use totalMarks instead of marksObtained
+  //             initialMarks[student.id] = student.totalMarks || null;
+  //           }
+  //         });
+  //         setStudentMarks(initialMarks);
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching marks:", error);
+  //     } finally {
+  //       setLoading((prev) => ({ ...prev, marks: false }));
+  //     }
+  //   };
+
+  //   fetchMarks();
+  // }, [selectedExam]);
+
   useEffect(() => {
     if (!selectedExam) return;
-
+  
     const fetchMarks = async () => {
       setLoading((prev) => ({ ...prev, marks: true }));
       try {
@@ -1489,15 +1534,41 @@ export default function MarksUploadPage() {
           }
           
           setMarksData(data.data);
-
+  
           // Initialize student marks from fetched data
           const initialMarks: Record<string, Record<string, number | null> | number | null> = {};
           data.data.students.forEach((student: Student) => {
             if (data.data.isQuestionWise) {
-              initialMarks[student.id] = student.questionMarks || {};
+              // Make sure we're not converting undefined/null to 0
+              const questionMarks: Record<string, number | null> = {};
+              
+              // If the student has question marks, process them
+              if (student.questionMarks) {
+                // For each question ID in the fetched data
+                Object.keys(student.questionMarks).forEach(qId => {
+                  const mark = student.questionMarks?.[qId];
+                  // Only set non-null values
+                  if (mark !== null && mark !== undefined) {
+                    questionMarks[qId] = mark;
+                  } else {
+                    questionMarks[qId] = null;
+                  }
+                });
+              }
+              
+              // For questions not in the fetched data, set to null
+              if (data.data.questions) {
+                data.data.questions.forEach(question => {
+                  if (!(question.id.toString() in questionMarks)) {
+                    questionMarks[question.id] = null;
+                  }
+                });
+              }
+              
+              initialMarks[student.id] = questionMarks;
             } else {
-              // For non-question-wise exams, use totalMarks instead of marksObtained
-              initialMarks[student.id] = student.totalMarks || null;
+              // For non-question-wise exams, use totalMarks but ensure null remains null
+              initialMarks[student.id] = student.totalMarks !== undefined ? student.totalMarks : null;
             }
           });
           setStudentMarks(initialMarks);
@@ -1508,7 +1579,7 @@ export default function MarksUploadPage() {
         setLoading((prev) => ({ ...prev, marks: false }));
       }
     };
-
+  
     fetchMarks();
   }, [selectedExam]);
 
@@ -1526,14 +1597,32 @@ export default function MarksUploadPage() {
     setSelectedExam(exam || null);
   };
 
+  // const handleQuestionMarkChange = (
+  //   studentId: number,
+  //   questionId: number,
+  //   value: string
+  // ) => {
+  //   // Allow explicit zeros by checking if the value is an empty string
+  //   const numValue = value === "" ? null : Number.parseInt(value);
+
+  //   setStudentMarks((prev) => ({
+  //     ...prev,
+  //     [studentId]: {
+  //       ...(prev[studentId] as Record<string, number | null> || {}),
+  //       [questionId]: numValue,
+  //     },
+  //   }));
+  // };
+
+  // N/A issue fix
   const handleQuestionMarkChange = (
     studentId: number,
     questionId: number,
     value: string
   ) => {
-    // Allow explicit zeros by checking if the value is an empty string
-    const numValue = value === "" ? null : Number.parseInt(value);
-
+    // Convert empty string to null, otherwise parse as number
+    const numValue = value === "" ? null : Number(value);
+  
     setStudentMarks((prev) => ({
       ...prev,
       [studentId]: {
@@ -1543,13 +1632,26 @@ export default function MarksUploadPage() {
     }));
   };
 
+  // const handleTotalMarkChange = (
+  //   studentId: number,
+  //   value: string
+  // ) => {
+  //   // Allow explicit zeros by checking if the value is an empty string
+  //   const numValue = value === "" ? null : Number.parseInt(value);
+
+  //   setStudentMarks((prev) => ({
+  //     ...prev,
+  //     [studentId]: numValue,
+  //   }));
+  // };
+
   const handleTotalMarkChange = (
     studentId: number,
     value: string
   ) => {
-    // Allow explicit zeros by checking if the value is an empty string
-    const numValue = value === "" ? null : Number.parseInt(value);
-
+    // Convert empty string to null, otherwise parse as number
+    const numValue = value === "" ? null : Number(value);
+  
     setStudentMarks((prev) => ({
       ...prev,
       [studentId]: numValue,
@@ -1645,27 +1747,120 @@ export default function MarksUploadPage() {
     }
   };
 
+  // const handleSaveMarks = async () => {
+  //   if (!selectedExam || !marksData) return;
+
+  //   setIsSaving(true);
+
+  //   try {
+  //     // Filter out students with no marks entered (all null)
+  //     const filteredMarks: Record<string, Record<string, number | null> | number | null> = {};
+
+  //     if (marksData.isQuestionWise) {
+  //       // Handle question-wise exams (CT1, CT2, ESE, CA)
+  //       Object.entries(studentMarks).forEach(([studentId, questionMarks]) => {
+  //         if (typeof questionMarks !== 'object') return;
+          
+  //         // Check if student has any marks entered (including zeros)
+  //         const hasAnyMarks = Object.values(questionMarks).some(
+  //           (mark) => mark !== null && mark !== undefined
+  //         );
+
+  //         if (hasAnyMarks) {
+  //           filteredMarks[studentId] = questionMarks;
+  //         }
+  //       });
+  //     } else {
+  //       // Handle total-only exams (AA, ATT, DHA)
+  //       Object.entries(studentMarks).forEach(([studentId, totalMark]) => {
+  //         // Only include non-null marks
+  //         if (totalMark !== null && totalMark !== undefined) {
+  //           filteredMarks[studentId] = totalMark;
+  //         }
+  //       });
+  //     }
+
+  //     // Call the API to save marks
+  //     const response = await saveMarks(selectedExam.id, filteredMarks);
+
+  //     if (response.success) {
+  //       // Refresh marks data
+  //       const marksResponse = await fetch(
+  //         `http://localhost:8000/api/v1/marks/${selectedExam.id}`,
+  //         {
+  //           credentials: "include",
+  //         }
+  //       );
+  //       const data = await marksResponse.json();
+
+  //       if (data.success) {
+  //         // Sort marksData students by roll number in ascending order
+  //         if (data.data.students && data.data.students.length > 0) {
+  //           data.data.students.sort((a: Student, b: Student) => {
+  //             return a.rollNo.localeCompare(b.rollNo, undefined, { numeric: true, sensitivity: 'base' });
+  //           });
+  //         }
+          
+  //         setMarksData(data.data);
+
+  //         // Update student marks from fetched data
+  //         const updatedMarks: Record<string, Record<string, number | null> | number | null> = {};
+  //         data.data.students.forEach((student: Student) => {
+  //           if (data.data.isQuestionWise) {
+  //             updatedMarks[student.id] = student.questionMarks || {};
+  //           } else {
+  //             // For non-question-wise exams, use totalMarks
+  //             updatedMarks[student.id] = student.totalMarks || null;
+  //           }
+  //         });
+  //         setStudentMarks(updatedMarks);
+  //       }
+
+  //       // Show success message
+  //       alert("Marks saved successfully!");
+  //     } else {
+  //       throw new Error(response.message || "Failed to save marks");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error saving marks:", error);
+  //     alert(
+  //       error instanceof Error
+  //         ? error.message
+  //         : "Failed to save marks. Please try again."
+  //     );
+  //   } finally {
+  //     setIsSaving(false);
+  //   }
+  // };
+
+  //Updated code 
   const handleSaveMarks = async () => {
     if (!selectedExam || !marksData) return;
-
+  
     setIsSaving(true);
-
+  
     try {
       // Filter out students with no marks entered (all null)
       const filteredMarks: Record<string, Record<string, number | null> | number | null> = {};
-
+  
       if (marksData.isQuestionWise) {
         // Handle question-wise exams (CT1, CT2, ESE, CA)
         Object.entries(studentMarks).forEach(([studentId, questionMarks]) => {
           if (typeof questionMarks !== 'object') return;
           
-          // Check if student has any marks entered (including zeros)
-          const hasAnyMarks = Object.values(questionMarks).some(
-            (mark) => mark !== null && mark !== undefined
-          );
-
+          // Create a clean object with only non-null values
+          const cleanQuestionMarks: Record<string, number> = {};
+          let hasAnyMarks = false;
+          
+          Object.entries(questionMarks).forEach(([questionId, mark]) => {
+            if (mark !== null && mark !== undefined) {
+              cleanQuestionMarks[questionId] = mark;
+              hasAnyMarks = true;
+            }
+          });
+  
           if (hasAnyMarks) {
-            filteredMarks[studentId] = questionMarks;
+            filteredMarks[studentId] = cleanQuestionMarks;
           }
         });
       } else {
@@ -1677,12 +1872,12 @@ export default function MarksUploadPage() {
           }
         });
       }
-
+  
       // Call the API to save marks
       const response = await saveMarks(selectedExam.id, filteredMarks);
-
+  
       if (response.success) {
-        // Refresh marks data
+        // Refresh marks data with the same null-preservation logic
         const marksResponse = await fetch(
           `http://localhost:8000/api/v1/marks/${selectedExam.id}`,
           {
@@ -1690,7 +1885,7 @@ export default function MarksUploadPage() {
           }
         );
         const data = await marksResponse.json();
-
+  
         if (data.success) {
           // Sort marksData students by roll number in ascending order
           if (data.data.students && data.data.students.length > 0) {
@@ -1700,20 +1895,44 @@ export default function MarksUploadPage() {
           }
           
           setMarksData(data.data);
-
-          // Update student marks from fetched data
+  
+          // Update student marks from fetched data with null preservation
           const updatedMarks: Record<string, Record<string, number | null> | number | null> = {};
           data.data.students.forEach((student: Student) => {
             if (data.data.isQuestionWise) {
-              updatedMarks[student.id] = student.questionMarks || {};
+              const questionMarks: Record<string, number | null> = {};
+              
+              // Process question marks from API response
+              if (student.questionMarks) {
+                Object.keys(student.questionMarks).forEach(qId => {
+                  const mark = student.questionMarks?.[qId];
+                  // Only set non-null values
+                  if (mark !== null && mark !== undefined) {
+                    questionMarks[qId] = mark;
+                  } else {
+                    questionMarks[qId] = null;
+                  }
+                });
+              }
+              
+              // Set null for questions not in the response
+              if (data.data.questions) {
+                data.data.questions.forEach(question => {
+                  if (!(question.id.toString() in questionMarks)) {
+                    questionMarks[question.id] = null;
+                  }
+                });
+              }
+              
+              updatedMarks[student.id] = questionMarks;
             } else {
-              // For non-question-wise exams, use totalMarks
-              updatedMarks[student.id] = student.totalMarks || null;
+              // For non-question-wise exams, preserve null
+              updatedMarks[student.id] = student.totalMarks !== undefined ? student.totalMarks : null;
             }
           });
           setStudentMarks(updatedMarks);
         }
-
+  
         // Show success message
         alert("Marks saved successfully!");
       } else {
@@ -1732,9 +1951,18 @@ export default function MarksUploadPage() {
   };
 
   // Calculate how many questions the student has filled out so far
+  // const calculateAnsweredQuestionsCount = (studentId: number) => {
+  //   if (!marksData?.isQuestionWise || !studentMarks[studentId]) return 0;
+
+  //   const studentMarkRecord = studentMarks[studentId] as Record<string, number | null>;
+  //   return Object.values(studentMarkRecord).filter(
+  //     mark => mark !== null && mark !== undefined
+  //   ).length;
+  // };
+
   const calculateAnsweredQuestionsCount = (studentId: number) => {
     if (!marksData?.isQuestionWise || !studentMarks[studentId]) return 0;
-
+  
     const studentMarkRecord = studentMarks[studentId] as Record<string, number | null>;
     return Object.values(studentMarkRecord).filter(
       mark => mark !== null && mark !== undefined
@@ -1939,7 +2167,7 @@ export default function MarksUploadPage() {
                               <tr key={student.id} className="border-b">
                                 <td className="py-2 px-4">{student.rollNo}</td>
                                 <td className="py-2 px-4">{student.name}</td>
-                                {marksData.questions?.map((question) => {
+                                {/* {marksData.questions?.map((question) => {
                                   const studentMarkRecord = studentMarks[student.id] as Record<string, number | null> || {};
                                   return (
                                     <td
@@ -1968,7 +2196,35 @@ export default function MarksUploadPage() {
                                       />
                                     </td>
                                   );
-                                })}
+                                })} */}
+
+{marksData.questions?.map((question) => {
+  const studentMarkRecord = studentMarks[student.id] as Record<string, number | null> || {};
+  const markValue = studentMarkRecord[question.id];
+  
+  return (
+    <td
+      key={question.id}
+      className="py-2 px-4 text-center"
+    >
+      <Input
+        type="number"
+        min="0"
+        max={question.marksAllocated}
+        className="w-16 mx-auto text-center"
+        value={markValue === null || markValue === undefined ? "" : markValue.toString()}
+        onChange={(e) =>
+          handleQuestionMarkChange(
+            student.id,
+            question.id,
+            e.target.value
+          )
+        }
+        placeholder="N/A"
+      />
+    </td>
+  );
+})}
                                 <td className={`py-2 px-4 text-center font-medium ${
                                   isWarning ? "text-amber-500" : 
                                   isError ? "text-red-500" : 
@@ -2010,7 +2266,7 @@ export default function MarksUploadPage() {
                               <td className="py-2 px-4">{student.rollNo}</td>
                               <td className="py-2 px-4">{student.name}</td>
                               <td className="py-2 px-4 text-center">
-                                <Input
+                                {/* <Input
                                   type="number"
                                   min="0"
                                   max={getMaxMarksForExamType()}
@@ -2028,7 +2284,27 @@ export default function MarksUploadPage() {
                                     )
                                   }
                                   placeholder="N/A"
-                                />
+                                /> */}
+
+<Input
+  type="number"
+  min="0"
+  max={getMaxMarksForExamType()}
+  className="w-20 mx-auto text-center"
+  value={
+    studentMarks[student.id] === null ||
+    studentMarks[student.id] === undefined
+      ? ""
+      : studentMarks[student.id].toString()
+  }
+  onChange={(e) =>
+    handleTotalMarkChange(
+      student.id,
+      e.target.value
+    )
+  }
+  placeholder="N/A"
+/>
                               </td>
                             </tr>
                           ))}

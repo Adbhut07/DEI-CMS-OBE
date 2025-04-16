@@ -113,8 +113,8 @@ const getExamsBySubject = (req, res) => __awaiter(void 0, void 0, void 0, functi
                         unit: true,
                     }
                 },
-                standardMarks: true,
-                internalMarks: true
+                // standardMarks: true,
+                // internalMarks: true
             },
         });
         // Filter out questions for internal assessment exams (DHA, AA, ATT)

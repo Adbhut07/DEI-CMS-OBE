@@ -621,8 +621,8 @@ export const getExamsBySubject = async (req: Request, res: Response): Promise<an
             unit: true,
           }
         },
-        standardMarks: true,
-        internalMarks: true
+        // standardMarks: true,
+        // internalMarks: true
       },
     });
 

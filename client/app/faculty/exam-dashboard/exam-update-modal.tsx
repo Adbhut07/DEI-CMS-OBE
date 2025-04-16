@@ -104,7 +104,7 @@
 
 // return (
 //     <Dialog open={isOpen} onOpenChange={onClose}>
-//       <DialogContent className="sm:max-w-[425px]">
+//       <DialogContent className="sm:max-w-[525px] max-h-[90vh] overflow-y-auto">
 //         <DialogHeader>
 //           <DialogTitle>Update Exam</DialogTitle>
 //         </DialogHeader>
@@ -184,9 +184,7 @@
 //       </DialogContent>
 //     </Dialog>
 //   )
-  
 // }
-
 
 "use client"
 
@@ -210,8 +208,9 @@ interface Exam {
   id: number
   examType: string
   subjectId: number
-  semesterId: number
-  questions: Question[]
+  semesterId?: number
+  marksAllocated: number
+  questions?: Question[]
 }
 
 interface Unit {
@@ -227,27 +226,48 @@ interface ExamUpdateModalProps {
   onUpdate: () => void
 }
 
+// Define exam types arrays
+const EXAM_TYPES_WITH_QUESTIONS = ["CT1", "CT2", "CA", "ESE"];
+const INTERNAL_ASSESSMENT_TYPES = ["DHA", "AA", "ATT"];
+
 export function ExamUpdateModal({ isOpen, onClose, exam, onUpdate }: ExamUpdateModalProps) {
   const [units, setUnits] = useState<Unit[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [totalMarks, setTotalMarks] = useState(0)
 
-  const { register, control, handleSubmit, reset, setValue } = useForm<Exam>({
+  // Determine if exam has questions based on exam type
+  const hasQuestions = EXAM_TYPES_WITH_QUESTIONS.includes(exam.examType)
+
+  const { register, control, handleSubmit, reset, setValue, watch } = useForm<Exam>({
     defaultValues: {
       ...exam,
-      questions: exam.questions.map((q) => ({
-        id: q.id,
-        text: q.questionText,
-        marksAllocated: q.marksAllocated,
-        unitId: q.unitId,
-      })),
+      marksAllocated: exam.marksAllocated || 0,
+      questions: hasQuestions ? 
+        (exam.questions?.map(q => ({
+          id: q.id,
+          text: q.questionText || q.text, // Handle both property names
+          marksAllocated: q.marksAllocated,
+          unitId: q.unitId,
+        })) || []) : undefined,
     },
   })
 
   const { fields, append, remove } = useFieldArray({
     control,
     name: "questions",
-  })
+  });
+
+  // Watch all questions to calculate total marks
+  const questions = watch("questions");
+  const marksAllocated = watch("marksAllocated");
+  
+  useEffect(() => {
+    if (hasQuestions && questions) {
+      const sum = questions.reduce((total, q) => total + (q.marksAllocated || 0), 0);
+      setTotalMarks(sum);
+    }
+  }, [questions, hasQuestions]);
 
   useEffect(() => {
     if (isOpen) {
@@ -273,15 +293,30 @@ export function ExamUpdateModal({ isOpen, onClose, exam, onUpdate }: ExamUpdateM
   const onSubmit = async (data: Exam) => {
     setLoading(true)
     setError(null)
+    
     try {
+      // Prepare request payload based on exam type
+      const payload = hasQuestions ? {
+        examType: data.examType,
+        subjectId: data.subjectId,
+        marksAllocated: totalMarks, // Use calculated total
+        questions: data.questions
+      } : {
+        examType: data.examType,
+        subjectId: data.subjectId,
+        marksAllocated: data.marksAllocated
+      };
+
       const response = await fetch(`http://localhost:8000/api/v1/exams/${exam.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       })
+      
       if (!response.ok) throw new Error("Failed to update exam")
+      
       alert("Exam updated successfully!")
       onUpdate()
       onClose()
@@ -292,7 +327,7 @@ export function ExamUpdateModal({ isOpen, onClose, exam, onUpdate }: ExamUpdateM
     }
   }
 
-return (
+  return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[525px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -307,53 +342,83 @@ return (
               </Label>
               <Input id="examType" className="col-span-3" {...register("examType", { required: true })} />
             </div>
+
+            {!hasQuestions && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="marksAllocated" className="text-right">
+                  Marks Allocated
+                </Label>
+                <Input 
+                  id="marksAllocated" 
+                  type="number" 
+                  className="col-span-3" 
+                  {...register("marksAllocated", { required: !hasQuestions, valueAsNumber: true })} 
+                />
+              </div>
+            )}
           </div>
 
-          <div className="space-y-4">
-            {fields.map((field, index) => (
-              <div key={field.id} className="space-y-2">
-                <Label htmlFor={`questions.${index}.text`}>Question {index + 1}</Label>
-                <Input id={`questions.${index}.text`} {...register(`questions.${index}.text`, { required: true })} />
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label htmlFor={`questions.${index}.marksAllocated`}>Marks</Label>
-                    <Input
-                      id={`questions.${index}.marksAllocated`}
-                      type="number"
-                      {...register(`questions.${index}.marksAllocated`, { required: true, valueAsNumber: true })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor={`questions.${index}.unitId`}>Unit</Label>
-                    <Select
-                      onValueChange={(value) => {
-                        setValue(`questions.${index}.unitId`, parseInt(value, 10))
-                      }}
-                      value={field.unitId?.toString()}
-                      defaultValue={field.unitId?.toString()}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a unit" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {units.map((unit) => (
-                          <SelectItem key={unit.id} value={unit.id.toString()}>
-                            {unit.unitNumber} - {unit.description}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <Button type="button" variant="destructive" onClick={() => remove(index)}>
-                  Remove Question
-                </Button>
+          {hasQuestions && (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="font-medium">Questions</h3>
+                <div className="text-sm">Total Marks: {totalMarks}</div>
               </div>
-            ))}
-            <Button type="button" onClick={() => append({ text: "", marksAllocated: 0, unitId: 0 })}>
-              Add Question
-            </Button>
-          </div>
+              
+              {fields.map((field, index) => (
+                <div key={field.id} className="space-y-2 border p-3 rounded-md">
+                  <Label htmlFor={`questions.${index}.text`}>Question {index + 1}</Label>
+                  <Input id={`questions.${index}.text`} {...register(`questions.${index}.text`, { required: true })} />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor={`questions.${index}.marksAllocated`}>Marks</Label>
+                      <Input
+                        id={`questions.${index}.marksAllocated`}
+                        type="number"
+                        {...register(`questions.${index}.marksAllocated`, { required: true, valueAsNumber: true })}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor={`questions.${index}.unitId`}>Unit</Label>
+                      <Select
+                        onValueChange={(value) => {
+                          setValue(`questions.${index}.unitId`, parseInt(value, 10))
+                        }}
+                        value={field.unitId?.toString()}
+                        defaultValue={field.unitId?.toString()}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a unit" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {units.map((unit) => (
+                            <SelectItem key={unit.id} value={unit.id.toString()}>
+                              {unit.unitNumber} - {unit.description}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="destructive" 
+                    onClick={() => remove(index)}
+                    className="mt-2"
+                  >
+                    Remove Question
+                  </Button>
+                </div>
+              ))}
+              <Button 
+                type="button" 
+                onClick={() => append({ text: "", marksAllocated: 0, unitId: 0 })}
+                className="w-full"
+              >
+                Add Question
+              </Button>
+            </div>
+          )}
 
           <div className="mt-4 flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={onClose}>
