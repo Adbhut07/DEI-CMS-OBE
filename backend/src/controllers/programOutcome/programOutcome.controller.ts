@@ -150,10 +150,11 @@ export const getCourseOutcomesByCourse = async (req: Request, res: Response): Pr
   }
 };
 
+
 // const createCOPOMappingSchema = zod.object({
 //   coId: zod.number().int().positive(),
 //   poId: zod.number().int().positive(),
-//   weightage: zod.number().min(0).max(1),
+//   weightage: zod.enum(['0', '0.5', '1', '1.5', '2', '2.5', '3']).transform(val => parseFloat(val)),
 // });
 
 // export const createCOPOMapping = async (req: Request, res: Response): Promise<any> => {
@@ -336,7 +337,7 @@ export const getCourseOutcomesByCourse = async (req: Request, res: Response): Pr
 // const updateMappingSchema = zod.object({
 //   coId: zod.number().int().positive(),
 //   poId: zod.number().int().positive(),
-//   weightage: zod.number().min(0).max(1)
+//   weightage: zod.enum(['0', '0.5', '1', '1.5', '2', '2.5', '3']).transform(val => parseFloat(val))
 // });
 
 // const updateCOPOMappingsSchema = zod.object({
@@ -456,6 +457,22 @@ const createCOPOMappingSchema = zod.object({
   weightage: zod.enum(['0', '0.5', '1', '1.5', '2', '2.5', '3']).transform(val => parseFloat(val)),
 });
 
+// New schema for bulk creation
+const createBulkCOPOMappingSchema = zod.object({
+  mappings: zod.array(createCOPOMappingSchema)
+});
+
+const copoMappingSchema = zod.object({
+  coId: zod.number().int().positive(),
+  poId: zod.number().int().positive(),
+  weightage: zod.enum(['0', '0.5', '1', '1.5', '2', '2.5', '3']).transform(val => parseFloat(val)),
+});
+
+// Schema for bulk operations
+const bulkCOPOMappingSchema = zod.object({
+  mappings: zod.array(copoMappingSchema)
+});
+
 export const createCOPOMapping = async (req: Request, res: Response): Promise<any> => {
   try {
     const courseId = parseInt(req.params.courseId);
@@ -468,19 +485,61 @@ export const createCOPOMapping = async (req: Request, res: Response): Promise<an
       });
     }
 
-    const result = createCOPOMappingSchema.safeParse(req.body);
-    if (!result.success) {
+    // Check if the request is for bulk operation or single mapping
+    const isBulkRequest = Array.isArray(req.body.mappings);
+    
+    // Validate input
+    let mappingsToProcess: any[] = [];
+    
+    if (isBulkRequest) {
+      const result = bulkCOPOMappingSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid input",
+          errors: result.error.format(),
+        });
+      }
+      mappingsToProcess = result.data.mappings;
+    } else {
+      const result = copoMappingSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid input",
+          errors: result.error.format(),
+        });
+      }
+      mappingsToProcess = [result.data];
+    }
+
+    // Check for duplicate entries in the request
+    const requestPairs = new Set();
+    const duplicateEntries = mappingsToProcess.filter(mapping => {
+      const pair = `${mapping.coId}-${mapping.poId}`;
+      if (requestPairs.has(pair)) {
+        return true;
+      }
+      requestPairs.add(pair);
+      return false;
+    });
+
+    if (duplicateEntries.length > 0) {
       return res.status(400).json({
         success: false,
-        message: "Invalid input",
-        errors: result.error.format(),
+        message: "Request contains duplicate CO-PO pairs",
+        duplicates: duplicateEntries
       });
     }
 
-    // Verify the Unit belongs to a subject in this course
-    const courseOutcome = await prisma.unit.findFirst({
+    // Extract all unique coIds and poIds for batch validation
+    const coIds = [...new Set(mappingsToProcess.map(mapping => mapping.coId))];
+    const poIds = [...new Set(mappingsToProcess.map(mapping => mapping.poId))];
+
+    // Verify all Course Outcomes belong to subjects in this course
+    const courseOutcomes = await prisma.unit.findMany({
       where: {
-        id: result.data.coId,
+        id: { in: coIds },
         subject: {
           courseMappings: {
             some: {
@@ -489,59 +548,121 @@ export const createCOPOMapping = async (req: Request, res: Response): Promise<an
             }
           }
         }
-      }
+      },
+      select: { id: true }
     });
 
-    if (!courseOutcome) {
+    const validCoIds = new Set(courseOutcomes.map(co => co.id));
+    const invalidCOs = mappingsToProcess.filter(mapping => !validCoIds.has(mapping.coId));
+
+    if (invalidCOs.length > 0) {
       return res.status(404).json({
         success: false,
-        message: "Course Outcome not found or doesn't belong to this course/batch"
+        message: "Some Course Outcomes not found or don't belong to this course/batch",
+        invalidCOs: invalidCOs.map(mapping => mapping.coId)
       });
     }
 
-    // Verify the Program Outcome belongs to this course and batch
-    const whereClause: any = {
-      id: result.data.poId,
-      courseId
+    // Verify all Program Outcomes belong to this course and batch
+    const whereClause: any = { 
+      id: { in: poIds },
+      courseId 
     };
+    
     if (!isNaN(batchId)) {
       whereClause.batchId = batchId;
     }
 
-    const programOutcome = await prisma.programOutcome.findFirst({
-      where: whereClause
+    const programOutcomes = await prisma.programOutcome.findMany({
+      where: whereClause,
+      select: { id: true }
     });
 
-    if (!programOutcome) {
+    const validPoIds = new Set(programOutcomes.map(po => po.id));
+    const invalidPOs = mappingsToProcess.filter(mapping => !validPoIds.has(mapping.poId));
+
+    if (invalidPOs.length > 0) {
       return res.status(404).json({
         success: false,
-        message: "Program Outcome not found or doesn't belong to this course/batch"
+        message: "Some Program Outcomes not found or don't belong to this course/batch",
+        invalidPOs: invalidPOs.map(mapping => mapping.poId)
       });
     }
 
-    const mapping = await prisma.cO_PO_Mapping.create({
-      data: result.data,
-      include: {
-        courseOutcome: {
-          include: {
-            subject: true
-          }
-        },
-        programOutcome: {
-          include: {
-            batch: true
-          }
-        }
+    // Check for existing mappings to classify as updates vs creations
+    const existingMappings = await prisma.cO_PO_Mapping.findMany({
+      where: {
+        OR: mappingsToProcess.map(mapping => ({
+          coId: mapping.coId,
+          poId: mapping.poId
+        }))
+      },
+      select: {
+        id: true,
+        coId: true,
+        poId: true
       }
     });
 
-    return res.status(201).json({
+    const existingPairsMap = new Map(
+      existingMappings.map(mapping => [`${mapping.coId}-${mapping.poId}`, mapping.id])
+    );
+    
+    // Track operations for response
+    let createdCount = 0;
+    let updatedCount = 0;
+
+    // Use upsert for each mapping in a transaction
+    const results = await prisma.$transaction(
+      mappingsToProcess.map(mapping => {
+        const pairKey = `${mapping.coId}-${mapping.poId}`;
+        const exists = existingPairsMap.has(pairKey);
+        
+        // Count the operation type
+        if (exists) {
+          updatedCount++;
+        } else {
+          createdCount++;
+        }
+        
+        return prisma.cO_PO_Mapping.upsert({
+          where: {
+            coId_poId: {
+              coId: mapping.coId,
+              poId: mapping.poId
+            }
+          },
+          update: {
+            weightage: mapping.weightage
+          },
+          create: {
+            coId: mapping.coId,
+            poId: mapping.poId,
+            weightage: mapping.weightage
+          },
+          include: {
+            courseOutcome: {
+              include: {
+                subject: true
+              }
+            },
+            programOutcome: {
+              include: {
+                batch: true
+              }
+            }
+          }
+        });
+      })
+    );
+
+    return res.status(200).json({
       success: true,
-      message: "CO-PO Mapping created successfully",
-      data: mapping,
+      message: `CO-PO Mappings processed successfully: ${createdCount} created, ${updatedCount} updated`,
+      data: results
     });
   } catch (error) {
-    console.error("Error in createCOPOMapping", error);
+    console.error("Error in createOrUpdateCOPOMapping", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
@@ -630,120 +751,5 @@ export const getCOPOMappings = async (req: Request, res: Response): Promise<any>
   } catch (error) {
     console.error("Error in getCOPOMappings", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
-  }
-};
-
-const updateMappingSchema = zod.object({
-  coId: zod.number().int().positive(),
-  poId: zod.number().int().positive(),
-  weightage: zod.enum(['0', '0.5', '1', '1.5', '2', '2.5', '3']).transform(val => parseFloat(val))
-});
-
-const updateCOPOMappingsSchema = zod.object({
-  updates: zod.array(updateMappingSchema)
-});
-
-export const updateCOPOMappings = async (req: Request, res: Response): Promise<any> => {
-  try {
-    const courseId = parseInt(req.params.courseId);
-    const batchId = parseInt(req.query.batchId as string);
-    
-    if (isNaN(courseId) || courseId <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid course ID"
-      });
-    }
-
-    const result = updateCOPOMappingsSchema.safeParse(req.body);
-    if (!result.success) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid input data",
-        errors: result.error.format()
-      });
-    }
-
-    // Verify all Units belong to subjects in this course
-    const courseOutcomes = await prisma.unit.findMany({
-      where: {
-        subject: {
-          courseMappings: {
-            some: {
-              courseId,
-              batchId: !isNaN(batchId) ? batchId : undefined
-            }
-          }
-        }
-      },
-      select: { id: true }
-    });
-
-    const validCoIds = new Set(courseOutcomes.map(co => co.id));
-    const invalidCOs = result.data.updates.filter(update => !validCoIds.has(update.coId));
-
-    if (invalidCOs.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Some Course Outcomes do not belong to this course/batch",
-        invalidCOs: invalidCOs.map(co => co.coId)
-      });
-    }
-
-    // Verify all POs belong to this course and batch
-    const whereClause: any = { courseId };
-    if (!isNaN(batchId)) {
-      whereClause.batchId = batchId;
-    }
-
-    const programOutcomes = await prisma.programOutcome.findMany({
-      where: whereClause,
-      select: { id: true }
-    });
-
-    const validPoIds = new Set(programOutcomes.map(po => po.id));
-    const invalidPOs = result.data.updates.filter(update => !validPoIds.has(update.poId));
-
-    if (invalidPOs.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Some Program Outcomes do not belong to this course/batch",
-        invalidPOs: invalidPOs.map(po => po.poId)
-      });
-    }
-
-    const updateResults = await prisma.$transaction(
-      result.data.updates.map(update => 
-        prisma.cO_PO_Mapping.upsert({
-          where: {
-            coId_poId: {
-              coId: update.coId,
-              poId: update.poId
-            }
-          },
-          update: {
-            weightage: update.weightage
-          },
-          create: {
-            coId: update.coId,
-            poId: update.poId,
-            weightage: update.weightage
-          }
-        })
-      )
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: "CO-PO mappings updated successfully",
-      data: updateResults
-    });
-
-  } catch (error) {
-    console.error("Error in updateCOPOMappings:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error"
-    });
   }
 };

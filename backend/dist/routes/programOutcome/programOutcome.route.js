@@ -12,5 +12,4 @@ router.get('/course-outcomes/course/:courseId', programOutcome_controller_1.getC
 // CO-PO Mapping routes
 router.post('/co-po-mappings/course/:courseId', programOutcome_controller_1.createCOPOMapping);
 router.get('/co-po-mappings/course/:courseId', programOutcome_controller_1.getCOPOMappings);
-router.put('/co-po-mappings/course/:courseId', programOutcome_controller_1.updateCOPOMappings);
 exports.default = router;

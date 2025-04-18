@@ -445,13 +445,13 @@ export const getUnitsByCourse = async (req: Request, res: Response): Promise<any
       include: {
         subject: {
           include: {
-            courseMappings: {
-              include: {
-                course: true,
-                faculty: true,
-                batch: true,
-              },
-            },
+            // courseMappings: {
+            //   include: {
+            //     course: true,
+            //     faculty: true,
+            //     batch: true,
+            //   },
+            // },
           },
         },
       },

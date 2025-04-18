@@ -2,13 +2,14 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Book, Users, LayoutDashboard, FileText, ClipboardList, BarChart, FileQuestion, Users2, Plus, UserPlus, Contact, BookOpenText, Atom } from "lucide-react"
+import { Book, Users, LayoutDashboard, FileText, ClipboardList, BarChart, FileQuestion, Users2, Plus, UserPlus, Contact, BookOpenText, Atom, MapPinPlus, SquareChartGantt } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
 const navigation = [
   { name: "Home", href: "/", icon: LayoutDashboard },
   { name: "Program Outcome", href: "/admin/program-outcome", icon: Atom },
+  { name: "CO PO Mapping", href: "/admin/co-po-mapping", icon: SquareChartGantt},
   { name: "Users Management", href: "/admin/users", icon: Users2 },
   { name: "Create User", href: "/admin/create-user", icon: UserPlus },
   { name: "Course Management", href: "/admin/course", icon: Book },
@@ -17,8 +18,7 @@ const navigation = [
   { name: "Enrollments", href: "/admin/enrollments", icon: Contact },
   { name: "Reports", href: "/admin/reports", icon: FileText },
   { name: "Assessment", href: "/admin/assessment", icon: ClipboardList },
-  { name: "Attainment", href: "/admin/attainment", icon: BarChart },
-
+  { name: "Attainment", href: "/admin/attainment", icon: BarChart }
 ]
 
 export function MainSidebar() {

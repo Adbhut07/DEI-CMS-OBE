@@ -6,7 +6,6 @@ import {
   getCourseOutcomesByCourse,
   createCOPOMapping,
   getCOPOMappings,
-  updateCOPOMappings
 } from '../../controllers/programOutcome/programOutcome.controller';
 
 const router = Router();
@@ -22,6 +21,5 @@ router.get('/course-outcomes/course/:courseId', getCourseOutcomesByCourse);
 // CO-PO Mapping routes
 router.post('/co-po-mappings/course/:courseId', createCOPOMapping);
 router.get('/co-po-mappings/course/:courseId', getCOPOMappings);
-router.put('/co-po-mappings/course/:courseId', updateCOPOMappings);
 
-export default router;
+export default router; 
