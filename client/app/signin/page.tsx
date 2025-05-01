@@ -1,10 +1,10 @@
 "use client"
 
 import { useRouter } from 'next/navigation'
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from 'next/image'
 import login_img from '../../resources/login_img.jpg';
-import { useAppDispatch } from '@/lib/store/hooks'
+import { useAppDispatch, useAppSelector } from '@/lib/store/hooks'
 import * as z from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
@@ -12,7 +12,6 @@ import { Loader2 } from 'lucide-react'
 import { setUser } from '@/lib/store/features/user/userSlice'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
   Form,
   FormControl,
@@ -23,6 +22,7 @@ import {
 } from "@/components/ui/form"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from 'next/link'
+import { RootState } from '@/lib/store/store';
 
 const formSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -36,6 +36,29 @@ export default function SignInPage() {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const dispatch = useAppDispatch()
+
+  const { isAuthenticated, role } = useAppSelector((state: RootState) => state.user);
+
+  useEffect(() => {
+    // Check if the user is already logged in
+    if (isAuthenticated) {
+      // Redirect based on the user's role
+      switch (role) {
+        case "Student":
+          router.push("/student");
+          break;
+        case "Faculty":
+          router.push("/faculty");
+          break;
+        case "ADMIN":
+          router.push("/admin/course");
+          break;
+        default:
+          router.push("/Forbidden"); // Default dashboard
+      }
+    }
+  }, [isAuthenticated, role, router]);
+
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -89,22 +112,12 @@ export default function SignInPage() {
           router.push('/admin/course')
         }else if(user.role === 'Faculty'){
           router.push('/faculty')
+        }else if(user.role === 'Student'){
+          router.push('/student')
         }
         else{
-          router.push('/admin/course')
+          router.push('/Forbidden')
         }
-
-        // Role-based navigation
-        // switch (user.role) {
-        //   case 'CANDIDATE':
-        //     router.push('/course-management')
-        //     break
-        //   case 'ADMIN':
-        //     router.push('/dashboard-admin')
-        //     break
-        //   default:
-        //     router.push('/course-management')
-        // }
       } else {
         throw new Error(responseData.message || 'Failed to sign in')
       }

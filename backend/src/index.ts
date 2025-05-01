@@ -17,6 +17,8 @@ import programOutcomeRoutes from './routes/programOutcome/programOutcome.route';
 import courseSubjectMappingRoutes from './routes/course/course-subject-mapping.route';
 import courseOutcomeRoutes from './routes/course/courseOutcome.route'
 import poAttainmentRotes from './routes/programOutcome/poAttainment.routes';
+import studentRoutes from './routes/student/student.route';
+import semesterRoutes from './routes/semester/semester.route';
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -46,6 +48,8 @@ app.use('/api/v1/program-outcomes', programOutcomeRoutes);
 app.use('/api/v1/courseOutcome', courseOutcomeRoutes);
 app.use('/api/v1/course-subject-mapping', courseSubjectMappingRoutes);
 app.use('/api/v1/po-attainment', poAttainmentRotes);
+app.use('/api/v1/student', studentRoutes);
+app.use('/api/v1/semester', semesterRoutes);
 
 
 app.get('/', (req: Request, res: Response) => {

@@ -21,6 +21,8 @@ const programOutcome_route_1 = __importDefault(require("./routes/programOutcome/
 const course_subject_mapping_route_1 = __importDefault(require("./routes/course/course-subject-mapping.route"));
 const courseOutcome_route_1 = __importDefault(require("./routes/course/courseOutcome.route"));
 const poAttainment_routes_1 = __importDefault(require("./routes/programOutcome/poAttainment.routes"));
+const student_route_1 = __importDefault(require("./routes/student/student.route"));
+const semester_route_1 = __importDefault(require("./routes/semester/semester.route"));
 const app = (0, express_1.default)();
 const port = process.env.PORT || 5000;
 const corsOptions = {
@@ -46,6 +48,8 @@ app.use('/api/v1/program-outcomes', programOutcome_route_1.default);
 app.use('/api/v1/courseOutcome', courseOutcome_route_1.default);
 app.use('/api/v1/course-subject-mapping', course_subject_mapping_route_1.default);
 app.use('/api/v1/po-attainment', poAttainment_routes_1.default);
+app.use('/api/v1/student', student_route_1.default);
+app.use('/api/v1/semester', semester_route_1.default);
 app.get('/', (req, res) => {
     res.send('Hello, world!');
 });

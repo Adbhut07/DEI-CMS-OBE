@@ -1,4 +1,5 @@
 "use strict";
+// controllers/semesterController.ts
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -9,347 +10,135 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteSemester = exports.updateSemester = exports.createSemester = exports.getSemesterById = exports.getSemesters = void 0;
+exports.getCurrentStudentSemesters = exports.getActiveSemesters = void 0;
 const client_1 = require("@prisma/client");
 const zod_1 = require("zod");
 const prisma = new client_1.PrismaClient();
-const semesterSchema = zod_1.z.object({
-    name: zod_1.z.string().min(3, "Semester name must be at least 3 characters"),
-    courseId: zod_1.z.number().int("Invalid course ID")
+// Schema for validating the request body
+const getActiveSemestersSchema = zod_1.z.object({
+    batchId: zod_1.z.number().positive("Batch ID must be a positive number"),
 });
-const updateSemesterSchema = zod_1.z.object({
-    name: zod_1.z.string().min(3, "Semester name must be at least 3 characters").optional(),
-    courseId: zod_1.z.number().int("Invalid course ID").optional()
-});
-// Get All Semesters
-const getSemesters = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+/**
+ * Fetches the list of active semesters for a specific batch
+ * This can be used to populate dropdown menus for semester selection
+ */
+const getActiveSemesters = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const semesters = yield prisma.semester.findMany({
+        // Validate request body
+        const parseResult = getActiveSemestersSchema.safeParse(req.body);
+        if (!parseResult.success) {
+            return res.status(400).json({ errors: parseResult.error.flatten() });
+        }
+        const { batchId } = parseResult.data;
+        // Check if the batch exists
+        const batch = yield prisma.batch.findUnique({
+            where: { id: batchId },
             include: {
-                course: {
-                    select: {
-                        id: true,
-                        courseName: true,
-                        createdBy: {
-                            select: {
-                                id: true,
-                                name: true,
-                                email: true
-                            }
-                        }
-                    }
-                },
-                subjects: {
-                    include: {
-                        faculty: {
-                            select: {
-                                id: true,
-                                name: true,
-                                email: true
-                            }
-                        }
-                    }
-                },
+                course: true,
             },
         });
-        res.json({
-            success: true,
-            data: semesters
-        });
-    }
-    catch (error) {
-        console.error("Error in getSemesters controller:", error.message);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
-    }
-});
-exports.getSemesters = getSemesters;
-// Get Semester by ID
-const getSemesterById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { id } = req.params;
-        const semesterId = parseInt(id);
-        if (isNaN(semesterId)) {
-            res.status(400).json({
-                success: false,
-                message: "Invalid semester ID"
-            });
-            return;
+        if (!batch) {
+            return res.status(404).json({ message: "Batch not found" });
         }
-        const semester = yield prisma.semester.findUnique({
-            where: { id: semesterId },
-            include: {
-                course: {
-                    select: {
-                        id: true,
-                        courseName: true,
-                        createdBy: {
-                            select: {
-                                id: true,
-                                name: true,
-                                email: true
-                            }
-                        }
-                    }
+        // For student users, check if they're enrolled in this batch
+        if (req.user.role === "Student") {
+            const enrollment = yield prisma.enrollment.findFirst({
+                where: {
+                    studentId: req.user.id,
+                    batchId: batchId,
+                    isActive: true,
                 },
-                subjects: {
-                    include: {
-                        faculty: {
-                            select: {
-                                id: true,
-                                name: true,
-                                email: true
-                            }
-                        },
-                        units: true,
-                        // exams: true
-                    }
-                }
+            });
+            if (!enrollment) {
+                return res.status(403).json({ message: "You are not enrolled in this batch" });
             }
-        });
-        if (!semester) {
-            res.status(404).json({
-                success: false,
-                message: 'Semester not found'
-            });
-            return;
         }
-        res.json({
-            success: true,
-            data: semester
-        });
-    }
-    catch (error) {
-        console.error("Error in getSemesterById controller:", error.message);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
-    }
-});
-exports.getSemesterById = getSemesterById;
-// Create Semester
-const createSemester = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const result = semesterSchema.safeParse(req.body);
-        if (!result.success) {
-            res.status(400).json({
-                success: false,
-                message: "Invalid inputs",
-                errors: result.error.format()
-            });
-            return;
-        }
-        const { name, courseId } = result.data;
-        const courseExists = yield prisma.course.findUnique({
-            where: { id: courseId }
-        });
-        if (!courseExists) {
-            res.status(404).json({
-                success: false,
-                message: "Course not found"
-            });
-            return;
-        }
-        const existingSemester = yield prisma.semester.findFirst({
+        // Get distinct semesters from CourseSubject for this batch
+        const courseSubjects = yield prisma.courseSubject.findMany({
             where: {
-                name,
-                courseId
-            }
+                batchId: batchId,
+            },
+            select: {
+                semester: true,
+            },
+            distinct: ['semester'],
+            orderBy: {
+                semester: 'asc',
+            },
         });
-        if (existingSemester) {
-            res.status(400).json({
-                success: false,
-                message: "Semester with this name already exists in the course"
-            });
-            return;
+        // Extract and format the semester information
+        const activeSemesters = courseSubjects.map(cs => ({
+            semester: cs.semester,
+        }));
+        // Return the list of active semesters along with batch and course information
+        return res.status(200).json({
+            batchYear: batch.batchYear,
+            courseName: batch.course.courseName,
+            activeSemesters: activeSemesters,
+        });
+    }
+    catch (error) {
+        console.error("Error fetching active semesters:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+exports.getActiveSemesters = getActiveSemesters;
+/**
+ * Fetches the list of active semesters for the current student's batch
+ * This is a convenience endpoint for students to easily get their semesters
+ */
+const getCurrentStudentSemesters = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // Only allow students to access this endpoint
+        if (req.user.role !== "Student") {
+            return res.status(403).json({ message: "This endpoint is only for students" });
         }
-        const newSemester = yield prisma.semester.create({
-            data: {
-                name,
-                course: { connect: { id: courseId } }, // Connect to the course
+        const userId = req.user.id;
+        // Find the student's active enrollment
+        const enrollment = yield prisma.enrollment.findFirst({
+            where: {
+                studentId: userId,
+                isActive: true,
             },
             include: {
-                course: {
-                    select: {
-                        id: true,
-                        courseName: true
-                    }
-                }
-            }
-        });
-        res.status(201).json({
-            success: true,
-            message: "Semester created successfully",
-            data: newSemester
-        });
-    }
-    catch (error) {
-        console.error("Error in createSemester controller:", error.message);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
-    }
-});
-exports.createSemester = createSemester;
-// Update Semester
-const updateSemester = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { id } = req.params;
-        const semesterId = parseInt(id);
-        if (isNaN(semesterId)) {
-            res.status(400).json({
-                success: false,
-                message: "Invalid semester ID"
-            });
-            return;
-        }
-        const result = updateSemesterSchema.safeParse(req.body);
-        if (!result.success) {
-            res.status(400).json({
-                success: false,
-                message: "Invalid inputs",
-                errors: result.error.format()
-            });
-            return;
-        }
-        const { name, courseId } = result.data;
-        const existingSemester = yield prisma.semester.findUnique({
-            where: { id: semesterId }
-        });
-        if (!existingSemester) {
-            res.status(404).json({
-                success: false,
-                message: "Semester not found"
-            });
-            return;
-        }
-        if (courseId) {
-            const courseExists = yield prisma.course.findUnique({
-                where: { id: courseId }
-            });
-            if (!courseExists) {
-                res.status(404).json({
-                    success: false,
-                    message: "Course not found"
-                });
-                return;
-            }
-        }
-        const updatedSemester = yield prisma.semester.update({
-            where: { id: semesterId },
-            data: Object.assign({ name }, (courseId && { course: { connect: { id: courseId } } })),
-            include: {
-                course: {
-                    select: {
-                        id: true,
-                        courseName: true
-                    }
-                },
-                subjects: true
-            }
-        });
-        res.status(201).json({
-            success: true,
-            message: "Semester updated successfully",
-            data: updatedSemester
-        });
-    }
-    catch (error) {
-        console.error("Error in updateSemester controller:", error.message);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
-    }
-});
-exports.updateSemester = updateSemester;
-// Delete Semester
-const deleteSemester = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { id } = req.params;
-        const semesterId = parseInt(id);
-        if (isNaN(semesterId)) {
-            res.status(400).json({
-                success: false,
-                message: "Invalid semester ID"
-            });
-            return;
-        }
-        // Check if semester exists with subjects
-        const semester = yield prisma.semester.findUnique({
-            where: { id: semesterId },
-            include: {
-                subjects: {
+                batch: {
                     include: {
-                        units: {
-                            include: {
-                                coMappings: true
-                            }
-                        },
-                        exams: {
-                            include: {
-                                questions: true
-                            }
-                        }
-                    }
-                }
-            }
+                        course: true,
+                    },
+                },
+            },
         });
-        if (!semester) {
-            res.status(404).json({
-                success: false,
-                message: "Semester not found"
-            });
-            return;
+        if (!enrollment) {
+            return res.status(404).json({ message: "No active enrollment found" });
         }
-        // Remove the check for associated subjects since we're handling them in the transaction
-        // Delete structural elements while preserving historical data
-        yield prisma.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
-            // For each subject in the semester
-            for (const subject of semester.subjects) {
-                // Delete structural elements only
-                for (const unit of subject.units) {
-                    // Delete CO_PO_Mappings as they are structural relationships
-                    yield prisma.cO_PO_Mapping.deleteMany({
-                        where: { coId: unit.id }
-                    });
-                }
-                // Delete units
-                yield prisma.unit.deleteMany({
-                    where: { subjectId: subject.id }
-                });
-                // Delete questions (structural part of exams)
-                for (const exam of subject.exams) {
-                    yield prisma.question.deleteMany({
-                        where: { examId: exam.id }
-                    });
-                }
-                // Delete exams
-                yield prisma.exam.deleteMany({
-                    where: { subjectId: subject.id }
-                });
-                // Delete the subject
-                yield prisma.subject.delete({
-                    where: { id: subject.id }
-                });
-            }
-            // Finally delete the semester
-            yield prisma.semester.delete({
-                where: { id: semesterId }
-            });
+        // Get distinct semesters from CourseSubject for this batch
+        const courseSubjects = yield prisma.courseSubject.findMany({
+            where: {
+                batchId: enrollment.batchId,
+            },
+            select: {
+                semester: true,
+            },
+            distinct: ['semester'],
+            orderBy: {
+                semester: 'asc',
+            },
+        });
+        // Extract and format the semester information
+        const activeSemesters = courseSubjects.map(cs => ({
+            semester: cs.semester,
         }));
-        res.status(200).json({
-            success: true,
-            message: "Semester and associated data deleted successfully"
+        // Return the list of active semesters along with batch and course information
+        return res.status(200).json({
+            batchId: enrollment.batchId,
+            batchYear: enrollment.batch.batchYear,
+            courseName: enrollment.batch.course.courseName,
+            activeSemesters: activeSemesters,
         });
     }
     catch (error) {
-        console.error("Error in deleteSemester controller:", error);
-        if (error instanceof client_1.Prisma.PrismaClientKnownRequestError) {
-            if (error.code === 'P2003') {
-                res.status(400).json({
-                    success: false,
-                    message: "Cannot delete semester due to existing references"
-                });
-                return;
-            }
-        }
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+        console.error("Error fetching student semesters:", error);
+        return res.status(500).json({ message: "Internal server error" });
     }
 });
-exports.deleteSemester = deleteSemester;
+exports.getCurrentStudentSemesters = getCurrentStudentSemesters;
