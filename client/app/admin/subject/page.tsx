@@ -73,7 +73,9 @@ export default function SubjectsPage() {
   const fetchSubjects = async () => {
     try {
       setLoading(true)
-      const response = await fetch("http://localhost:8000/api/v1/subjects/getAllSubjects")
+      const response = await fetch("http://localhost:8000/api/v1/subjects/getAllSubjects", {
+        credentials: "include",
+      })
       if (!response.ok) {
         throw new Error("Failed to fetch subjects")
       }
@@ -91,7 +93,9 @@ export default function SubjectsPage() {
   const fetchUnits = async (subjectId: number) => {
     try {
       setLoading(true)
-      const response = await fetch(`http://localhost:8000/api/v1/units/getAllUnits/${subjectId}`)
+      const response = await fetch(`http://localhost:8000/api/v1/units/getAllUnits/${subjectId}`, {
+        credentials: "include",
+      })
       if (!response.ok) {
         throw new Error("Failed to fetch units")
       }
@@ -109,6 +113,7 @@ export default function SubjectsPage() {
   const createSubject = async () => {
     try {
       const response = await fetch("http://localhost:8000/api/v1/subjects/create", {
+        credentials: "include",
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -158,6 +163,7 @@ export default function SubjectsPage() {
       }
 
       const response = await fetch("http://localhost:8000/api/v1/units/bulkCreate", {
+        credentials: "include",
         method: "POST",
         headers: {
           "Content-Type": "application/json",
