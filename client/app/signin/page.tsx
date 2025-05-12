@@ -37,27 +37,27 @@ export default function SignInPage() {
   const router = useRouter()
   const dispatch = useAppDispatch()
 
-  const { isAuthenticated, role } = useAppSelector((state: RootState) => state.user);
+  // const { isAuthenticated, role } = useAppSelector((state: RootState) => state.user);
 
-  useEffect(() => {
-    // Check if the user is already logged in
-    if (isAuthenticated) {
-      // Redirect based on the user's role
-      switch (role) {
-        case "Student":
-          router.push("/student");
-          break;
-        case "Faculty":
-          router.push("/faculty");
-          break;
-        case "ADMIN":
-          router.push("/admin/course");
-          break;
-        default:
-          router.push("/Forbidden"); // Default dashboard
-      }
-    }
-  }, [isAuthenticated, role, router]);
+  // useEffect(() => {
+  //   // Check if the user is already logged in
+  //   if (isAuthenticated) {
+  //     // Redirect based on the user's role
+  //     switch (role) {
+  //       case "Student":
+  //         router.push("/student");
+  //         break;
+  //       case "Faculty":
+  //         router.push("/faculty");
+  //         break;
+  //       case "ADMIN":
+  //         router.push("/admin/course");
+  //         break;
+  //       default:
+  //         router.push("/Forbidden"); // Default dashboard
+  //     }
+  //   }
+  // }, [isAuthenticated, role, router]);
 
 
   const form = useForm<FormValues>({
@@ -116,7 +116,7 @@ export default function SignInPage() {
           router.push('/student')
         }
         else{
-          router.push('/Forbidden')
+          router.push('/admin/course')
         }
       } else {
         throw new Error(responseData.message || 'Failed to sign in')

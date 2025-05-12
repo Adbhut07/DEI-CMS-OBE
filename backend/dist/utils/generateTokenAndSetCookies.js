@@ -21,12 +21,12 @@ const generateTokenAndSetCookie = (user, res) => {
         throw new Error("JWT_SECRET environment variable is not set!");
     }
     const token = jsonwebtoken_1.default.sign({ userId: user.id, role: user.role }, JWT_SECRET, {
-        expiresIn: "24h",
+        expiresIn: "2h",
     });
     const { password, profileDetails } = user, userWithoutSensitiveData = __rest(user, ["password", "profileDetails"]);
     res
         .cookie("jwt", token, {
-        maxAge: 24 * 60 * 60 * 1000,
+        maxAge: 2 * 60 * 60 * 1000,
         httpOnly: true, // Use true for security
         sameSite: "strict", // Prevent CSRF attacks
         secure: process.env.NODE_ENV === "production", // Use secure cookies in production

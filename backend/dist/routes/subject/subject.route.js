@@ -2,11 +2,12 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const subject_controller_1 = require("../../controllers/subject/subject.controller");
+const roleMiddleware_1 = require("../../utils/roleMiddleware");
 const router = (0, express_1.Router)();
-router.post('/create', subject_controller_1.createSubject);
-router.get('/getAllSubjects', subject_controller_1.getAllSubjects);
-router.get('/get-all-subjects-details', subject_controller_1.getAllSubjectsDetails);
-router.get('/:subjectId', subject_controller_1.getSubjectById);
-router.put('/:subjectId', subject_controller_1.updateSubject);
-router.delete('/:subjectId', subject_controller_1.deleteSubject);
+router.post('/create', (0, roleMiddleware_1.roleMiddleware)(['Admin', 'HOD', 'Dean', 'Faculty']), subject_controller_1.createSubject);
+router.get('/getAllSubjects', (0, roleMiddleware_1.roleMiddleware)(['Admin', 'HOD', 'Dean', 'Faculty']), subject_controller_1.getAllSubjects);
+router.get('/get-all-subjects-details', (0, roleMiddleware_1.roleMiddleware)(['Admin', 'HOD', 'Dean', 'Faculty']), subject_controller_1.getAllSubjectsDetails);
+router.get('/:subjectId', (0, roleMiddleware_1.roleMiddleware)(['Admin', 'HOD', 'Dean', 'Faculty']), subject_controller_1.getSubjectById);
+router.put('/:subjectId', (0, roleMiddleware_1.roleMiddleware)(['Admin', 'HOD', 'Dean', 'Faculty']), subject_controller_1.updateSubject);
+router.delete('/:subjectId', (0, roleMiddleware_1.roleMiddleware)(['Admin', 'HOD', 'Dean', 'Faculty']), subject_controller_1.deleteSubject);
 exports.default = router;

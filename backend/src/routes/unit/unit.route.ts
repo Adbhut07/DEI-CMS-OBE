@@ -1,23 +1,24 @@
 import express from 'express';
 import { createUnit, updateUnit, getUnit, getAllUnits, bulkCreateUnits, getUnitsByCourse, bulkDeleteUnits, reorderUnits, deleteUnit } from '../../controllers/unit/unit.controller';
+import { roleMiddleware } from '../../utils/roleMiddleware';
 
 const router = express.Router();
 
 //create
-router.post('/create', createUnit); 
-router.post('/bulkCreate', bulkCreateUnits);
+router.post('/create', roleMiddleware(['Admin', 'HOD', 'Dean', 'Faculty']), createUnit); 
+router.post('/bulkCreate', roleMiddleware(['Admin', 'HOD', 'Dean', 'Faculty']), bulkCreateUnits);
 
 //update
-router.put('/update/:unitId', updateUnit); 
-router.put("/reorder", reorderUnits);
+router.put('/update/:unitId', roleMiddleware(['Admin', 'HOD', 'Dean', 'Faculty']), updateUnit); 
+router.put("/reorder", roleMiddleware(['Admin', 'HOD', 'Dean', 'Faculty']), reorderUnits);
 
 //delete
-router.delete('/:unitId', deleteUnit);
-router.delete('/bulk', bulkDeleteUnits);
+router.delete('/:unitId', roleMiddleware(['Admin', 'HOD', 'Dean', 'Faculty']), deleteUnit);
+router.delete('/bulk', roleMiddleware(['Admin', 'HOD', 'Dean', 'Faculty']), bulkDeleteUnits);
 
 //get
-router.get('/getUnit/:unitId', getUnit); 
-router.get('/getAllUnits/:subjectId', getAllUnits);
-router.get("/course/:courseId", getUnitsByCourse);
+router.get('/getUnit/:unitId', roleMiddleware(['Admin', 'HOD', 'Dean', 'Faculty']), getUnit); 
+router.get('/getAllUnits/:subjectId', roleMiddleware(['Admin', 'HOD', 'Dean', 'Faculty']), getAllUnits);
+router.get("/course/:courseId", roleMiddleware(['Admin', 'HOD', 'Dean', 'Faculty']), getUnitsByCourse);
 
 export default router;
