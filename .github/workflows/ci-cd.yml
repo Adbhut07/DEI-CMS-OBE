@@ -7,41 +7,54 @@ on:
     branches: [main]
 
 jobs:
-  backend-build:
+  backend:
+    name: Backend CI
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./backend
+        working-directory: backend
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: Install dependencies
+      - name: Install backend dependencies
         run: npm install
 
-      - name: Compile TypeScript
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Build backend
         run: npm run build
 
-  frontend-build:
+      - name: Docker build
+        run: docker build -t dei-obe-backend .
+
+  frontend:
+    name: Frontend CI
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./frontend
+        working-directory: frontend
+
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
         run: npm install
 
       - name: Build frontend
