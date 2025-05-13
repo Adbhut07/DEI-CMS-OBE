@@ -833,7 +833,7 @@ export function ExamCreationModal({ isOpen, onClose, subject }: ExamCreationModa
     setError(null)
     try {
       // Prepare request body based on exam type
-      let requestBody: any = {
+      const requestBody: any = {
         examType: data.examType,
         subjectId: data.subjectId,
         marksAllocated: data.marksAllocated
