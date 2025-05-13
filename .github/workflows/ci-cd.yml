@@ -1,11 +1,9 @@
 name: CI/CD Pipeline
-
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
-
 jobs:
   backend:
     name: Backend CI
@@ -13,28 +11,21 @@ jobs:
     defaults:
       run:
         working-directory: backend
-
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
-
       - name: Install backend dependencies
         run: npm install
-
       - name: Generate Prisma client
         run: npx prisma generate
-
       - name: Build backend
         run: npm run build
-
       - name: Docker build
         run: docker build -t dei-obe-backend .
 
@@ -44,18 +35,16 @@ jobs:
     defaults:
       run:
         working-directory: client
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
-
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
       - name: Install frontend dependencies
-        run: npm install
-
+        run: npm install --legacy-peer-deps
       - name: Build frontend
         run: npm run build
