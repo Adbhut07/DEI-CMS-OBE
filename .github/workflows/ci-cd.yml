@@ -16,16 +16,28 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+      
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
+      
       - name: Install backend dependencies
         run: npm install
+      
       - name: Generate Prisma client
         run: npx prisma generate
+      
       - name: Build backend
         run: npm run build
+        
+      - name: Create .env file
+        run: |
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
+          echo "PORT=8000" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+          # Add other environment variables as needed
+      
       - name: Docker build
         run: docker build -t dei-obe-backend .
 
@@ -38,13 +50,16 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+      
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
           cache: 'npm'
           cache-dependency-path: client/package-lock.json
+      
       - name: Install frontend dependencies
         run: npm install --legacy-peer-deps
+      
       - name: Build frontend
         run: npm run build
