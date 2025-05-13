@@ -45,7 +45,7 @@
 //   const fetchCourses = async () => {
 //     setIsLoading(true)
 //     try {
-//       const response = await fetch("http://localhost:8000/api/v1/courses/getAllCourses", {
+//       const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/courses/getAllCourses", {
 //         credentials: "include",
 //       })
 //       if (!response.ok) throw new Error("Failed to fetch courses")
@@ -69,7 +69,7 @@
 //   const fetchCourseDetails = async (courseId: number) => {
 //     setIsLoading(true)
 //     try {
-//       const response = await fetch(`http://localhost:8000/api/v1/courses/getCourse/${courseId}`, {
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/courses/getCourse/${courseId}`, {
 //         credentials: "include",
 //       })
 //       if (!response.ok) throw new Error("Failed to fetch course details")
@@ -88,7 +88,7 @@
 
 //   const fetchFaculties = async () => {
 //     try {
-//       const response = await fetch("http://localhost:8000/api/v1/users/getUserByRole/Faculty", {
+//       const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/users/getUserByRole/Faculty", {
 //         credentials: "include",
 //       })
 //       if (!response.ok) throw new Error("Failed to fetch faculties")
@@ -112,7 +112,7 @@
 
 //     setIsLoading(true)
 //     try {
-//       const response = await fetch(`http://localhost:8000/api/v1/subjects/${selectedCourse.id}/assign-faculty`, {
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/subjects/${selectedCourse.id}/assign-faculty`, {
 //         method: "POST",
 //         credentials: "include",
 //         headers: {
@@ -297,7 +297,7 @@
 //   const fetchCourses = async () => {
 //     setIsLoading(true)
 //     try {
-//       const response = await fetch("http://localhost:8000/api/v1/courses/getAllCourses", {
+//       const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/courses/getAllCourses", {
 //         credentials: "include",
 //       })
 //       if (!response.ok) throw new Error("Failed to fetch courses")
@@ -320,7 +320,7 @@
 
 //   const fetchAllSubjects = async () => {
 //     try {
-//       const response = await fetch("http://localhost:8000/api/v1/subjects/getAllSubjects", {
+//       const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/subjects/getAllSubjects", {
 //         credentials: "include",
 //       })
 //       if (!response.ok) throw new Error("Failed to fetch subjects")
@@ -345,7 +345,7 @@
 //   const fetchCourseDetails = async (courseId: number) => {
 //     setIsLoading(true)
 //     try {
-//       const response = await fetch(`http://localhost:8000/api/v1/courses/getCourse/${courseId}`, {
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/courses/getCourse/${courseId}`, {
 //         credentials: "include",
 //       })
 //       if (!response.ok) throw new Error("Failed to fetch course details")
@@ -372,7 +372,7 @@
 
 //   const fetchFaculties = async () => {
 //     try {
-//       const response = await fetch("http://localhost:8000/api/v1/users/getUserByRole/Faculty", {
+//       const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/users/getUserByRole/Faculty", {
 //         credentials: "include",
 //       })
 //       if (!response.ok) throw new Error("Failed to fetch faculties")
@@ -400,7 +400,7 @@
 
 //     setIsLoading(true)
 //     try {
-//       const response = await fetch(`http://localhost:8000/api/v1/subjects/assign-faculty`, {
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/subjects/assign-faculty`, {
 //         method: "POST",
 //         credentials: "include",
 //         headers: {
@@ -659,7 +659,7 @@ export default function ViewAssignedFacultyPage() {
   const fetchCourses = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch("http://localhost:8000/api/v1/courses/getAllCourses", {
+      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/courses/getAllCourses", {
         credentials: "include",
       })
       if (!response.ok) throw new Error("Failed to fetch courses")
@@ -684,7 +684,7 @@ export default function ViewAssignedFacultyPage() {
     setIsLoading(true)
     try {
       // Get course details
-      const courseResponse = await fetch(`http://localhost:8000/api/v1/courses/getCourse/${courseId}`, {
+      const courseResponse = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/courses/getCourse/${courseId}`, {
         credentials: "include",
       })
       if (!courseResponse.ok) throw new Error("Failed to fetch course details")
@@ -692,7 +692,7 @@ export default function ViewAssignedFacultyPage() {
       setSelectedCourse(courseData.data)
       
       // Get course subjects using the new API endpoint
-      const subjectsResponse = await fetch(`http://localhost:8000/api/v1/course-subject-mapping/course/${courseId}/subjects`, {
+      const subjectsResponse = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/course-subject-mapping/course/${courseId}/subjects`, {
         credentials: "include",
       })
       if (!subjectsResponse.ok) throw new Error("Failed to fetch course subjects")
@@ -718,7 +718,7 @@ export default function ViewAssignedFacultyPage() {
 
   const fetchFaculties = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/v1/users/getUserByRole/Faculty", {
+      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/users/getUserByRole/Faculty", {
         credentials: "include",
       })
       if (!response.ok) throw new Error("Failed to fetch faculties")
@@ -747,7 +747,7 @@ export default function ViewAssignedFacultyPage() {
     setIsLoading(true)
     try {
       // Use the new API endpoint for faculty assignment
-      const response = await fetch(`http://localhost:8000/api/v1/course-subject-mapping/assign-faculty`, {
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/course-subject-mapping/assign-faculty`, {
         method: "POST",
         credentials: "include",
         headers: {

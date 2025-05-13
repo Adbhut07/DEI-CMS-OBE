@@ -103,7 +103,7 @@
 //     setError(null)
 
 //     try {
-//       const response = await fetch("http://localhost:8000/api/v1/courses/getAllCourses", {
+//       const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/courses/getAllCourses", {
 //         credentials: "include",
 //       })
 //       if (!response.ok) {
@@ -129,7 +129,7 @@
 //     setError(null)
 
 //     try {
-//       const response = await fetch(`http://localhost:8000/api/v1/program-outcomes/course/${courseId}`)
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/program-outcomes/course/${courseId}`)
 //       if (!response.ok) {
 //         throw new Error(`HTTP error! Status: ${response.status}`)
 //       }
@@ -152,7 +152,7 @@
 //     setIsLoading((prev) => ({ ...prev, batches: true }))
 
 //     try {
-//       const response = await fetch(`http://localhost:8000/api/v1/batch/course/${courseId}`)
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/batch/course/${courseId}`)
 //       if (!response.ok) {
 //         throw new Error(`HTTP error! Status: ${response.status}`)
 //       }
@@ -176,7 +176,7 @@
 //     setIsLoading((prev) => ({ ...prev, action: true }))
 
 //     try {
-//       const response = await fetch("http://localhost:8000/api/v1/program-outcomes/create", {
+//       const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/program-outcomes/create", {
 //         method: "POST",
 //         headers: {
 //           "Content-Type": "application/json",
@@ -225,7 +225,7 @@
 //     setIsLoading((prev) => ({ ...prev, action: true }))
 
 //     try {
-//       const response = await fetch(`http://localhost:8000/api/v1/program-outcomes/${selectedOutcome.id}`, {
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/program-outcomes/${selectedOutcome.id}`, {
 //         method: "PUT",
 //         headers: {
 //           "Content-Type": "application/json",
@@ -275,7 +275,7 @@
 //     setIsLoading((prev) => ({ ...prev, action: true }))
 
 //     try {
-//       const response = await fetch(`http://localhost:8000/api/v1/program-outcomes/${selectedOutcome.id}`, {
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/program-outcomes/${selectedOutcome.id}`, {
 //         method: "DELETE",
 //       })
 
@@ -585,7 +585,7 @@ export default function ProgramOutcomesPage() {
     setError(null)
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/courses/getAllCourses", {
+      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/courses/getAllCourses", {
         credentials: "include",
       })
       if (!response.ok) {
@@ -611,7 +611,7 @@ export default function ProgramOutcomesPage() {
     setError(null)
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/program-outcomes/course/${courseId}`)
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/program-outcomes/course/${courseId}`)
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
       }
@@ -634,7 +634,7 @@ export default function ProgramOutcomesPage() {
     setIsLoading((prev) => ({ ...prev, batches: true }))
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/batch/course/${courseId}`)
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/batch/course/${courseId}`)
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
       }
@@ -658,7 +658,7 @@ export default function ProgramOutcomesPage() {
     setIsLoading((prev) => ({ ...prev, action: true }))
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/program-outcomes/create", {
+      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/program-outcomes/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -707,7 +707,7 @@ export default function ProgramOutcomesPage() {
     setIsLoading((prev) => ({ ...prev, action: true }))
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/program-outcomes/${selectedOutcome.id}`, {
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/program-outcomes/${selectedOutcome.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -757,7 +757,7 @@ export default function ProgramOutcomesPage() {
     setIsLoading((prev) => ({ ...prev, action: true }))
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/program-outcomes/${selectedOutcome.id}`, {
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/program-outcomes/${selectedOutcome.id}`, {
         method: "DELETE",
       })
 

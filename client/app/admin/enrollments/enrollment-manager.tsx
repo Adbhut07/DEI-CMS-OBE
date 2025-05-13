@@ -45,7 +45,7 @@
 //     setSelectedCourse(courseId)
 //     setError(null)
 //     try {
-//       const response = await fetch(`http://localhost:8000/api/v1/enrollments/course/${courseId}`)
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/enrollments/course/${courseId}`)
 //       if (!response.ok) {
 //         throw new Error(`HTTP error! status: ${response.status}`)
 //       }
@@ -63,7 +63,7 @@
 
 //   const handleDelete = async (id: string) => {
 //     try {
-//       const response = await fetch(`http://localhost:8000/api/v1/enrollments/${id}`, {
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/enrollments/${id}`, {
 //         method: "DELETE",
 //       })
 //       if (!response.ok) {
@@ -99,7 +99,7 @@
 //       }
 //       let response
 //       if (editingEnrollment) {
-//         response = await fetch(`http://localhost:8000/api/v1/enrollments/${editingEnrollment.id}`, {
+//         response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/enrollments/${editingEnrollment.id}`, {
 //           method: "PUT",
 //           headers: {
 //             "Content-Type": "application/json",
@@ -107,7 +107,7 @@
 //           body: JSON.stringify(formattedData),
 //         })
 //       } else {
-//         response = await fetch("http://localhost:8000/api/v1/enrollments/", {
+//         response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/enrollments/", {
 //           method: "POST",
 //           headers: {
 //             "Content-Type": "application/json",
@@ -272,7 +272,7 @@
 //     setEnrollments([])
 //     setError(null)
 //     try {
-//       const response = await fetch(`http://localhost:8000/api/v1/batch/course/${courseId}`)
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/batch/course/${courseId}`)
 //       if (!response.ok) {
 //         throw new Error(`HTTP error! status: ${response.status}`)
 //       }
@@ -292,7 +292,7 @@
 //     setSelectedBatch(batchId)
 //     setError(null)
 //     try {
-//       const response = await fetch(`http://localhost:8000/api/v1/enrollments/batch/${batchId}`)
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/enrollments/batch/${batchId}`)
 //       if (!response.ok) {
 //         throw new Error(`HTTP error! status: ${response.status}`)
 //       }
@@ -310,7 +310,7 @@
 
 //   const handleStatusChange = async (enrollmentId: number, newStatus: boolean) => {
 //     try {
-//       const response = await fetch(`http://localhost:8000/api/v1/enrollments/${enrollmentId}`, {
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/enrollments/${enrollmentId}`, {
 //         method: "PUT",
 //         headers: {
 //           "Content-Type": "application/json",
@@ -484,7 +484,7 @@ export default function EnrollmentManager({ courses }: { courses: Course[] }) {
     setEnrollments([])
     setError(null)
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/batch/course/${courseId}`)
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/batch/course/${courseId}`)
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
@@ -504,7 +504,7 @@ export default function EnrollmentManager({ courses }: { courses: Course[] }) {
     setSelectedBatch(batchId)
     setError(null)
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/enrollments/batch/${batchId}`)
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/enrollments/batch/${batchId}`)
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
@@ -522,7 +522,7 @@ export default function EnrollmentManager({ courses }: { courses: Course[] }) {
 
   const handleStatusChange = async (enrollmentId: number, newStatus: boolean) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/enrollments/${enrollmentId}`, {
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/enrollments/${enrollmentId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -560,7 +560,7 @@ export default function EnrollmentManager({ courses }: { courses: Course[] }) {
 
   const handleCreateEnrollment = async (studentId: number, rollNo: string) => {
     try {
-      const response = await fetch("http://localhost:8000/api/v1/enrollments/", {
+      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/enrollments/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

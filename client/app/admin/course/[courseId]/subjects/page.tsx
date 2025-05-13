@@ -73,7 +73,7 @@ export default function SubjectsPage() {
   const fetchCourseSubjects = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/courses/getAllCourses`, {
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/courses/getAllCourses`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch course subjects');
@@ -99,7 +99,7 @@ export default function SubjectsPage() {
 
   const fetchAllSubjects = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/v1/subjects/getAllSubjects', {
+      const response = await fetch('http://outcomemagic-backend.asdevx.com/api/v1/subjects/getAllSubjects', {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch subjects');
@@ -118,7 +118,7 @@ export default function SubjectsPage() {
 
   const fetchBatches = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/batch/course/${courseId}`, {
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/batch/course/${courseId}`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch batches');
@@ -149,7 +149,7 @@ export default function SubjectsPage() {
         batchId: mapping.batchId
       };
       
-      const response = await fetch('http://localhost:8000/api/v1/course-subject-mapping/map', {
+      const response = await fetch('http://outcomemagic-backend.asdevx.com/api/v1/course-subject-mapping/map', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -185,7 +185,7 @@ export default function SubjectsPage() {
     if (window.confirm('Are you sure you want to remove this subject from the course?')) {
       setIsLoading(true);
       try {
-        const response = await fetch(`http://localhost:8000/api/v1/course-subject-mapping/unmap/${id}`, {
+        const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/course-subject-mapping/unmap/${id}`, {
           method: 'DELETE',
           credentials: 'include',
         });

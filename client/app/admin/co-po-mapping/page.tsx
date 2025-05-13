@@ -98,7 +98,7 @@
 //   const fetchCourses = async () => {
 //     try {
 //       setLoading(true)
-//       const response = await fetch("http://localhost:8000/api/v1/courses/getAllCourses", {
+//       const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/courses/getAllCourses", {
 //         credentials: "include",
 //       })
 //       const data = await response.json()
@@ -119,7 +119,7 @@
 //   const fetchProgramOutcomes = async (courseId: number) => {
 //     try {
 //       setLoadingData(true)
-//       const response = await fetch(`http://localhost:8000/api/v1/program-outcomes/course/${courseId}`, {
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/program-outcomes/course/${courseId}`, {
 //         credentials: "include",
 //       })
 //       const data = await response.json()
@@ -140,7 +140,7 @@
 //   const fetchCourseOutcomes = async (courseId: number) => {
 //     try {
 //       setLoadingData(true)
-//       const response = await fetch(`http://localhost:8000/api/v1/units/course/${courseId}`, {
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/units/course/${courseId}`, {
 //         credentials: "include",
 //       })
 //       const data = await response.json()
@@ -162,7 +162,7 @@
 //   const fetchExistingMappings = async (courseId: number) => {
 //     try {
 //       setLoadingData(true)
-//       const response = await fetch(`http://localhost:8000/api/v1/program-outcomes/co-po-mappings/course/${courseId}`, {
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/program-outcomes/co-po-mappings/course/${courseId}`, {
 //         credentials: "include",
 //       })
 //       const data = await response.json()
@@ -257,7 +257,7 @@
 //       }))
       
 //       // Send to backend - endpoint needs to be implemented according to your API
-//       const response = await fetch(`http://localhost:8000/api/v1/program-outcomes/co-po-mappings/course/${selectedCourseId}`, {
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/program-outcomes/co-po-mappings/course/${selectedCourseId}`, {
 //         method: 'POST',
 //         headers: {
 //           'Content-Type': 'application/json',
@@ -507,7 +507,7 @@
 //   const fetchCourses = async () => {
 //     try {
 //       setLoading(true)
-//       const response = await fetch("http://localhost:8000/api/v1/courses/getAllCourses", {
+//       const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/courses/getAllCourses", {
 //         credentials: "include",
 //       })
 //       const data = await response.json()
@@ -528,7 +528,7 @@
 //   const fetchProgramOutcomes = async (courseId: number) => {
 //     try {
 //       setLoadingData(true)
-//       const response = await fetch(`http://localhost:8000/api/v1/program-outcomes/course/${courseId}`, {
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/program-outcomes/course/${courseId}`, {
 //         credentials: "include",
 //       })
 //       const data = await response.json()
@@ -549,7 +549,7 @@
 //   const fetchCourseOutcomes = async (courseId: number) => {
 //     try {
 //       setLoadingData(true)
-//       const response = await fetch(`http://localhost:8000/api/v1/units/course/${courseId}`, {
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/units/course/${courseId}`, {
 //         credentials: "include",
 //       })
 //       const data = await response.json()
@@ -570,7 +570,7 @@
 //   const fetchExistingMappings = async (courseId: number) => {
 //     try {
 //       setLoadingData(true)
-//       const response = await fetch(`http://localhost:8000/api/v1/program-outcomes/co-po-mappings/course/${courseId}`, {
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/program-outcomes/co-po-mappings/course/${courseId}`, {
 //         credentials: "include",
 //       })
 //       const data = await response.json()
@@ -673,7 +673,7 @@
 //         weightage: item.weightage
 //       }))
             
-//       const response = await fetch(`http://localhost:8000/api/v1/program-outcomes/co-po-mappings/course/${selectedCourseId}`, {
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/program-outcomes/co-po-mappings/course/${selectedCourseId}`, {
 //         method: 'POST',
 //         headers: {
 //           'Content-Type': 'application/json',
@@ -943,7 +943,7 @@ export default function COPOMapping() {
   const fetchCourses = async () => {
     try {
       setLoading(true)
-      const response = await fetch("http://localhost:8000/api/v1/courses/getAllCourses", {
+      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/courses/getAllCourses", {
         credentials: "include",
       })
       const data = await response.json()
@@ -964,7 +964,7 @@ export default function COPOMapping() {
   const fetchBatches = async (courseId: number) => {
     try {
       setLoadingBatches(true)
-      const response = await fetch(`http://localhost:8000/api/v1/batch/course/${courseId}`, {
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/batch/course/${courseId}`, {
         credentials: "include",
       })
       const data = await response.json()
@@ -985,7 +985,7 @@ export default function COPOMapping() {
   const fetchProgramOutcomes = async (courseId: number) => {
     try {
       setLoadingData(true)
-      const response = await fetch(`http://localhost:8000/api/v1/program-outcomes/course/${courseId}`, {
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/program-outcomes/course/${courseId}`, {
         credentials: "include",
       })
       const data = await response.json()
@@ -1006,7 +1006,7 @@ export default function COPOMapping() {
   const fetchCourseOutcomes = async (courseId: number) => {
     try {
       setLoadingData(true)
-      const response = await fetch(`http://localhost:8000/api/v1/units/course/${courseId}`, {
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/units/course/${courseId}`, {
         credentials: "include",
       })
       const data = await response.json()
@@ -1027,7 +1027,7 @@ export default function COPOMapping() {
   const fetchExistingMappings = async (courseId: number, batchId: number) => {
     try {
       setLoadingData(true)
-      const response = await fetch(`http://localhost:8000/api/v1/program-outcomes/co-po-mappings/course/${courseId}?batchId=${batchId}`, {
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/program-outcomes/co-po-mappings/course/${courseId}?batchId=${batchId}`, {
         credentials: "include",
       })
       const data = await response.json()
@@ -1139,7 +1139,7 @@ export default function COPOMapping() {
         weightage: item.weightage.toString() // Convert number to string
       }))
             
-      const response = await fetch(`http://localhost:8000/api/v1/program-outcomes/co-po-mappings/course/${selectedCourseId}?batchId=${selectedBatchId}`, {
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/program-outcomes/co-po-mappings/course/${selectedCourseId}?batchId=${selectedBatchId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

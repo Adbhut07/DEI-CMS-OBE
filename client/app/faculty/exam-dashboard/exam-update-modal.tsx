@@ -67,7 +67,7 @@
 
 //   const fetchSubjectDetails = async (subjectId: number) => {
 //     try {
-//       const response = await fetch(`http://localhost:8000/api/v1/subjects/${subjectId}`)
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/subjects/${subjectId}`)
 //       if (!response.ok) throw new Error("Failed to fetch subject details")
 //       const result = await response.json()
 //       if (result.success && result.data) {
@@ -84,7 +84,7 @@
 //     setLoading(true)
 //     setError(null)
 //     try {
-//       const response = await fetch(`http://localhost:8000/api/v1/exams/${exam.id}`, {
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/exams/${exam.id}`, {
 //         method: "PUT",
 //         headers: {
 //           "Content-Type": "application/json",
@@ -277,7 +277,7 @@ export function ExamUpdateModal({ isOpen, onClose, exam, onUpdate }: ExamUpdateM
 
   const fetchSubjectDetails = async (subjectId: number) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/subjects/${subjectId}`)
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/subjects/${subjectId}`)
       if (!response.ok) throw new Error("Failed to fetch subject details")
       const result = await response.json()
       if (result.success && result.data) {
@@ -307,7 +307,7 @@ export function ExamUpdateModal({ isOpen, onClose, exam, onUpdate }: ExamUpdateM
         marksAllocated: data.marksAllocated
       };
 
-      const response = await fetch(`http://localhost:8000/api/v1/exams/${exam.id}`, {
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/exams/${exam.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

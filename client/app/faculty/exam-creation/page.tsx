@@ -67,7 +67,7 @@
 
 //   const fetchAssignedSubjects = async () => {
 //     try {
-//       const response = await fetch("http://localhost:8000/api/v1/faculty/get-assigned-subjects", {
+//       const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/faculty/get-assigned-subjects", {
 //         credentials: "include",
 //       })
 //       if (!response.ok) throw new Error("Failed to fetch assigned subjects")
@@ -84,7 +84,7 @@
 
 //   const fetchSubjectDetails = async (subjectId: number) => {
 //     try {
-//       const response = await fetch(`http://localhost:8000/api/v1/subjects/getSubject/${subjectId}`)
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/subjects/getSubject/${subjectId}`)
 //       if (!response.ok) throw new Error("Failed to fetch subject details")
 //       const result = await response.json()
 //       if (result.success && result.data) {
@@ -103,7 +103,7 @@
 //     setLoading(true)
 //     setError(null)
 //     try {
-//       const response = await fetch("http://localhost:8000/api/v1/exams", {
+//       const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/exams", {
 //         method: "POST",
 //         headers: {
 //           "Content-Type": "application/json",
@@ -334,14 +334,14 @@ export default function ExamCreationPage() {
 
   const fetchAssignedSubjects = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/v1/faculty/get-assigned-subjects", {
+      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/faculty/get-assigned-subjects", {
         credentials: "include",
       })
       if (!response.ok) throw new Error("Failed to fetch assigned subjects")
       const result = await response.json()
       if (result.success && Array.isArray(result.data)) {
         setAssignedSubjects(result.data)
-        console.log("assigned subjects",result.data)
+        //console.log("assigned subjects",result.data)
       } else {
         throw new Error("Invalid data format for assigned subjects")
       }
@@ -352,7 +352,7 @@ export default function ExamCreationPage() {
 
   const fetchSubjectDetails = async (subjectId: number) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/subjects/${subjectId}`)
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/subjects/${subjectId}`)
       if (!response.ok) throw new Error("Failed to fetch subject details")
       const result = await response.json()
       if (result.success && result.data) {
@@ -378,7 +378,7 @@ export default function ExamCreationPage() {
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch("http://localhost:8000/api/v1/exams", {
+      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/exams", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

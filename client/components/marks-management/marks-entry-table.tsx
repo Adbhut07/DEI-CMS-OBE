@@ -42,7 +42,7 @@
 
 //       // Fetch all students for the batch
 //       const studentsResponse = await fetch(
-//         `http://localhost:8000/api/v1/enrollments/course/batch/${selectedSubject.batchId}`,
+//         `http://outcomemagic-backend.asdevx.com/api/v1/enrollments/course/batch/${selectedSubject.batchId}`,
 //         { credentials: "include" },
 //       )
 
@@ -73,7 +73,7 @@
 //       // Try to fetch existing marks
 //       console.log("Fetching marks for exam:", examData.id)
 //       try {
-//         const marksResponse = await fetch(`http://localhost:8000/api/v1/marks/${examData.id}`, {
+//         const marksResponse = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/marks/${examData.id}`, {
 //           credentials: "include",
 //         })
 
@@ -168,7 +168,7 @@
 //       console.log("Saving marks with data:", formattedData)
 
 //       // Make the API call to save marks
-//       const response = await fetch("http://localhost:8000/api/v1/marks/upload", {
+//       const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/marks/upload", {
 //         method: "POST",
 //         headers: {
 //           "Content-Type": "application/json",
@@ -302,7 +302,7 @@ export function MarksEntryTable({ examData, selectedSubject }: MarksEntryTablePr
 
   // Create a memoized fetch function to avoid recreation on each render
   const fetchData = useCallback(async () => {
-    console.log("fetchData called with:", { examData, selectedSubject })
+    //console.log("fetchData called with:", { examData, selectedSubject })
 
     try {
       setLoading(true)
@@ -320,11 +320,11 @@ export function MarksEntryTable({ examData, selectedSubject }: MarksEntryTablePr
         throw new Error("Missing exam information. Please select an exam again.")
       }
 
-      console.log("Fetching students for batch:", selectedSubject.batchId)
+      //console.log("Fetching students for batch:", selectedSubject.batchId)
 
       // Fetch all students for the batch
       const studentsResponse = await fetch(
-        `http://localhost:8000/api/v1/enrollments/course/batch/${selectedSubject.batchId}`,
+        `http://outcomemagic-backend.asdevx.com/api/v1/enrollments/course/batch/${selectedSubject.batchId}`,
         { credentials: "include" },
       )
 
@@ -333,7 +333,7 @@ export function MarksEntryTable({ examData, selectedSubject }: MarksEntryTablePr
       }
 
       const studentsData = await studentsResponse.json()
-      console.log("Students data:", studentsData)
+      //console.log("Students data:", studentsData)
 
       if (!studentsData.success) {
         throw new Error(studentsData.message || "Failed to fetch students")
@@ -353,17 +353,17 @@ export function MarksEntryTable({ examData, selectedSubject }: MarksEntryTablePr
       })
 
       // Try to fetch existing marks
-      console.log("Fetching marks for exam:", examData.id)
+      //console.log("Fetching marks for exam:", examData.id)
       try {
-        const marksResponse = await fetch(`http://localhost:8000/api/v1/marks/${examData.id}`, {
+        const marksResponse = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/marks/${examData.id}`, {
           credentials: "include",
         })
 
-        console.log("Marks response status:", marksResponse.status)
+//console.log("Marks response status:", marksResponse.status)
 
         if (marksResponse.ok) {
           const marksData = await marksResponse.json()
-          console.log("Marks data:", marksData)
+          //console.log("Marks data:", marksData)
 
           if (marksData.success) {
             // Update marks data with existing marks
@@ -377,7 +377,7 @@ export function MarksEntryTable({ examData, selectedSubject }: MarksEntryTablePr
             })
           }
         } else {
-          console.log("No existing marks found or API returned non-200 status")
+         // console.log("No existing marks found or API returned non-200 status")
         }
       } catch (marksError) {
         console.error("Error fetching marks (continuing with empty marks):", marksError)
@@ -396,7 +396,7 @@ export function MarksEntryTable({ examData, selectedSubject }: MarksEntryTablePr
 
   // Fetch students and existing marks when component mounts or dependencies change
   useEffect(() => {
-    console.log("MarksEntryTable useEffect triggered with:", { examData, selectedSubject })
+    //console.log("MarksEntryTable useEffect triggered with:", { examData, selectedSubject })
 
     if (examData && selectedSubject) {
       fetchData()
@@ -447,10 +447,10 @@ export function MarksEntryTable({ examData, selectedSubject }: MarksEntryTablePr
         }),
       }
 
-      console.log("Saving marks with data:", formattedData)
+      //console.log("Saving marks with data:", formattedData)
 
       // Make the API call to save marks
-      const response = await fetch("http://localhost:8000/api/v1/marks/upload", {
+      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/marks/upload", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

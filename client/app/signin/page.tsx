@@ -89,14 +89,14 @@ export default function SignInPage() {
       }
 
       if (responseData.success) {
-        console.log(responseData.data);
+        //console.log(responseData.data);
         const { user, token } = responseData.data
 
         // Store token
         localStorage.setItem('token', token)
 
         // Update Redux state
-        console.log(user);
+        //console.log(user);
         dispatch(
           setUser({
             id: user.id || null,

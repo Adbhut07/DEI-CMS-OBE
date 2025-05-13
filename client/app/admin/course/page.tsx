@@ -70,7 +70,7 @@ export default function CourseManagement() {
   const fetchCourses = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch('http://localhost:8000/api/v1/courses/getAllCourses', {
+      const response = await fetch('http://outcomemagic-backend.asdevx.com/api/v1/courses/getAllCourses', {
         credentials: 'include',
       })
       if (!response.ok) throw new Error('Failed to fetch courses')
@@ -107,7 +107,7 @@ export default function CourseManagement() {
 
     setIsLoading(true)
     try {
-      const response = await fetch('http://localhost:8000/api/v1/courses/create', {
+      const response = await fetch('http://outcomemagic-backend.asdevx.com/api/v1/courses/create', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -155,7 +155,7 @@ export default function CourseManagement() {
 
     setIsLoading(true)
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/courses/update/${selectedCourse.id}`, {
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/courses/update/${selectedCourse.id}`, {
         method: 'PUT',
         credentials: 'include',
         headers: {
@@ -193,7 +193,7 @@ export default function CourseManagement() {
     if (window.confirm('Are you sure you want to delete this course?')) {
       setIsLoading(true)
       try {
-        const response = await fetch(`http://localhost:8000/api/v1/courses/delete/${id}`, {
+        const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/courses/delete/${id}`, {
           method: 'DELETE',
           credentials: 'include',
         })
@@ -233,7 +233,7 @@ export default function CourseManagement() {
 
     setIsLoading(true)
     try {
-      const response = await fetch('http://localhost:8000/api/v1/batch/', {
+      const response = await fetch('http://outcomemagic-backend.asdevx.com/api/v1/batch/', {
         method: 'POST',
         credentials: 'include',
         headers: {

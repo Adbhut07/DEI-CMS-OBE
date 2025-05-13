@@ -73,7 +73,7 @@ export default function SubjectsPage() {
   const fetchSubjects = async () => {
     try {
       setLoading(true)
-      const response = await fetch("http://localhost:8000/api/v1/subjects/getAllSubjects", {
+      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/subjects/getAllSubjects", {
         credentials: "include",
       })
       if (!response.ok) {
@@ -93,7 +93,7 @@ export default function SubjectsPage() {
   const fetchUnits = async (subjectId: number) => {
     try {
       setLoading(true)
-      const response = await fetch(`http://localhost:8000/api/v1/units/getAllUnits/${subjectId}`, {
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/units/getAllUnits/${subjectId}`, {
         credentials: "include",
       })
       if (!response.ok) {
@@ -112,7 +112,7 @@ export default function SubjectsPage() {
   // Create a new subject
   const createSubject = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/v1/subjects/create", {
+      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/subjects/create", {
         credentials: "include",
         method: "POST",
         headers: {
@@ -162,7 +162,7 @@ export default function SubjectsPage() {
         return
       }
 
-      const response = await fetch("http://localhost:8000/api/v1/units/bulkCreate", {
+      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/units/bulkCreate", {
         credentials: "include",
         method: "POST",
         headers: {

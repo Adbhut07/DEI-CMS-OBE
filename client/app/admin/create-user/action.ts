@@ -8,7 +8,7 @@ interface UserData {
 }
 
 export async function createUser(userData: UserData) {
-  const response = await fetch("http://localhost:8000/api/v1/users/", {
+  const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/users/", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

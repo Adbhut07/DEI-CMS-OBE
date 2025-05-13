@@ -19,7 +19,7 @@
 //     const fetchExams = async () => {
 //       try {
 //         setLoading(true)
-//         const response = await fetch(`http://localhost:8000/api/v1/exams/getExamsBySubject/${subjectId}`, {
+//         const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/exams/getExamsBySubject/${subjectId}`, {
 //           credentials: "include",
 //         })
 
@@ -105,7 +105,7 @@ export function ExamSelector({ subjectId, onExamSelect, selectedExam }: ExamSele
     const fetchExams = async () => {
       try {
         setLoading(true)
-        const response = await fetch(`http://localhost:8000/api/v1/exams/getExamsBySubject/${subjectId}`, {
+        const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/exams/getExamsBySubject/${subjectId}`, {
           credentials: "include",
         })
 

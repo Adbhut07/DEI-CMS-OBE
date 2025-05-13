@@ -29,7 +29,7 @@ export default function CreateEnrollmentModal({ isOpen, onClose, onSubmit, batch
 
   const handleSearch = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/users/email/${email}`)
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/users/email/${email}`)
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }

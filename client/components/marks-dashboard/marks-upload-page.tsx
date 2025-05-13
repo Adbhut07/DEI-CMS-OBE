@@ -94,7 +94,7 @@
 // //       setLoading((prev) => ({ ...prev, subjects: true }));
 // //       try {
 // //         const response = await fetch(
-// //           "http://localhost:8000/api/v1/faculty/get-assigned-subjects",
+// //           "http://outcomemagic-backend.asdevx.com/api/v1/faculty/get-assigned-subjects",
 // //           {
 // //             credentials: "include",
 // //           }
@@ -121,7 +121,7 @@
 // //       setLoading((prev) => ({ ...prev, exams: true }));
 // //       try {
 // //         const response = await fetch(
-// //           `http://localhost:8000/api/v1/exams/getExamsBySubject/${selectedSubject.subject.id}`,
+// //           `http://outcomemagic-backend.asdevx.com/api/v1/exams/getExamsBySubject/${selectedSubject.subject.id}`,
 // //           { credentials: "include" }
 // //         );
 // //         const data = await response.json();
@@ -146,7 +146,7 @@
 // //       setLoading((prev) => ({ ...prev, students: true }));
 // //       try {
 // //         const response = await fetch(
-// //           `http://localhost:8000/api/v1/enrollments/course/batch/${selectedSubject.batch.id}`,
+// //           `http://outcomemagic-backend.asdevx.com/api/v1/enrollments/course/batch/${selectedSubject.batch.id}`,
 // //           { credentials: "include" }
 // //         );
 // //         const data = await response.json();
@@ -171,7 +171,7 @@
 // //       setLoading((prev) => ({ ...prev, marks: true }));
 // //       try {
 // //         const response = await fetch(
-// //           `http://localhost:8000/api/v1/marks/${selectedExam.id}`,
+// //           `http://outcomemagic-backend.asdevx.com/api/v1/marks/${selectedExam.id}`,
 // //           {
 // //             credentials: "include",
 // //           }
@@ -279,7 +279,7 @@
 // //       if (response.success) {
 // //         // Refresh marks data
 // //         const marksResponse = await fetch(
-// //           `http://localhost:8000/api/v1/marks/${selectedExam.id}`,
+// //           `http://outcomemagic-backend.asdevx.com/api/v1/marks/${selectedExam.id}`,
 // //           {
 // //             credentials: "include",
 // //           }
@@ -630,7 +630,7 @@
 //       setLoading((prev) => ({ ...prev, subjects: true }));
 //       try {
 //         const response = await fetch(
-//           "http://localhost:8000/api/v1/faculty/get-assigned-subjects",
+//           "http://outcomemagic-backend.asdevx.com/api/v1/faculty/get-assigned-subjects",
 //           {
 //             credentials: "include",
 //           }
@@ -657,7 +657,7 @@
 //       setLoading((prev) => ({ ...prev, exams: true }));
 //       try {
 //         const response = await fetch(
-//           `http://localhost:8000/api/v1/exams/getExamsBySubject/${selectedSubject.subject.id}`,
+//           `http://outcomemagic-backend.asdevx.com/api/v1/exams/getExamsBySubject/${selectedSubject.subject.id}`,
 //           { credentials: "include" }
 //         );
 //         const data = await response.json();
@@ -682,7 +682,7 @@
 //       setLoading((prev) => ({ ...prev, students: true }));
 //       try {
 //         const response = await fetch(
-//           `http://localhost:8000/api/v1/enrollments/course/batch/${selectedSubject.batch.id}`,
+//           `http://outcomemagic-backend.asdevx.com/api/v1/enrollments/course/batch/${selectedSubject.batch.id}`,
 //           { credentials: "include" }
 //         );
 //         const data = await response.json();
@@ -707,7 +707,7 @@
 //       setLoading((prev) => ({ ...prev, marks: true }));
 //       try {
 //         const response = await fetch(
-//           `http://localhost:8000/api/v1/marks/${selectedExam.id}`,
+//           `http://outcomemagic-backend.asdevx.com/api/v1/marks/${selectedExam.id}`,
 //           {
 //             credentials: "include",
 //           }
@@ -910,7 +910,7 @@
 //       if (response.success) {
 //         // Refresh marks data
 //         const marksResponse = await fetch(
-//           `http://localhost:8000/api/v1/marks/${selectedExam.id}`,
+//           `http://outcomemagic-backend.asdevx.com/api/v1/marks/${selectedExam.id}`,
 //           {
 //             credentials: "include",
 //           }
@@ -1393,7 +1393,7 @@ export default function MarksUploadPage() {
       setLoading((prev) => ({ ...prev, subjects: true }));
       try {
         const response = await fetch(
-          "http://localhost:8000/api/v1/faculty/get-assigned-subjects",
+          "http://outcomemagic-backend.asdevx.com/api/v1/faculty/get-assigned-subjects",
           {
             credentials: "include",
           }
@@ -1420,7 +1420,7 @@ export default function MarksUploadPage() {
       setLoading((prev) => ({ ...prev, exams: true }));
       try {
         const response = await fetch(
-          `http://localhost:8000/api/v1/exams/getExamsBySubject/${selectedSubject.subject.id}`,
+          `http://outcomemagic-backend.asdevx.com/api/v1/exams/getExamsBySubject/${selectedSubject.subject.id}`,
           { credentials: "include" }
         );
         const data = await response.json();
@@ -1445,7 +1445,7 @@ export default function MarksUploadPage() {
       setLoading((prev) => ({ ...prev, students: true }));
       try {
         const response = await fetch(
-          `http://localhost:8000/api/v1/enrollments/course/batch/${selectedSubject.batch.id}`,
+          `http://outcomemagic-backend.asdevx.com/api/v1/enrollments/course/batch/${selectedSubject.batch.id}`,
           { credentials: "include" }
         );
         const data = await response.json();
@@ -1474,7 +1474,7 @@ export default function MarksUploadPage() {
   //     setLoading((prev) => ({ ...prev, marks: true }));
   //     try {
   //       const response = await fetch(
-  //         `http://localhost:8000/api/v1/marks/${selectedExam.id}`,
+  //         `http://outcomemagic-backend.asdevx.com/api/v1/marks/${selectedExam.id}`,
   //         {
   //           credentials: "include",
   //         }
@@ -1519,7 +1519,7 @@ export default function MarksUploadPage() {
       setLoading((prev) => ({ ...prev, marks: true }));
       try {
         const response = await fetch(
-          `http://localhost:8000/api/v1/marks/${selectedExam.id}`,
+          `http://outcomemagic-backend.asdevx.com/api/v1/marks/${selectedExam.id}`,
           {
             credentials: "include",
           }
@@ -1786,7 +1786,7 @@ export default function MarksUploadPage() {
   //     if (response.success) {
   //       // Refresh marks data
   //       const marksResponse = await fetch(
-  //         `http://localhost:8000/api/v1/marks/${selectedExam.id}`,
+  //         `http://outcomemagic-backend.asdevx.com/api/v1/marks/${selectedExam.id}`,
   //         {
   //           credentials: "include",
   //         }
@@ -1879,7 +1879,7 @@ export default function MarksUploadPage() {
       if (response.success) {
         // Refresh marks data with the same null-preservation logic
         const marksResponse = await fetch(
-          `http://localhost:8000/api/v1/marks/${selectedExam.id}`,
+          `http://outcomemagic-backend.asdevx.com/api/v1/marks/${selectedExam.id}`,
           {
             credentials: "include",
           }

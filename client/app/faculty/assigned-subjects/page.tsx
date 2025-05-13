@@ -41,7 +41,7 @@ export default function AssignedSubjectsPage() {
   useEffect(() => {
       const fetchDashboardStats = async () => {
         try {
-          const response = await fetch("http://localhost:8000/api/v1/faculty/get-assigned-subjects", {
+          const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/faculty/get-assigned-subjects", {
             credentials: "include",
           })
           if (!response.ok) {

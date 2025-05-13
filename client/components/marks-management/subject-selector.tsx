@@ -18,7 +18,7 @@ export function SubjectSelector({ onSubjectSelect, selectedSubject }: SubjectSel
     const fetchSubjects = async () => {
       try {
         setLoading(true)
-        const response = await fetch("http://localhost:8000/api/v1/faculty/get-assigned-subjects", {
+        const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/faculty/get-assigned-subjects", {
           credentials: "include",
         })
 
@@ -59,7 +59,7 @@ export function SubjectSelector({ onSubjectSelect, selectedSubject }: SubjectSel
         mappingId: mapping.id,
       }
 
-      console.log("Selected subject in selector:", selectedSubject)
+      //console.log("Selected subject in selector:", selectedSubject)
       onSubjectSelect(selectedSubject)
     }
   }

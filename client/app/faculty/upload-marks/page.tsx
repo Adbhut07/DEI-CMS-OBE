@@ -104,23 +104,23 @@ export default function MarksManagementPage() {
 
   // Debug logging to check the data flow
   useEffect(() => {
-    console.log("Selected Subject:", selectedSubject)
+    //console.log("Selected Subject:", selectedSubject)
   }, [selectedSubject])
 
   useEffect(() => {
-    console.log("Selected Exam:", selectedExam)
+    //console.log("Selected Exam:", selectedExam)
   }, [selectedExam])
 
   // Handle subject selection
   const handleSubjectSelect = (subject: SelectedSubject) => {
-    console.log("Subject selected:", subject)
+    //console.log("Subject selected:", subject)
     setSelectedSubject(subject)
     setSelectedExam(null) // Reset exam when subject changes
   }
 
   // Handle exam selection
   const handleExamSelect = (exam: Exam) => {
-    console.log("Exam selected:", exam)
+    //console.log("Exam selected:", exam)
     setSelectedExam(exam)
   }
 

@@ -99,7 +99,7 @@
 //     setLoading(true)
 //     setError(null)
 //     try {
-//       const response = await fetch(`http://localhost:8000/api/v1/exams/subject/${subjectId}`)
+//       const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/exams/subject/${subjectId}`)
 //       if (!response.ok) throw new Error("Failed to fetch exams")
 //       const data: ApiResponse = await response.json()
       
@@ -307,7 +307,7 @@ export function ExamList({ subjectId }: ExamListProps) {
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/exams/subject/${subjectId}`)
+      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/exams/subject/${subjectId}`)
       if (!response.ok) throw new Error("Failed to fetch exams")
       const data: ApiResponse = await response.json()
       

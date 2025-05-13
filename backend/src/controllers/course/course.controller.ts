@@ -63,7 +63,7 @@ export const getAllCourses = async (_req: Request, res: Response): Promise<any> 
 export const getCourseById = async (req: Request, res: Response): Promise<any> => {
   try {
     const courseId = parseInt(req.params.courseId);
-    console.log(courseId);
+    //console.log(courseId);
     if (isNaN(courseId)) {
       return res.status(400).json({ success: false, message: "Invalid Course ID" });
     }

@@ -2,7 +2,7 @@
 // API functions for marks management
 
 export async function fetchAssignedSubjects() {
-  const response = await fetch("http://localhost:8000/api/v1/faculty/get-assigned-subjects", { credentials: "include" })
+  const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/faculty/get-assigned-subjects", { credentials: "include" })
 
   if (!response.ok) {
     throw new Error("Failed to fetch assigned subjects")
@@ -12,7 +12,7 @@ export async function fetchAssignedSubjects() {
 }
 
 export async function fetchExamsBySubject(subjectId: number) {
-  const response = await fetch(`http://localhost:8000/api/v1/exams/getExamsBySubject/${subjectId}`, {
+  const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/exams/getExamsBySubject/${subjectId}`, {
     credentials: "include",
   })
 
@@ -24,7 +24,7 @@ export async function fetchExamsBySubject(subjectId: number) {
 }
 
 export async function fetchStudentsByBatch(batchId: number) {
-  const response = await fetch(`http://localhost:8000/api/v1/enrollments/course/batch/${batchId}`, {
+  const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/enrollments/course/batch/${batchId}`, {
     credentials: "include",
   })
 
@@ -36,7 +36,7 @@ export async function fetchStudentsByBatch(batchId: number) {
 }
 
 export async function fetchMarksByExam(examId: number) {
-  const response = await fetch(`http://localhost:8000/api/v1/marks/${examId}`, { credentials: "include" })
+  const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/marks/${examId}`, { credentials: "include" })
 
   if (!response.ok) {
     throw new Error("Failed to fetch marks")
@@ -80,7 +80,7 @@ export async function saveMarks(examId: number, marks: Record<string, Record<str
     };
   }
 
-  const response = await fetch(`http://localhost:8000/api/v1/marks/upload`, {
+  const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/marks/upload`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
