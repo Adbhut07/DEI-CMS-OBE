@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { Response } from 'express';
 
-interface User {
+export interface User {
   id: number;
   role: string;
   [key: string]: any; // Allows additional fields
