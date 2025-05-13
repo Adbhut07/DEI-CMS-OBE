@@ -1,11 +1,9 @@
-// backend/src/types/express/index.d.ts
-
-import { User } from "../../utils/generateTokenAndSetCookies";
+import { User } from '../../interfaces/user.interface';
 
 declare global {
   namespace Express {
     interface Request {
-      user?: User; 
+      user?: User;
     }
   }
 }

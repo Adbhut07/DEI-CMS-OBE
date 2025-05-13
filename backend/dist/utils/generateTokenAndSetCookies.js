@@ -15,6 +15,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+// export interface User {
+//   id: number;
+//   role: string;
+//   [key: string]: any; // Allows additional fields
+// }
 const generateTokenAndSetCookie = (user, res) => {
     const JWT_SECRET = process.env.JWT_SECRET || "default-secret-key";
     if (JWT_SECRET === "default-secret-key" && process.env.NODE_ENV === "production") {

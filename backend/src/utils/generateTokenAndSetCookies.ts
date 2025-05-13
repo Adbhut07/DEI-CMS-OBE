@@ -1,11 +1,12 @@
 import jwt from 'jsonwebtoken';
 import { Response } from 'express';
+import { User } from '../interfaces/user.interface';
 
-export interface User {
-  id: number;
-  role: string;
-  [key: string]: any; // Allows additional fields
-}
+// export interface User {
+//   id: number;
+//   role: string;
+//   [key: string]: any; // Allows additional fields
+// }
 
 const generateTokenAndSetCookie = (user: User, res: Response): void => {
     const JWT_SECRET = process.env.JWT_SECRET || "default-secret-key";
