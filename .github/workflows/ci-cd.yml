@@ -47,9 +47,9 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          port: ${{ secrets.EC2_PORT }}
-          source: "."
-          target: "/home/ubuntu/backend-app"
+          port: 22
+          source: "backend"
+          target: "/home/ubuntu/dei-obe-backend"
 
       - name: Deploy on EC2 via SSH
         uses: appleboy/ssh-action@v1.0.0
