@@ -41,6 +41,33 @@ jobs:
       - name: Docker build
         run: docker build -t dei-obe-backend .
 
+      - name: Upload files to EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT }}
+          source: "."
+          target: "/home/ubuntu/backend-app"
+
+      - name: Deploy on EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT }}
+          script: |
+            cd /home/ubuntu/backend-app
+            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+            echo "PORT=8000" >> .env
+            docker stop dei-obe-backend || true
+            docker rm dei-obe-backend || true
+            docker build -t dei-obe-backend .
+            docker run -d -p 8000:8000 --env-file .env --name dei-obe-backend dei-obe-backend
+
   frontend:
     name: Frontend CI
     runs-on: ubuntu-latest
