@@ -7,7 +7,7 @@ on:
 
 jobs:
   backend:
-    name: Backend CI
+    name: Backend CI/CD
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -42,20 +42,7 @@ jobs:
       - name: Docker build
         run: docker build -t dei-obe-backend .
       
-      # Option 1: Using SCP with increased timeout
-      - name: Upload files to EC2
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: 22
-          source: "backend"
-          target: "/home/ubuntu/dei-obe-backend"
-          timeout: 60s  # Increased timeout
-          command_timeout: 30m  # Command timeout increased
-      
-      # Option 2: Alternative deployment via SSH only
+      # Deploy using SSH with the correct directory path
       - name: Deploy on EC2 via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -63,13 +50,21 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT }}
-          script_stop: true  # Stop script after first error
-          command_timeout: 20m  # Increased timeout for commands
+          script_stop: true
+          command_timeout: 20m
           script: |
-            cd /home/ubuntu/backend-app
+            # Use the correct directory path
+            cd /home/ubuntu/dei-obe-backend/backend
+            
+            # Create environment files
             echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
             echo "PORT=8000" >> .env
+            
+            # Pull latest changes from repository
+            git pull origin main || echo "Not a git repository or git pull failed, continuing anyway"
+            
+            # Build and run docker
             docker stop dei-obe-backend || true
             docker rm dei-obe-backend || true
             docker build -t dei-obe-backend .
