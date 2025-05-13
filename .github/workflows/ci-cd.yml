@@ -4,6 +4,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+
 jobs:
   backend:
     name: Backend CI
@@ -16,18 +17,18 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-      
+        
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
-      
+          
       - name: Install backend dependencies
         run: npm install
-      
+        
       - name: Generate Prisma client
         run: npx prisma generate
-      
+        
       - name: Build backend
         run: npm run build
         
@@ -37,10 +38,11 @@ jobs:
           echo "PORT=8000" >> .env
           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
           # Add other environment variables as needed
-      
+          
       - name: Docker build
         run: docker build -t dei-obe-backend .
-
+      
+      # Option 1: Using SCP with increased timeout
       - name: Upload files to EC2
         uses: appleboy/scp-action@v0.1.4
         with:
@@ -50,7 +52,10 @@ jobs:
           port: 22
           source: "backend"
           target: "/home/ubuntu/dei-obe-backend"
-
+          timeout: 60s  # Increased timeout
+          command_timeout: 30m  # Command timeout increased
+      
+      # Option 2: Alternative deployment via SSH only
       - name: Deploy on EC2 via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -58,6 +63,8 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT }}
+          script_stop: true  # Stop script after first error
+          command_timeout: 20m  # Increased timeout for commands
           script: |
             cd /home/ubuntu/backend-app
             echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
@@ -67,7 +74,7 @@ jobs:
             docker rm dei-obe-backend || true
             docker build -t dei-obe-backend .
             docker run -d -p 8000:8000 --env-file .env --name dei-obe-backend dei-obe-backend
-
+  
   frontend:
     name: Frontend CI
     runs-on: ubuntu-latest
@@ -77,16 +84,16 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-      
+        
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
           cache: 'npm'
           cache-dependency-path: client/package-lock.json
-      
+          
       - name: Install frontend dependencies
         run: npm install --legacy-peer-deps
-      
+        
       - name: Build frontend
         run: npm run build
