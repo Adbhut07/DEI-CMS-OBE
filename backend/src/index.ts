@@ -23,13 +23,23 @@ import semesterRoutes from './routes/semester/semester.route';
 const app = express();
 const port = process.env.PORT || 5000;
 
+const allowedOrigins = ['http://localhost:3000', 'https://outcomemagic.asdevx.com'];
+
 const corsOptions = {
-    origin: ['http://localhost:3000', 'https://outcomemagic.asdevx.com'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], 
-    credentials: true, 
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
 };
 
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // enable preflight
 app.use(express.json());
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
