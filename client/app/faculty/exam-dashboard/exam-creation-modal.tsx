@@ -792,7 +792,7 @@ export function ExamCreationModal({ isOpen, onClose, subject }: ExamCreationModa
 
   const fetchSubjectDetails = async (subjectId: number) => {
     try {
-      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/subjects/${subjectId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/subjects/${subjectId}`, {
         credentials: "include",
       })
       if (!response.ok) throw new Error("Failed to fetch subject details")
@@ -853,7 +853,7 @@ export function ExamCreationModal({ isOpen, onClose, subject }: ExamCreationModa
         requestBody.questions = validQuestions
       }
 
-      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/exams", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/exams`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

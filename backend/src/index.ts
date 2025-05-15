@@ -24,7 +24,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 const corsOptions = {
-    origin: ['http://localhost:3000', 'https://your-production-domain.com'],
+    origin: ['http://localhost:3000', 'https://outcomemagic.asdevx.com'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], 
     credentials: true, 
 };
@@ -65,23 +65,3 @@ app.listen(port, () => {
 
 
 
-
-// model Marks {
-//   id            Int       @id @default(autoincrement())
-//   student       User      @relation("StudentMarks", fields: [studentId], references: [id]) // ✅ Named Relation
-//   studentId     Int
-//   exam          Exam      @relation(fields: [examId], references: [id])
-//   examId        Int
-//   question      Question? @relation(fields: [questionId], references: [id]) // Nullable for DHA, AA, ATT
-//   questionId    Int?
-//   subject       Subject   @relation(fields: [subjectId], references: [id])
-//   subjectId     Int
-//   marksObtained Int
-//   uploadedBy    User      @relation("UploadedMarks", fields: [uploadedById], references: [id]) // ✅ Named Relation
-//   uploadedById  Int
-//   createdAt     DateTime  @default(now())
-//   updatedAt     DateTime  @updatedAt
-
-//   @@unique([studentId, examId, questionId]) // ✅ Unique if question-wise
-//   @@unique([studentId, examId, subjectId]) // ✅ Unique if subject-wise (DHA, AA, ATT)
-// }

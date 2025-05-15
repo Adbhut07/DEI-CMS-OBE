@@ -277,7 +277,9 @@ export function ExamUpdateModal({ isOpen, onClose, exam, onUpdate }: ExamUpdateM
 
   const fetchSubjectDetails = async (subjectId: number) => {
     try {
-      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/subjects/${subjectId}`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/subjects/${subjectId}`, {
+        credentials: "include",
+      })
       if (!response.ok) throw new Error("Failed to fetch subject details")
       const result = await response.json()
       if (result.success && result.data) {
@@ -307,8 +309,9 @@ export function ExamUpdateModal({ isOpen, onClose, exam, onUpdate }: ExamUpdateM
         marksAllocated: data.marksAllocated
       };
 
-      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/exams/${exam.id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/exams/${exam.id}`, {
         method: "PUT",
+        credentials: "include", 
         headers: {
           "Content-Type": "application/json",
         },

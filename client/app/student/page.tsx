@@ -68,7 +68,7 @@ export default function StudentDashboard() {
     async function fetchStudentDetails() {
       try {
         setLoading(true)
-        const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/student/details", {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/student/details`, {
           credentials: "include",
         })
 
@@ -92,7 +92,7 @@ export default function StudentDashboard() {
 
   const fetchSemesterInfo = async () => {
     try {
-      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/semester/student", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/semester/student`, {
         credentials: "include",
       })
 
@@ -121,7 +121,7 @@ export default function StudentDashboard() {
     try {
       setMarksLoading(true)
       // Changed from GET to POST method and fixed the body format
-      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/student/marks", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/student/marks`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

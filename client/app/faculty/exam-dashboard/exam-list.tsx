@@ -307,7 +307,9 @@ export function ExamList({ subjectId }: ExamListProps) {
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/exams/subject/${subjectId}`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/exams/subject/${subjectId}`, {
+        credentials: "include",
+      })
       if (!response.ok) throw new Error("Failed to fetch exams")
       const data: ApiResponse = await response.json()
       

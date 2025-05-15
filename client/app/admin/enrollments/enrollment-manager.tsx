@@ -484,7 +484,9 @@ export default function EnrollmentManager({ courses }: { courses: Course[] }) {
     setEnrollments([])
     setError(null)
     try {
-      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/batch/course/${courseId}`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/batch/course/${courseId}`, {
+        credentials: "include",
+      })
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
@@ -504,7 +506,9 @@ export default function EnrollmentManager({ courses }: { courses: Course[] }) {
     setSelectedBatch(batchId)
     setError(null)
     try {
-      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/enrollments/batch/${batchId}`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/enrollments/batch/${batchId}`, {
+        credentials: "include",
+      })
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
@@ -522,7 +526,8 @@ export default function EnrollmentManager({ courses }: { courses: Course[] }) {
 
   const handleStatusChange = async (enrollmentId: number, newStatus: boolean) => {
     try {
-      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/enrollments/${enrollmentId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/enrollments/${enrollmentId}`, {
+        credentials: "include",
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -560,7 +565,8 @@ export default function EnrollmentManager({ courses }: { courses: Course[] }) {
 
   const handleCreateEnrollment = async (studentId: number, rollNo: string) => {
     try {
-      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/enrollments/", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/enrollments/`, {
+        credentials: "include",
         method: "POST",
         headers: {
           "Content-Type": "application/json",

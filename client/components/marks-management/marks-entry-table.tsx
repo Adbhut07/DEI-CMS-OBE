@@ -324,7 +324,7 @@ export function MarksEntryTable({ examData, selectedSubject }: MarksEntryTablePr
 
       // Fetch all students for the batch
       const studentsResponse = await fetch(
-        `http://outcomemagic-backend.asdevx.com/api/v1/enrollments/course/batch/${selectedSubject.batchId}`,
+        `${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/enrollments/course/batch/${selectedSubject.batchId}`,
         { credentials: "include" },
       )
 
@@ -355,7 +355,7 @@ export function MarksEntryTable({ examData, selectedSubject }: MarksEntryTablePr
       // Try to fetch existing marks
       //console.log("Fetching marks for exam:", examData.id)
       try {
-        const marksResponse = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/marks/${examData.id}`, {
+        const marksResponse = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/marks/${examData.id}`, {
           credentials: "include",
         })
 
@@ -450,7 +450,7 @@ export function MarksEntryTable({ examData, selectedSubject }: MarksEntryTablePr
       //console.log("Saving marks with data:", formattedData)
 
       // Make the API call to save marks
-      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/marks/upload", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}api/v1/marks/upload`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

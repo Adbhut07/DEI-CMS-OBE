@@ -1393,7 +1393,7 @@ export default function MarksUploadPage() {
       setLoading((prev) => ({ ...prev, subjects: true }));
       try {
         const response = await fetch(
-          "http://outcomemagic-backend.asdevx.com/api/v1/faculty/get-assigned-subjects",
+          `${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/faculty/get-assigned-subjects`,
           {
             credentials: "include",
           }
@@ -1420,7 +1420,7 @@ export default function MarksUploadPage() {
       setLoading((prev) => ({ ...prev, exams: true }));
       try {
         const response = await fetch(
-          `http://outcomemagic-backend.asdevx.com/api/v1/exams/getExamsBySubject/${selectedSubject.subject.id}`,
+          `${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/exams/getExamsBySubject/${selectedSubject.subject.id}`,
           { credentials: "include" }
         );
         const data = await response.json();
@@ -1445,7 +1445,7 @@ export default function MarksUploadPage() {
       setLoading((prev) => ({ ...prev, students: true }));
       try {
         const response = await fetch(
-          `http://outcomemagic-backend.asdevx.com/api/v1/enrollments/course/batch/${selectedSubject.batch.id}`,
+          `${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/enrollments/course/batch/${selectedSubject.batch.id}`,
           { credentials: "include" }
         );
         const data = await response.json();
@@ -1519,7 +1519,7 @@ export default function MarksUploadPage() {
       setLoading((prev) => ({ ...prev, marks: true }));
       try {
         const response = await fetch(
-          `http://outcomemagic-backend.asdevx.com/api/v1/marks/${selectedExam.id}`,
+          `${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/marks/${selectedExam.id}`,
           {
             credentials: "include",
           }
@@ -1879,7 +1879,7 @@ export default function MarksUploadPage() {
       if (response.success) {
         // Refresh marks data with the same null-preservation logic
         const marksResponse = await fetch(
-          `http://outcomemagic-backend.asdevx.com/api/v1/marks/${selectedExam.id}`,
+          `${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/marks/${selectedExam.id}`,
           {
             credentials: "include",
           }

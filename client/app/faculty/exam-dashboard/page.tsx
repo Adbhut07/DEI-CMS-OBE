@@ -41,7 +41,7 @@ export default function ExamDashboard() {
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/faculty/get-assigned-subjects", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/faculty/get-assigned-subjects`, {
         credentials: "include",
       })
       if (!response.ok) throw new Error("Failed to fetch assigned subjects")

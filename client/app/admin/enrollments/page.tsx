@@ -62,7 +62,7 @@ import EnrollmentManager from "./enrollment-manager"
 
 async function fetchCourses() {
   try {
-    const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/courses/getAllCourses", {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/courses/getAllCourses`, {
       credentials: "include",
     })
     if (!response.ok) throw new Error("Failed to fetch courses")

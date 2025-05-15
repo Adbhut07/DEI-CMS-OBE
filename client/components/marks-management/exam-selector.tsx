@@ -105,7 +105,7 @@ export function ExamSelector({ subjectId, onExamSelect, selectedExam }: ExamSele
     const fetchExams = async () => {
       try {
         setLoading(true)
-        const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/exams/getExamsBySubject/${subjectId}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/exams/getExamsBySubject/${subjectId}`, {
           credentials: "include",
         })
 

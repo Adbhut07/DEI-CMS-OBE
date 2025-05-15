@@ -334,7 +334,7 @@ export default function ExamCreationPage() {
 
   const fetchAssignedSubjects = async () => {
     try {
-      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/faculty/get-assigned-subjects", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/faculty/get-assigned-subjects`, {
         credentials: "include",
       })
       if (!response.ok) throw new Error("Failed to fetch assigned subjects")
@@ -352,7 +352,9 @@ export default function ExamCreationPage() {
 
   const fetchSubjectDetails = async (subjectId: number) => {
     try {
-      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/subjects/${subjectId}`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/subjects/${subjectId}`, {
+        credentials: "include",
+      })
       if (!response.ok) throw new Error("Failed to fetch subject details")
       const result = await response.json()
       if (result.success && result.data) {
@@ -378,7 +380,7 @@ export default function ExamCreationPage() {
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/exams", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/exams`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

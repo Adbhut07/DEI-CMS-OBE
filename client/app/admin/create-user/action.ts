@@ -8,7 +8,8 @@ interface UserData {
 }
 
 export async function createUser(userData: UserData) {
-  const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/users/", {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/users/`, {
+    credentials: "include",
     method: "POST",
     headers: {
       "Content-Type": "application/json",

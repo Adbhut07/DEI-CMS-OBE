@@ -18,7 +18,7 @@ export function SubjectSelector({ onSubjectSelect, selectedSubject }: SubjectSel
     const fetchSubjects = async () => {
       try {
         setLoading(true)
-        const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/faculty/get-assigned-subjects", {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/faculty/get-assigned-subjects`, {
           credentials: "include",
         })
 

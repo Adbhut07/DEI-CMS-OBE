@@ -111,7 +111,9 @@ export default function AdminUsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/users/")
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/users/`, {
+        credentials: "include",
+      })
       const data = await response.json()
       if (data.success) {
         setUsers(data.data)
@@ -125,7 +127,8 @@ export default function AdminUsersPage() {
 
   const deleteUser = async (id: number) => {
     try {
-      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/users/${id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/users/${id}`, {
+        credentials: "include",
         method: "DELETE",
       })
       const data = await response.json()

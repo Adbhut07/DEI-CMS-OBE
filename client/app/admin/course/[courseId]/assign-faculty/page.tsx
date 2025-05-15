@@ -60,7 +60,7 @@ export default function AssignFacultyPage() {
   const fetchCourseDetails = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/courses/getCourse/${courseId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/courses/getCourse/${courseId}`, {
         credentials: "include",
       })
       if (!response.ok) throw new Error("Failed to fetch course details")
@@ -79,7 +79,7 @@ export default function AssignFacultyPage() {
 
   const fetchFaculties = async () => {
     try {
-      const response = await fetch("http://outcomemagic-backend.asdevx.com/api/v1/users/getUserByRole/Faculty", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/users/getUserByRole/Faculty`, {
         credentials: "include",
       })
       if (!response.ok) throw new Error("Failed to fetch faculties")
@@ -109,7 +109,7 @@ export default function AssignFacultyPage() {
 
     setIsLoading(true)
     try {
-      const response = await fetch(`http://outcomemagic-backend.asdevx.com/api/v1/subjects/${courseId}/assign-faculty`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/subjects/${courseId}/assign-faculty`, {
         method: "POST",
         credentials: "include",
         headers: {
