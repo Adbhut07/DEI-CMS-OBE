@@ -53,20 +53,25 @@ jobs:
           script_stop: true
           command_timeout: 20m
           script: |
-            # Use the correct directory path
+            # Remove old backend folder
+            rm -rf /home/ubuntu/dei-obe-backend
+
+            # Clone latest repo
+            git clone https://github.com/Adbhut07/DEI-CMS-OBE.git /home/ubuntu/dei-obe-backend
+
+            # Go to backend folder
             cd /home/ubuntu/dei-obe-backend/backend
-            
-            # Create environment files
+
+            # Create .env file
             echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
             echo "PORT=8000" >> .env
-            
-            # Pull latest changes from repository
-            git pull origin main || echo "Not a git repository or git pull failed, continuing anyway"
-            
-            # Build and run docker
+
+            # Stop and remove old container if running
             docker stop dei-obe-backend || true
             docker rm dei-obe-backend || true
+
+            # Build and run Docker container
             docker build -t dei-obe-backend .
             docker run -d -p 8000:8000 --env-file .env --name dei-obe-backend dei-obe-backend
   
