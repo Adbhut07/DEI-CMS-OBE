@@ -45,7 +45,7 @@ const Demo = () => {
               >
                 <div className="flex flex-col items-center gap-2">
                   <PieChart className="h-5 w-5" />
-                  <span>Analytics</span>
+                  <span>Course Management</span>
                 </div>
               </TabsTrigger>
               <TabsTrigger 
@@ -79,37 +79,56 @@ const Demo = () => {
             </TabsContent>
             
             <TabsContent value="outcomes" className="mt-0">
-              <div className="flex items-center justify-center h-96 bg-black/40 rounded-xl border border-white/10">
-                <div className="text-center max-w-lg p-6">
-                  <h4 className="text-2xl font-semibold text-white mb-4">Intuitive Outcome Mapping</h4>
-                  <p className="text-white/70">
-                    Easily map course outcomes to program outcomes and educational objectives with our visual mapping tools.
-                  </p>
-                </div>
+              <div className="bg-black/40 p-4 rounded-xl">
+                <img 
+                  src="/CO.png" 
+                  alt="Outcome Management Interface" 
+                  className="rounded-lg w-full border border-white/10" 
+                />
+              </div>
+              <div className="mt-6 text-center">
+                <h4 className="text-2xl font-semibold text-white mb-3">Intuitive Outcome Mapping</h4>
+                <p className="text-white/70 text-lg max-w-3xl mx-auto mb-6">
+                  Easily map course outcomes to program outcomes and educational objectives with our visual mapping tools.
+                </p>
+                <Button className="bg-accent hover:bg-accent/80 text-white">
+                  See More Features <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="analytics" className="mt-0">
-              <div className="flex items-center justify-center h-96 bg-black/40 rounded-xl border border-white/10">
-                <div className="text-center max-w-lg p-6">
-                  <h4 className="text-2xl font-semibold text-white mb-4">Advanced Analytics Dashboard</h4>
-                  <p className="text-white/70">
-                    Gain insights with powerful analytics showing outcome attainment trends, gap analysis, and improvement metrics.
-                  </p>
-                </div>
+              <div className="bg-black/40 p-4 rounded-xl">
+                <img 
+                  src="/course_management.png" 
+                  alt="Course Management Interface" 
+                  className="rounded-lg w-full border border-white/10" 
+                />
+              </div>
+              <div className="mt-6 text-center">
+                <h4 className="text-2xl font-semibold text-white mb-3">Intuitive Course Mapping</h4>
+                <p className="text-white/70 text-lg max-w-3xl mx-auto mb-6">
+                  Easily manage courses with batches and assign subjects and units to it.
+                </p>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="users" className="mt-0">
-              <div className="flex items-center justify-center h-96 bg-black/40 rounded-xl border border-white/10">
-                <div className="text-center max-w-lg p-6">
-                  <h4 className="text-2xl font-semibold text-white mb-4">Comprehensive User Management</h4>
-                  <p className="text-white/70">
-                    Set up different roles and permissions for faculty, administrators, and department heads to ensure proper access control.
-                  </p>
-                </div>
+              <div className="bg-black/40 p-4 rounded-xl">
+                <img 
+                  src="/user.png" 
+                  alt="User Management Interface" 
+                  className="rounded-lg w-full border border-white/10" 
+                />
+              </div>
+              <div className="mt-6 text-center">
+                <h4 className="text-2xl font-semibold text-white mb-3">Comprehensive User Management</h4>
+                <p className="text-white/70 text-lg max-w-3xl mx-auto mb-6">
+                  Set up different roles and permissions for faculty, administrators, and department heads to ensure proper access control.                
+                </p>
               </div>
             </TabsContent>
+
           </Tabs>
         </div>
       </div>

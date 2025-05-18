@@ -8,7 +8,7 @@ const Footer = () => {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <GraduationCap className="h-7 w-7 text-accent" />
-              <span className="text-xl font-bold text-white">OutcomeMagic</span>
+              <span className="text-xl font-bold text-white">Cognitia</span>
             </div>
             <p className="text-white/60 mb-4">
               Transforming outcome-based education with powerful, intuitive software solutions.
@@ -40,17 +40,17 @@ const Footer = () => {
           <div>
             <h4 className="text-lg font-semibold text-white mb-4">Contact</h4>
             <ul className="space-y-2">
-              <li className="text-white/60">hello@outcomemagic.com</li>
-              <li className="text-white/60">+1 (800) 123-4567</li>
-              <li className="text-white/60">123 Education Ave, Suite 200</li>
-              <li className="text-white/60">San Francisco, CA 94103</li>
+              <li className="text-white/60">adbhut.rei.2233@gmail.com</li>
+              <li className="text-white/60">+91 9997808641</li>
+              <li className="text-white/60">Dayalbagh Educational Institue, Agra (UP), India</li>
+              <li className="text-white/60">Agra - 282005 (UP), India</li>
             </ul>
           </div>
         </div>
         
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center">
           <p className="text-white/60 mb-4 md:mb-0">
-            © {new Date().getFullYear()} OutcomeMagic. All rights reserved.
+            © {new Date().getFullYear()} Cognitia. All rights reserved.
           </p>
           <div className="flex gap-6">
             <a href="#" className="text-white/60 hover:text-white transition-colors">Privacy Policy</a>

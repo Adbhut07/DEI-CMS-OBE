@@ -27,7 +27,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <GraduationCap className="h-8 w-8 text-accent" />
-          <span className="text-xl font-bold text-white">OutcomeMagic</span>
+          <span className="text-xl font-bold text-white">Cognitia</span>
         </div>
         
         {/* Desktop Navigation */}

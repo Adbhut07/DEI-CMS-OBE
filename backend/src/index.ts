@@ -23,7 +23,7 @@ import semesterRoutes from './routes/semester/semester.route';
 const app = express();
 const port = process.env.PORT || 5000;
 
-const allowedOrigins = ['http://localhost:3000', 'https://outcomemagic.asdevx.com'];
+const allowedOrigins = ['http://localhost:3000', 'https://cognitia.asdevx.com'];
 
 const corsOptions = {
   origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
